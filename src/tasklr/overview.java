@@ -1,25 +1,30 @@
 package tasklr;
 
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
+import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.Statement;
+
 public class overview {
 
+
     public static JPanel createOverview() {            
+        usernameDisplay obj = new usernameDisplay();
+
         //parent container of the overview
         JPanel panel = createPanel.panel(new Color(0x292E34), new GridBagLayout(), new Dimension(400, 0));
-
         //task components display
-        JPanel header_panel = createPanel.panel(new Color(0x292E34), null, new Dimension(400, 70));
+        JPanel header_panel = createPanel.panel(new Color(0x292E34), new BorderLayout(), new Dimension(400, 100));
         Border border = BorderFactory.createLineBorder(new Color(0x6D6D6D), 1);
+        header_panel.add(obj.DisplayUsername("Jherson"), BorderLayout.EAST);
         header_panel.setBorder(border);
 
         //task label and Panel
         JPanel task_overview_lbl = createPanel.panel(new Color(0x292E34), new BorderLayout(), new Dimension(100, 70));
+        
         JLabel taskLabel = new JLabel("Task Overview");
         task_overview_lbl.add(taskLabel, BorderLayout.CENTER);
         Border taskov_border = BorderFactory.createLineBorder(new Color(0x6D6D6D), 1);
@@ -93,10 +98,10 @@ public class overview {
     }
 
     private static void addComponent(JPanel panel, JComponent comp, int x, int y, int width, int height) {
-        GridBagConstraints gbc = new GridBagConstraints(); // New instance
+        GridBagConstraints gbc = new GridBagConstraints();
         gbc.fill = GridBagConstraints.BOTH;
         gbc.weightx = 1;
-        gbc.insets = new Insets(5, 5, 5, 5); 
+        gbc.insets = new Insets(5, 5, 5, 5);
         gbc.gridx = x;
         gbc.gridy = y;
         gbc.gridwidth = width;
@@ -104,16 +109,21 @@ public class overview {
         panel.add(comp, gbc);
     }
 
-    // === Utility Method for Adding Gaps ===
-    private static void addGap(JPanel panel, int x, int y, int width, int height) {
-        GridBagConstraints gbc = new GridBagConstraints(); // New instance
-        gbc.gridx = x;
-        gbc.gridy = y;
-        gbc.gridwidth = width;
-        gbc.gridheight = 1;
-        panel.add(Box.createVerticalStrut(height), gbc);
-    }
+    // public static String retrieveUserInfo() {
+    //     String url = "jdbc:mysql://localhost:3306/user_accounts";
+    //     String username = "JFCompany";
+    //     String password = "";
+    //     String userInfo = "User not found";
 
+    //     try (Connection conn = DriverManager.getConnection(url, username, password);
+    //          Statement stmt = conn.createStatement();
+    //          ResultSet rs = stmt.executeQuery("SELECT userName FROM fields LIMIT 1")) {
+    //         if (rs.next()) {
+    //             userInfo = "User: " + rs.getString("userName");
+    //         }
+    //     } catch (Exception e) {
+    //         e.printStackTrace();
+    //     }
+    //     return userInfo;
+    // }
 }
-
-

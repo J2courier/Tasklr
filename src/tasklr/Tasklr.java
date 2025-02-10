@@ -87,7 +87,7 @@ public class Tasklr extends JFrame {
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            new userLogin().setVisible(true);
+            new signup().setVisible(true);
         });
     }
 }

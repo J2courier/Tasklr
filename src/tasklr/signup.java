@@ -12,12 +12,12 @@ import java.awt.event.ActionListener;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import javax.swing.border.Border;
+public class signup extends JFrame {
 
-public class userLogin extends JFrame {
     private JTextField usernameField;
     private JPasswordField passwordField;
 
-    public userLogin() {
+    public signup() {
         setTitle("Login");
         setSize(1200, 920);
         setLayout(new GridBagLayout());
@@ -91,7 +91,7 @@ public class userLogin extends JFrame {
                     new Tasklr().setVisible(true);
                     dispose();
                 } else {
-                    JOptionPane.showMessageDialog(userLogin.this, "Invalid username or password!");
+                    JOptionPane.showMessageDialog(signup.this, "Invalid username or password!");
                 }
             }
         });
@@ -140,7 +140,8 @@ public class userLogin extends JFrame {
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            new userLogin().setVisible(true);
+            new signup().setVisible(true);
         });
     }
+
 }

@@ -101,6 +101,10 @@ public class login extends JFrame {
                         createUsernameField.setText("");
                         createPasswordField.setText("");
                         confirmPasswordField.setText("");
+
+                        usernameDisplay user = new usernameDisplay();
+                        user.DisplayUsername(username);
+                        
                         new Tasklr().setVisible(true);
                         dispose();
                     }
@@ -113,7 +117,7 @@ public class login extends JFrame {
         loginButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                new userLogin().setVisible(true);
+                new signup().setVisible(true);
                 dispose();
             }
         });
