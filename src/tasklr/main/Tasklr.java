@@ -1,18 +1,17 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Main.java to edit this template
- */
-package tasklr;
+package tasklr.main;
 
-/**
- *
- * @author J2AMD
- */
-
+//utilties
 import javax.swing.*;
-import javax.swing.border.Border;
-
 import java.awt.*;
+//file pathing:
+import tasklr.createPanel;
+import tasklr.expense;
+import tasklr.expenselist;
+import tasklr.overview;
+import tasklr.task;
+import tasklr.tasklist;
+import tasklr.login.login;
+
 public class Tasklr extends JFrame {
     
     public Tasklr() {
@@ -81,13 +80,14 @@ public class Tasklr extends JFrame {
         homePanel.add(expenselist.createExpenseList(), gbc);//just call the sub class tasklist and access the method
         gbc.gridx = 2;
         homePanel.add(overview.createOverview(), gbc);//just call the sub class tasklist and access the method
+        
         return homePanel;
     }
 
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            new signup().setVisible(true);
+            new login().setVisible(true);
         });
     }
 }

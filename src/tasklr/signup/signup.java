@@ -1,4 +1,4 @@
-package tasklr;
+package tasklr.signup;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -12,30 +12,37 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import javax.swing.border.Border;
 
-public class login extends JFrame {
+import tasklr.login.login;
+import tasklr.main.Tasklr;
+
+public class signup extends JFrame {
     private JTextField createUsernameField;
     private JTextField createPasswordField;
     private JPasswordField confirmPasswordField;
 
-    public login() {
-        setTitle("Login and Sign up");
-        setSize(1200, 920);
-        setLayout(new GridBagLayout());
-        setMinimumSize(new Dimension(1800, 1000));
-        getContentPane().setBackground(new Color(0x1C2128));
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
+    public signup() {
+        setTitle("Login and Sign up"); // Set window title
+        setSize(1200, 920); // Set window size
+        setLayout(new GridBagLayout()); // Use GridBagLayout for flexible layout management
+        setMinimumSize(new Dimension(1800, 1000)); // Set minimum size of the window
+        getContentPane().setBackground(new Color(0x1C2128)); // Set background color
+        setDefaultCloseOperation(EXIT_ON_CLOSE); // Ensure application closes when window is closed
+        
+        // Set application icon
         ImageIcon appIcon = new ImageIcon("C:/Users/ADMIN/Desktop/Tasklr/resource/icons/AppLogo.png");
         setIconImage(appIcon.getImage());
 
+        // Create main signup panel
         JPanel signupPanel = new JPanel(new GridBagLayout());
         Border signupBorder = BorderFactory.createMatteBorder(1, 1, 1, 1, new Color(0x6D6D6D));
         signupPanel.setBorder(signupBorder);
-        signupPanel.setPreferredSize(new Dimension(700, 700));
-        signupPanel.setBackground(new Color(0x292E34));
+        signupPanel.setPreferredSize(new Dimension(700, 700)); // Set panel size
+        signupPanel.setBackground(new Color(0x292E34)); // Set panel background color
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(5, 10, 10, 10);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
+        // Username field
         JLabel createUsernameLabel = new JLabel("Create Username");
         createUsernameLabel.setForeground(Color.WHITE);
         gbc.gridx = 0;
@@ -48,6 +55,7 @@ public class login extends JFrame {
         gbc.gridy = 1;
         signupPanel.add(createUsernameField, gbc);
 
+        // Password field
         JLabel createPasswordLabel = new JLabel("Create Password");
         createPasswordLabel.setForeground(Color.WHITE);
         gbc.gridy = 2;
@@ -58,6 +66,7 @@ public class login extends JFrame {
         gbc.gridy = 3;
         signupPanel.add(createPasswordField, gbc);
 
+        // Confirm password field
         JLabel confirmPasswordLabel = new JLabel("Confirm Password");
         confirmPasswordLabel.setForeground(Color.WHITE);
         gbc.gridy = 4;
@@ -68,6 +77,7 @@ public class login extends JFrame {
         gbc.gridy = 5;
         signupPanel.add(confirmPasswordField, gbc);
 
+        // Signup button
         JButton signupButton = new JButton("Sign Up");
         signupButton.setFocusable(false);
         signupButton.setPreferredSize(new Dimension(0, 40));
@@ -75,6 +85,7 @@ public class login extends JFrame {
         gbc.gridy = 6;
         signupPanel.add(signupButton, gbc);
 
+        // Login label and button
         JLabel loginLabel = new JLabel("Already have an account?");
         loginLabel.setForeground(Color.WHITE);
         gbc.gridy = 7;
@@ -88,6 +99,7 @@ public class login extends JFrame {
         gbc.gridx = 1;
         signupPanel.add(loginButton, gbc);
 
+        // Signup button action listener
         signupButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -95,33 +107,31 @@ public class login extends JFrame {
                 String password = createPasswordField.getText();
                 String confirmPassword = new String(confirmPasswordField.getPassword());
 
-                if (password.equals(confirmPassword)) {
-                    String hashedPassword = hashPassword(password);
-                    if (insertUser(username, hashedPassword)) {
+                if (password.equals(confirmPassword)) { // Check if passwords match
+                    String hashedPassword = hashPassword(password); // Hash the password
+                    if (insertUser(username, hashedPassword)) { // Insert user into database
                         createUsernameField.setText("");
                         createPasswordField.setText("");
                         confirmPasswordField.setText("");
-
-                        usernameDisplay user = new usernameDisplay();
-                        user.DisplayUsername(username);
-                        
-                        new Tasklr().setVisible(true);
-                        dispose();
+                        new Tasklr().setVisible(true); // Open main Tasklr application
+                        dispose(); // Close signup window
                     }
                 } else {
-                    JOptionPane.showMessageDialog(login.this, "Passwords do not match!");
+                    JOptionPane.showMessageDialog(signup.this, "Passwords do not match!");
                 }
             }
         });
 
+        // Login button action listener
         loginButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                new signup().setVisible(true);
-                dispose();
+                new login().setVisible(true); // Open login window
+                dispose(); // Close signup window
             }
         });
 
+        // Add signup panel to frame
         GridBagConstraints frameGbc = new GridBagConstraints();
         frameGbc.gridx = 0;
         frameGbc.gridy = 0;
@@ -129,6 +139,7 @@ public class login extends JFrame {
         add(signupPanel, frameGbc);
     }
 
+    // Method to hash password using SHA-256
     private String hashPassword(String password) {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
@@ -143,6 +154,7 @@ public class login extends JFrame {
         }
     }
 
+    // Method to insert user into database
     private boolean insertUser(String username, String hashedPassword) {
         String url = "jdbc:mysql://localhost:3306/user_accounts";
         String user = "JFCompany";
@@ -162,11 +174,5 @@ public class login extends JFrame {
             JOptionPane.showMessageDialog(this, "Error inserting user: " + ex.getMessage());
             return false;
         }
-    }
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            new login().setVisible(true);
-        });
     }
 }

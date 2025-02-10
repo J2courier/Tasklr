@@ -10,16 +10,25 @@ import java.sql.Statement;
 
 public class overview {
 
+    public static JPanel headerComponent() {
+        JPanel panel = createPanel.panel(Color.WHITE, new FlowLayout(FlowLayout.LEFT), new Dimension(400, 50));
+        JLabel userLabel = new JLabel("Fetching user...");
+        panel.add(userLabel);
+
+        // Fetch user data and update JLabel
+        String userInfo = retrieveUserInfo();
+        userLabel.setText(userInfo);
+
+        return panel;
+    }
 
     public static JPanel createOverview() {            
-        usernameDisplay obj = new usernameDisplay();
-
         //parent container of the overview
         JPanel panel = createPanel.panel(new Color(0x292E34), new GridBagLayout(), new Dimension(400, 0));
         //task components display
         JPanel header_panel = createPanel.panel(new Color(0x292E34), new BorderLayout(), new Dimension(400, 100));
         Border border = BorderFactory.createLineBorder(new Color(0x6D6D6D), 1);
-        header_panel.add(obj.DisplayUsername("Jherson"), BorderLayout.EAST);
+        header_panel.add(headerComponent(), BorderLayout.EAST);
         header_panel.setBorder(border);
 
         //task label and Panel
@@ -109,21 +118,21 @@ public class overview {
         panel.add(comp, gbc);
     }
 
-    // public static String retrieveUserInfo() {
-    //     String url = "jdbc:mysql://localhost:3306/user_accounts";
-    //     String username = "JFCompany";
-    //     String password = "";
-    //     String userInfo = "User not found";
+    public static String retrieveUserInfo() {
+        String url = "jdbc:mysql://localhost:3306/user_accounts";
+        String username = "JFCompany";
+        String password = "";
+        String userInfo = "User not found";
 
-    //     try (Connection conn = DriverManager.getConnection(url, username, password);
-    //          Statement stmt = conn.createStatement();
-    //          ResultSet rs = stmt.executeQuery("SELECT userName FROM fields LIMIT 1")) {
-    //         if (rs.next()) {
-    //             userInfo = "User: " + rs.getString("userName");
-    //         }
-    //     } catch (Exception e) {
-    //         e.printStackTrace();
-    //     }
-    //     return userInfo;
-    // }
+        try (Connection conn = DriverManager.getConnection(url, username, password);
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery("SELECT userName FROM fields LIMIT 1")) {
+            if (rs.next()) {
+                userInfo = "User: " + rs.getString("userName");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return userInfo;
+    }
 }
