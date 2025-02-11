@@ -32,7 +32,7 @@ public class login extends JFrame {
             String hashedPassword = hashPassword(password);
 
             if (validateUser(username, hashedPassword)) {
-                new Tasklr().setVisible(true);
+                new Tasklr(username).setVisible(true);
                 dispose();
             } else {
                 JOptionPane.showMessageDialog(this, "Invalid username or password!");

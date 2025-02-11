@@ -13,12 +13,14 @@ import tasklr.tasklist;
 import tasklr.login.login;
 
 public class Tasklr extends JFrame {
-    
-    public Tasklr() {
+    private String username;
+
+    public Tasklr(String username) {
+        this.username = username;
         setTitle("Tasklr");
-        setSize(1200, 920);
+        setSize(1200, 1150);
         setLayout(new BorderLayout());
-        setMinimumSize(new Dimension(1800, 1000));
+        setMinimumSize(new Dimension(1800, 1150));
         getContentPane().setBackground(new Color(0x1C2128));
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         ImageIcon appIcon = new ImageIcon("C:/Users/ADMIN/Desktop/Tasklr/resource/icons/AppLogo.png");
@@ -40,7 +42,7 @@ public class Tasklr extends JFrame {
         navbar.add(homeBtnIcon);
         navbar.add(taskBtnIcon);
         navbar.add(expenseBtnIcon);    
-        body.add(homePanel(), "homePanel");
+        body.add(homePanel(username), "homePanel");
         body.add(task.createTaskPanel(), "taskPanel");
         body.add(expense.createExpensePanel(), "expensePanel");
         
@@ -65,11 +67,11 @@ public class Tasklr extends JFrame {
         });
     }
         
-    public static JPanel homePanel() {
+    public static JPanel homePanel(String username) {
         JPanel homePanel = createPanel.panel(new Color(0x1C2128), new GridBagLayout(), new Dimension(100, 100));
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.fill = GridBagConstraints.BOTH;
-        gbc.weightx = 1.0;
+        gbc.weightx = 1;
         gbc.weighty = 1.0;
         gbc.insets = new Insets(10, 10, 10, 10); // Add margin
 
@@ -79,7 +81,7 @@ public class Tasklr extends JFrame {
         gbc.gridx = 1;
         homePanel.add(expenselist.createExpenseList(), gbc);//just call the sub class tasklist and access the method
         gbc.gridx = 2;
-        homePanel.add(overview.createOverview(), gbc);//just call the sub class tasklist and access the method
+        homePanel.add(overview.createOverview(username), gbc);//just call the sub class tasklist and access the method
         
         return homePanel;
     }

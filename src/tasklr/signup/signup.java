@@ -113,7 +113,7 @@ public class signup extends JFrame {
                         createUsernameField.setText("");
                         createPasswordField.setText("");
                         confirmPasswordField.setText("");
-                        new Tasklr().setVisible(true); // Open main Tasklr application
+                        new Tasklr(username).setVisible(true); // Open main Tasklr application
                         dispose(); // Close signup window
                     }
                 } else {

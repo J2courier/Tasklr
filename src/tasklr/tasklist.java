@@ -7,8 +7,8 @@ import java.awt.*;
 public class tasklist {
     public static JPanel createTaskList() { //create task list is a subpanel of a homePanel method
         //parent panel
-        JPanel panel = createPanel.panel(new Color(0x292E34), new BorderLayout(), new Dimension(400, 0));
-        Border border = BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0x6D6D6D));
+        JPanel panel = createPanel.panel(new Color(0x292E34), new BorderLayout(), new Dimension(350, 0));
+        Border border = BorderFactory.createMatteBorder(1, 1, 1, 1, new Color(0x6D6D6D));
         panel.setBorder(border);
         //child panels
         JPanel panel_header = createPanel.panel(null, new FlowLayout(FlowLayout.CENTER, 20, 15), new Dimension(0, 50));
