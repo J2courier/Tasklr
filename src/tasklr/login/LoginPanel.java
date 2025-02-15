@@ -4,6 +4,8 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 
 public class LoginPanel {
     private JPanel loginPanel;
@@ -14,10 +16,10 @@ public class LoginPanel {
 
     public LoginPanel() {
         loginPanel = new JPanel(new GridBagLayout());
-        Border loginBorder = BorderFactory.createMatteBorder(1, 1, 1, 1, new Color(0x6D6D6D));
-        loginPanel.setBorder(loginBorder);
+        // Border loginBorder = BorderFactory.createMatteBorder(1, 1, 1, 1, new Color(0x6D6D6D));
+        // loginPanel.setBorder(loginBorder);
         loginPanel.setPreferredSize(new Dimension(700, 700));
-        loginPanel.setBackground(new Color(0x292E34));
+        loginPanel.setBackground(new Color(0x1C2128));
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(5, 10, 10, 10);
@@ -58,6 +60,18 @@ public class LoginPanel {
         signupButton.setBackground(new Color(0x2E5AEA));
         gbc.gridy = 5;
         loginPanel.add(signupButton, gbc);
+
+        KeyAdapter enterKeyListener = new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                    loginButton.doClick();
+                }
+            }
+        };
+
+        usernameField.addKeyListener(enterKeyListener);
+        passwordField.addKeyListener(enterKeyListener);
     }
 
     public JPanel getLoginPanel() {

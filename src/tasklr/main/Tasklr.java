@@ -2,14 +2,16 @@ package tasklr.main;
 
 //utilties
 import javax.swing.*;
+import javax.swing.border.Border;
+
 import java.awt.*;
 //file pathing:
 import tasklr.createPanel;
-import tasklr.expense;
-import tasklr.expenselist;
 import tasklr.overview;
-import tasklr.task;
-import tasklr.tasklist;
+import tasklr.ExpensePanel.expense;
+import tasklr.ExpensePanel.expenselist;
+import tasklr.TaskPanel.task;
+import tasklr.TaskPanel.tasklist;
 import tasklr.login.login;
 
 public class Tasklr extends JFrame {
@@ -18,9 +20,9 @@ public class Tasklr extends JFrame {
     public Tasklr(String username) {
         this.username = username;
         setTitle("Tasklr");
-        setSize(1200, 1150);
+        setSize(1200, 1170);
         setLayout(new BorderLayout());
-        setMinimumSize(new Dimension(1800, 1150));
+        setMinimumSize(new Dimension(1800, 1170));
         getContentPane().setBackground(new Color(0x1C2128));
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         ImageIcon appIcon = new ImageIcon("C:/Users/ADMIN/Desktop/Tasklr/resource/icons/AppLogo.png");
@@ -28,6 +30,8 @@ public class Tasklr extends JFrame {
         
         JPanel body = createPanel.panel(new Color(0x1C2128), new CardLayout(), new Dimension(0, 0));
         JPanel navbar = createPanel.panel(new Color(0x292E34), new FlowLayout(FlowLayout.CENTER, 10, 40), new Dimension(100, 0));
+        Border border = BorderFactory.createLineBorder(new Color(0x6D6D6D), 1);
+        navbar.setBorder(border);
         add(body, BorderLayout.CENTER);
         add(navbar, BorderLayout.WEST);
         
@@ -73,7 +77,7 @@ public class Tasklr extends JFrame {
         gbc.fill = GridBagConstraints.BOTH;
         gbc.weightx = 1;
         gbc.weighty = 1.0;
-        gbc.insets = new Insets(10, 10, 10, 10); // Add margin
+        gbc.insets = new Insets(10, 5, 10, 5); // Add margin
 
         gbc.gridx = 0;
         gbc.gridy = 0;       

@@ -16,9 +16,9 @@ import tasklr.signup.signup;
 public class login extends JFrame {
     public login() {
         setTitle("Login");
-        setSize(1200, 920);
+        setSize(700, 920);
         setLayout(new GridBagLayout());
-        setMinimumSize(new Dimension(1800, 1000));
+        setMinimumSize(new Dimension(900, 1000));
         getContentPane().setBackground(new Color(0x1C2128));
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         ImageIcon appIcon = new ImageIcon("C:/Users/ADMIN/Desktop/Tasklr/resource/icons/AppLogo.png");

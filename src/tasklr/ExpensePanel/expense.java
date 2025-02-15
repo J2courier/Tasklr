@@ -1,22 +1,26 @@
-package tasklr;
+package tasklr.ExpensePanel;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.SwingConstants;
 import javax.swing.border.Border;
 
+import tasklr.createPanel;
+
 import java.awt.*;
-
-public class task {
-
-    public static JPanel createTaskPanel() {
-        JPanel panel = createPanel.panel(new Color(0xFFFFFF), new GridBagLayout(), new Dimension(100, 100));
-        JPanel taskContainer = createPanel.panel(new Color(0x292E34), new BorderLayout(), new Dimension(300, 0));
+public class expense {
+    public static JPanel createExpensePanel(){
+        JPanel panel = createPanel.panel(new Color(0x1C2128), new GridBagLayout(), new Dimension(100, 100));
+        JPanel expenseContainer = createPanel.panel(new Color(0x292E34), new BorderLayout(), new Dimension(300, 1));
         Border border = BorderFactory.createLineBorder(new Color(0x6D6D6D), 1);
-        taskContainer.setBorder(border);
-        taskContainer.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        expenseContainer.setBorder(border);
+        expenseContainer.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         JPanel inputContainer = createPanel.panel(new Color(0x292E34), new GridBagLayout(), new Dimension(500, 0));
         
         panel.add(inputContainer);
-        panel.add(taskContainer);
+        panel.add(expenseContainer);
 
         JLabel taskLabel = new JLabel("Task");
         taskLabel.setFont(new Font("Arial", Font.BOLD, 20));
@@ -24,15 +28,13 @@ public class task {
         taskLabel.setHorizontalAlignment(SwingConstants.CENTER);
         JPanel taskContainerHeadLabel = createPanel.panel(new Color(0x292E34), new BorderLayout(), new Dimension(95, 50));
         taskContainerHeadLabel.add(taskLabel, BorderLayout.CENTER);
-        taskContainer.add(taskContainerHeadLabel, BorderLayout.NORTH);
+        expenseContainer.add(taskContainerHeadLabel, BorderLayout.NORTH);
 
         JPanel taskListContainer = createPanel.panel(new Color(0x292E34), new BorderLayout(), new Dimension(95, 0));
-        taskContainer.add(taskListContainer, BorderLayout.SOUTH);
+        expenseContainer.add(taskListContainer, BorderLayout.SOUTH);
 
         JTextField titleField = new JTextField(50);
         inputContainer.add(titleField);
         return panel; 
     }
-        
-    
 }
