@@ -16,8 +16,14 @@ public class overview {
         //parent container of the overview
         JPanel panel = createPanel.panel(new Color(0x292E34), new GridBagLayout(), new Dimension(400, 0));
         //task components display
+
         JPanel profile = createPanel.panel(new Color(0x292E34), new BorderLayout(), new Dimension(400, 100));
         Border border = BorderFactory.createLineBorder(new Color(0x6D6D6D), 1);
+        JLabel userLabel = new JLabel("Welcome, " + username + "!");
+        userLabel.setForeground(Color.WHITE);
+        userLabel.setFont(new Font("Arial", Font.BOLD, 18));
+        userLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        profile.add(userLabel, BorderLayout.CENTER);
         profile.setBorder(border);
 
         //task label and Panel
