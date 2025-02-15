@@ -78,7 +78,6 @@ public class Tasklr extends JFrame {
         gbc.weightx = 1;
         gbc.weighty = 1.0;
         gbc.insets = new Insets(10, 5, 10, 5); // Add margin
-
         gbc.gridx = 0;
         gbc.gridy = 0;       
         homePanel.add(tasklist.createTaskList(), gbc);//just call the sub class tasklist and access the method

@@ -13,6 +13,8 @@ import java.awt.*;
 public class expense {
     public static JPanel createExpensePanel(){
         JPanel panel = createPanel.panel(new Color(0x1C2128), new GridBagLayout(), new Dimension(100, 100));
+        Border panelBorder = BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0x6D6D6D));
+        panel.setBorder(panelBorder);
         JPanel expenseContainer = createPanel.panel(new Color(0x292E34), new BorderLayout(), new Dimension(300, 1));
         Border border = BorderFactory.createLineBorder(new Color(0x6D6D6D), 1);
         expenseContainer.setBorder(border);

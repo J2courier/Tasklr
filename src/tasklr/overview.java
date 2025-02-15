@@ -10,11 +10,11 @@ import java.sql.Statement;
 
 public class overview {
 
-
-
     public static JPanel createOverview(String username) {            
         //parent container of the overview
         JPanel panel = createPanel.panel(new Color(0x292E34), new GridBagLayout(), new Dimension(400, 0));
+        Border panelBorder = BorderFactory.createMatteBorder(1, 1, 1, 1, new Color(0x6D6D6D));
+        panel.setBorder(panelBorder);
         //task components display
 
         JPanel profile = createPanel.panel(new Color(0x292E34), new BorderLayout(), new Dimension(400, 100));
@@ -31,6 +31,7 @@ public class overview {
         
         JLabel taskLabel = new JLabel("Task Overview");
         taskLabel.setForeground(Color.WHITE);
+        taskLabel.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 0));
         task_overview_lbl.add(taskLabel, BorderLayout.CENTER);
         Border taskov_border = BorderFactory.createLineBorder(new Color(0x6D6D6D), 1);
         task_overview_lbl.setBorder(taskov_border);
@@ -54,6 +55,7 @@ public class overview {
         JPanel expense_overview_lbl = createPanel.panel(new Color(0x292E34), new BorderLayout(), new Dimension(100, 70));
         JLabel expenseLabel = new JLabel("Expense Overview");
         expenseLabel.setForeground(Color.WHITE);
+        expenseLabel.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 0));
         expense_overview_lbl.add(expenseLabel, BorderLayout.CENTER);
         Border expenseov_border = BorderFactory.createLineBorder(new Color(0x6D6D6D), 1);
         expense_overview_lbl.setBorder(expenseov_border);
@@ -86,7 +88,6 @@ public class overview {
         addComponent(panel, totalExpense_panel, 2, 7, 1, 1, new Insets(5, 5, 10, 5));
         addComponent(panel, spacer, 0, 8, 3, 1, new Insets(5, 5, 5, 5));
     
-
         return panel;
     }
 

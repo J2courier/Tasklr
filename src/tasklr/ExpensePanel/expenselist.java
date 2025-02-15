@@ -17,7 +17,7 @@ public class expenselist {
         panel.setBorder(border);
         //child panels
         JPanel panel_header = createPanel.panel(null, new FlowLayout(FlowLayout.CENTER, 20, 15), new Dimension(0, 50));
-        Border header_border = BorderFactory.createMatteBorder(1, 0, 1, 0, new Color(0x6D6D6D));
+        Border header_border = BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0x6D6D6D));
         panel_header.setBorder(header_border);
         JPanel panel_body = createPanel.panel(null, new BorderLayout(), new Dimension(0, 0));
         
