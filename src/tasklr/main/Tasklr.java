@@ -7,11 +7,8 @@ import javax.swing.border.Border;
 import java.awt.*;
 //file pathing:
 import tasklr.createPanel;
-import tasklr.overview;
 import tasklr.ExpensePanel.expense;
-import tasklr.ExpensePanel.expenselist;
 import tasklr.TaskPanel.task;
-import tasklr.TaskPanel.tasklist;
 import tasklr.login.login;
 
 public class Tasklr extends JFrame {
