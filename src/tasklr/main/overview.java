@@ -15,9 +15,9 @@ public class overview {
 
     public static JPanel createOverview(String username) {            
         //parent container of the overview
-        JPanel panel = createPanel.panel(new Color(0x292E34), new GridBagLayout(), new Dimension(400, 0));
-        Border panelBorder = BorderFactory.createMatteBorder(1, 1, 1, 1, new Color(0x6D6D6D));
-        panel.setBorder(panelBorder);
+        JPanel panel = createPanel.panel(new Color(0x1C2128), new GridBagLayout(), new Dimension(400, 0));
+        // Border panelBorder = BorderFactory.createMatteBorder(1, 1, 1, 1, new Color(0x6D6D6D));
+        // panel.setBorder(panelBorder);
         //task components display
 
         JPanel profile = createPanel.panel(new Color(0x292E34), new BorderLayout(), new Dimension(400, 100));
@@ -40,14 +40,10 @@ public class overview {
         task_overview_lbl.setBorder(taskov_border);
         
         //ongoing panel
-        JPanel ongoing_panel = createPanel.panel(new Color(0x292E34), null, new Dimension(100, 200));
-        Border ongoing_border = BorderFactory.createLineBorder(new Color(0x6D6D6D), 1);
-        ongoing_panel.setBorder(ongoing_border);
+        
 
         //done panel
-        JPanel done_panel = createPanel.panel(new Color(0x292E34), null, new Dimension(100, 200));
-        Border done_border = BorderFactory.createLineBorder(new Color(0x6D6D6D), 1);
-        done_panel.setBorder(done_border);
+     
 
         //total task panel
         JPanel totalTask_panel = createPanel.panel(new Color(0x292E34), null, new Dimension(100, 200));
@@ -82,13 +78,13 @@ public class overview {
 
         addComponent(panel, profile, 0, 0, 3, 1, new Insets(0, 5,10, 5));
         addComponent(panel, task_overview_lbl, 0, 2, 3, 1, new Insets(5, 5, 10, 5));
-        addComponent(panel, ongoing_panel, 0, 4, 1, 1, new Insets(5, 5, 10, 5));
-        addComponent(panel, done_panel, 1, 4, 1, 1, new Insets(5, 5, 10, 5));
-        addComponent(panel, totalTask_panel, 2, 4, 1, 1, new Insets(5, 5, 10, 5));
+        addComponent(panel, ongoing.createOngoingPanel(), 0, 4, 1, 1, new Insets(5, 5, 10, 5));
+        addComponent(panel, done.createDonePanel(), 1, 4, 1, 1, new Insets(5, 5, 10, 5));
+        addComponent(panel, totaltask.createTotalTaskPanel(), 2, 4, 1, 1, new Insets(5, 5, 10, 5));
         addComponent(panel, expense_overview_lbl, 0, 6, 3, 1, new Insets(5, 5, 10, 5));
-        addComponent(panel, paid_panel, 0, 7, 1, 1, new Insets(5, 5, 10, 5));   
-        addComponent(panel, unpaid_panel, 1, 7,1, 1, new Insets(5, 5, 10, 5));
-        addComponent(panel, totalExpense_panel, 2, 7, 1, 1, new Insets(5, 5, 10, 5));
+        addComponent(panel, paid.createPaidPanel(), 0, 7, 1, 1, new Insets(5, 5, 10, 5));   
+        addComponent(panel, unpaid.createUnpaidPanel(), 1, 7,1, 1, new Insets(5, 5, 10, 5));
+        addComponent(panel, totalexpense.createTotalExpensePanel(), 2, 7, 1, 1, new Insets(5, 5, 10, 5));
         addComponent(panel, spacer, 0, 8, 3, 1, new Insets(5, 5, 5, 5));
     
         return panel;

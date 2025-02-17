@@ -27,7 +27,7 @@ public class InputPanel {
         title.setBorder(titleBorder);
         title.setCaretColor(Color.WHITE);
         // title.setFont(new Font("Arial", Font.PLAIN, 20));
-        title.setPreferredSize(new Dimension(0, 40));
+        title.setPreferredSize(new Dimension(0, 30));
 
         // Input component for adding description
         JLabel addDescription = new JLabel("ADD DESCRIPTION");
@@ -36,16 +36,16 @@ public class InputPanel {
         addDescription.setFont(new Font("Arial", Font.BOLD, 16));
         addDescription.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0));
         JTextArea description = new JTextArea(1, 50); // Set rows and columns
-        Border descriptionBorder = BorderFactory.createMatteBorder(1, 1, 1, 1, new Color(0xB7B7B7));
         description.setBackground(new Color(0x292E34));
         description.setForeground(Color.WHITE);
-        description.setBorder(descriptionBorder);
         description.setCaretColor(Color.WHITE);
         description.setFont(new Font("Arial", Font.PLAIN, 14));
         description.setLineWrap(true); // Enable line wrapping
         description.setWrapStyleWord(true); // Wrap at word boundaries
         JScrollPane descriptionScrollPane = new JScrollPane(description);
         descriptionScrollPane.setPreferredSize(new Dimension(0, 100)); // Set preferred size for the scroll pane
+        Border descriptionBorder = BorderFactory.createMatteBorder(1, 1, 1, 1, new Color(0xB7B7B7));
+        descriptionScrollPane.setBorder(descriptionBorder);
 
         // Input component for adding category
         JLabel addCategory = new JLabel("ADD CATEGORY");

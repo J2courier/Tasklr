@@ -21,7 +21,7 @@ public class TaskListPanel {
         taskContainerHeader.setBorder(taskContainerHeaderBorder);
 
         //label of the tasklist header
-        JLabel taskContainerLabel = new JLabel("ON-GOING LIST");
+        JLabel taskContainerLabel = new JLabel("ADDED LIST");
         taskContainerLabel.setFont(new Font("Arial", Font.BOLD, 24));
         taskContainerLabel.setForeground(Color.WHITE);
         taskContainerLabel.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 0));
@@ -35,6 +35,8 @@ public class TaskListPanel {
         //JScrollPane
         JScrollPane scrollPane = new JScrollPane(taskContainerScrollPanel);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        Border scrollPaneBorder = BorderFactory.createMatteBorder(1, 1, 1, 1, new Color(0x6D6D6D));
+        scrollPane.setBorder(scrollPaneBorder);
         taskContainer.add(taskContainerHeader, BorderLayout.NORTH);        
         taskContainer.add(scrollPane, BorderLayout.CENTER);
         return taskContainer;
