@@ -16,7 +16,7 @@ public class unpaid {
 
         JPanel LblPanel = createPanel.panel(new Color(0x44759D), new BorderLayout(), new Dimension(0, 30));
   
-        int doneCtr = 0;
+        int doneCtr =   0;
         JLabel CtrLbl = new JLabel("" + doneCtr, SwingConstants.CENTER);
         CtrLbl.setForeground(new Color(0x414141));
         CtrLbl.setFont(new Font("Arial", Font.BOLD, 50));

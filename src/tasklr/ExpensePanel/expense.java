@@ -12,7 +12,7 @@ import tasklr.createPanel;
 import java.awt.*;
 public class expense {
     public static JPanel createExpensePanel(){
-        JPanel panel = createPanel.panel(new Color(0xD9F2EB), new GridBagLayout(), new Dimension(100, 100));
+        JPanel panel = createPanel.panel(new Color(0xE0E3E2), new GridBagLayout(), new Dimension(100, 100));
         Border panelBorder = BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0x6D6D6D));
         panel.setBorder(panelBorder);
         JPanel expenseContainer = createPanel.panel(new Color(0x292E34), new BorderLayout(), new Dimension(300, 1));

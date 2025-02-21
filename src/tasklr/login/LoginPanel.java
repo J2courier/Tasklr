@@ -19,7 +19,7 @@ public class LoginPanel {
         // Border loginBorder = BorderFactory.createMatteBorder(1, 1, 1, 1, new Color(0x6D6D6D));
         // loginPanel.setBorder(loginBorder);
         loginPanel.setPreferredSize(new Dimension(700, 700));
-        loginPanel.setBackground(new Color(0xD9F2EB));
+        loginPanel.setBackground(null);
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(5, 10, 10, 10);
