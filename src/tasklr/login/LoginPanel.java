@@ -19,14 +19,14 @@ public class LoginPanel {
         // Border loginBorder = BorderFactory.createMatteBorder(1, 1, 1, 1, new Color(0x6D6D6D));
         // loginPanel.setBorder(loginBorder);
         loginPanel.setPreferredSize(new Dimension(700, 700));
-        loginPanel.setBackground(new Color(0x1C2128));
+        loginPanel.setBackground(new Color(0xD9F2EB));
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(5, 10, 10, 10);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
         JLabel usernameLabel = new JLabel("Username");
-        usernameLabel.setForeground(Color.WHITE);
+        usernameLabel.setForeground(Color.BLACK);
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridwidth = 2;
@@ -38,7 +38,7 @@ public class LoginPanel {
         loginPanel.add(usernameField, gbc);
 
         JLabel passwordLabel = new JLabel("Password");
-        passwordLabel.setForeground(Color.WHITE);
+        passwordLabel.setForeground(Color.BLACK);
         gbc.gridy = 2;
         loginPanel.add(passwordLabel, gbc);
 

@@ -1,25 +1,27 @@
-package tasklr.main;
+package tasklr.main.expenselist;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+
 import javax.swing.border.Border;
 
 import tasklr.createPanel;
 
 import java.awt.*;
-public class tasklist {
-    public static JPanel createTaskList() { //create task list is a subpanel of a homePanel method
-        //parent panel
-        JPanel panel = createPanel.panel(new Color(0x292E34), new BorderLayout(), new Dimension(325, 0));
-        Border border = BorderFactory.createMatteBorder(1, 1, 1, 1, new Color(0x6D6D6D));
+public class expenselist {
+    public static JPanel createExpenseList() {
+        JPanel panel = createPanel.panel(new Color(0x0A4A7E), new BorderLayout(), new Dimension(325, 0));
+        Border border = BorderFactory.createMatteBorder(2, 2, 2, 2, new Color(0x749AAD));
         panel.setBorder(border);
         //child panels
         JPanel panel_header = createPanel.panel(null, new FlowLayout(FlowLayout.CENTER, 20, 15), new Dimension(0, 50));
-        Border header_border = BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0x6D6D6D));
+        Border header_border = BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0x749AAD));
         panel_header.setBorder(header_border);
-        JPanel panel_body = createPanel.panel(null, new BorderLayout(), new Dimension(0, 0));
+        JPanel panel_body = createPanel.panel(null, new BorderLayout(), new Dimension(0, 0));       
         
         //label of header
-        JLabel panel_header_lbl = new JLabel("Task List");
+        JLabel panel_header_lbl = new JLabel("Expense List");
         panel_header_lbl.setFont(new Font("Arial", Font.PLAIN, 14));
         panel_header_lbl.setForeground(Color.WHITE);
 

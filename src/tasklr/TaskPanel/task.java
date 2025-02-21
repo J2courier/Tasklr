@@ -11,12 +11,12 @@ public class task {
 //this class is for task option
     public static JPanel createTaskPanel() {
         //main panel of task page
-        JPanel panel = createPanel.panel(new Color(0xFFFFFF), new BorderLayout(), new Dimension(100, 100));
+        JPanel panel = createPanel.panel(null, new BorderLayout(), new Dimension(100, 100));
         Border panelBorder = BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0x6D6D6D));
         panel.setBorder(panelBorder);
         
         //center panel
-        JPanel CenterContainer = createPanel.panel(new Color(0x1C2128), new GridBagLayout(), new Dimension(0, 0));
+        JPanel CenterContainer = createPanel.panel(new Color(0xD9F2EB), new GridBagLayout(), new Dimension(0, 0));
         panel.add(CenterContainer, BorderLayout.CENTER);
 
         

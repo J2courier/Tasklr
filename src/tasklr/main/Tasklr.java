@@ -10,6 +10,9 @@ import tasklr.createPanel;
 import tasklr.ExpensePanel.expense;
 import tasklr.TaskPanel.task;
 import tasklr.login.login;
+import tasklr.main.expenselist.expenselist;
+import tasklr.main.overveiw.overview;
+import tasklr.main.tasklist.tasklist;
 
 public class Tasklr extends JFrame {
     private String username;
@@ -20,13 +23,13 @@ public class Tasklr extends JFrame {
         setSize(1200, 1170);
         setLayout(new BorderLayout());
         setMinimumSize(new Dimension(1800, 1170));
-        getContentPane().setBackground(new Color(0x1C2128));
+        getContentPane().setBackground(new Color(0xD9F2EB));
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         ImageIcon appIcon = new ImageIcon("C:/Users/ADMIN/Desktop/Tasklr/resource/icons/AppLogo.png");
         setIconImage(appIcon.getImage());
         
-        JPanel body = createPanel.panel(new Color(0x1C2128), new CardLayout(), new Dimension(0, 0));
-        JPanel navbar = createPanel.panel(new Color(0x292E34), new FlowLayout(FlowLayout.CENTER, 10, 40), new Dimension(100, 0));
+        JPanel body = createPanel.panel(new Color(0xD9F2EB), new CardLayout(), new Dimension(0, 0));
+        JPanel navbar = createPanel.panel(new Color(0x0A4A7E), new FlowLayout(FlowLayout.CENTER, 10, 40), new Dimension(100, 0));
         Border border = BorderFactory.createLineBorder(new Color(0x6D6D6D), 1);
         navbar.setBorder(border);
         add(body, BorderLayout.CENTER);
@@ -69,7 +72,7 @@ public class Tasklr extends JFrame {
     }
         
     public static JPanel homePanel(String username) {
-        JPanel homePanel = createPanel.panel(new Color(0x1C2128), new GridBagLayout(), new Dimension(100, 100));
+        JPanel homePanel = createPanel.panel(new Color(0xE0E3E2), new GridBagLayout(), new Dimension(100, 100));
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.fill = GridBagConstraints.BOTH;
         gbc.weightx = 1;

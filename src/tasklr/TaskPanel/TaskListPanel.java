@@ -11,12 +11,12 @@ public class TaskListPanel {
     public static JPanel createDisplayPanel() {
         //two panels inside the Center Panel
         //task list container
-        JPanel taskContainer = createPanel.panel(new Color(0x292E34), new BorderLayout(), new Dimension(500, 1100));
+        JPanel taskContainer = createPanel.panel(new Color(0x0A4A7E), new BorderLayout(), new Dimension(500, 1100));
         Border taskContainerBorder = BorderFactory.createMatteBorder(1, 1, 1, 1, new Color(0x6D6D6D));
         taskContainer.setBorder(taskContainerBorder);
 
        //head and body component of the tasklist container panel
-        JPanel taskContainerHeader = createPanel.panel(new Color(0x292E34), new BorderLayout(),new Dimension(0, 70));
+        JPanel taskContainerHeader = createPanel.panel(new Color(0x0A4A7E), new BorderLayout(),new Dimension(0, 70));
         Border taskContainerHeaderBorder = BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0x6D6D6D));
         taskContainerHeader.setBorder(taskContainerHeaderBorder);
 
@@ -30,7 +30,7 @@ public class TaskListPanel {
         //SrollPanel
         JPanel taskContainerScrollPanel = new JPanel();
         taskContainerScrollPanel.setLayout(new BoxLayout(taskContainerScrollPanel, BoxLayout.Y_AXIS));
-        taskContainerScrollPanel.setBackground(new Color(0x292E34));
+        taskContainerScrollPanel.setBackground(new Color(0x0A4A7E));
 
         //JScrollPane
         JScrollPane scrollPane = new JScrollPane(taskContainerScrollPanel);

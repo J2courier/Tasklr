@@ -1,4 +1,4 @@
-package tasklr.main;
+package tasklr.main.overveiw;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -6,21 +6,18 @@ import javax.swing.border.Border;
 import tasklr.createPanel;
 
 import java.awt.*;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.Statement;
+
 
 public class overview {
 
     public static JPanel createOverview(String username) {            
         //parent container of the overview
-        JPanel panel = createPanel.panel(new Color(0x1C2128), new GridBagLayout(), new Dimension(400, 0));
+        JPanel panel = createPanel.panel(null, new GridBagLayout(), new Dimension(400, 0));
         // Border panelBorder = BorderFactory.createMatteBorder(1, 1, 1, 1, new Color(0x6D6D6D));
         // panel.setBorder(panelBorder);
         //task components display
 
-        JPanel profile = createPanel.panel(new Color(0x292E34), new BorderLayout(), new Dimension(400, 100));
+        JPanel profile = createPanel.panel(new Color(0x0A4A7E), new BorderLayout(), new Dimension(400, 100));
         Border border = BorderFactory.createLineBorder(new Color(0x6D6D6D), 1);
         JLabel userLabel = new JLabel("Welcome, " + username + "!");
         userLabel.setForeground(Color.WHITE);
@@ -30,7 +27,7 @@ public class overview {
         profile.setBorder(border);
 
         //task label and Panel
-        JPanel task_overview_lbl = createPanel.panel(new Color(0x292E34), new BorderLayout(), new Dimension(100, 70));
+        JPanel task_overview_lbl = createPanel.panel(new Color(0x0A4A7E), new BorderLayout(), new Dimension(100, 70));
         
         JLabel taskLabel = new JLabel("Task Overview");
         taskLabel.setForeground(Color.WHITE);
@@ -39,19 +36,11 @@ public class overview {
         Border taskov_border = BorderFactory.createLineBorder(new Color(0x6D6D6D), 1);
         task_overview_lbl.setBorder(taskov_border);
         
-        //ongoing panel
-        
+   
 
-        //done panel
-     
-
-        //total task panel
-        JPanel totalTask_panel = createPanel.panel(new Color(0x292E34), null, new Dimension(100, 200));
-        Border totalTask_border = BorderFactory.createLineBorder(new Color(0x6D6D6D), 1);
-        totalTask_panel.setBorder(totalTask_border);
 
         //expense label and Panel
-        JPanel expense_overview_lbl = createPanel.panel(new Color(0x292E34), new BorderLayout(), new Dimension(100, 70));
+        JPanel expense_overview_lbl = createPanel.panel(new Color(0x0A4A7E), new BorderLayout(), new Dimension(100, 70));
         JLabel expenseLabel = new JLabel("Expense Overview");
         expenseLabel.setForeground(Color.WHITE);
         expenseLabel.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 0));
@@ -59,21 +48,8 @@ public class overview {
         Border expenseov_border = BorderFactory.createLineBorder(new Color(0x6D6D6D), 1);
         expense_overview_lbl.setBorder(expenseov_border);
         
-        //paid panel
-        JPanel paid_panel = createPanel.panel(new Color(0x292E34), null, new Dimension(100, 200));
-        Border paid_border = BorderFactory.createLineBorder(new Color(0x6D6D6D), 1);
-        paid_panel.setBorder(paid_border);
-
-        //unpaid panel
-        JPanel unpaid_panel = createPanel.panel(new Color(0x292E34), null, new Dimension(100, 200));
-        Border unpaid_border = BorderFactory.createLineBorder(new Color(0x6D6D6D), 1);
-        unpaid_panel.setBorder(unpaid_border);
-
-        //total expense panel
-        JPanel totalExpense_panel = createPanel.panel(new Color(0x292E34), null, new Dimension(100, 200));
-        Border totalExpense_border = BorderFactory.createLineBorder(new Color(0x6D6D6D), 1);
-        totalExpense_panel.setBorder(totalExpense_border);
-
+        
+ 
         JPanel spacer = createPanel.panel(null, null, new Dimension(100, 370));
 
         addComponent(panel, profile, 0, 0, 3, 1, new Insets(0, 5,10, 5));

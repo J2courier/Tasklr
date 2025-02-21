@@ -19,7 +19,7 @@ public class login extends JFrame {
         setSize(700, 920);
         setLayout(new GridBagLayout());
         setMinimumSize(new Dimension(900, 1000));
-        getContentPane().setBackground(new Color(0x1C2128));
+        getContentPane().setBackground(new Color(0xD9F2EB));
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         ImageIcon appIcon = new ImageIcon("C:/Users/ADMIN/Desktop/Tasklr/resource/icons/AppLogo.png");
         setIconImage(appIcon.getImage());
