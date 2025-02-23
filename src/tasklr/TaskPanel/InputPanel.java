@@ -29,7 +29,7 @@ public class InputPanel {
         title.setForeground(Color.BLACK);
         title.setBorder(titleBorder);
         title.setCaretColor(Color.BLACK);
-        // title.setFont(new Font("Arial", Font.PLAIN, 20));
+        title.setFont(new Font("Arial", Font.PLAIN, 16));
         title.setPreferredSize(new Dimension(0, 30));
 
         JLabel addDescription = new JLabel("ADD DESCRIPTION");
@@ -71,8 +71,9 @@ public class InputPanel {
             public void actionPerformed(ActionEvent e) {
                 String taskTitle = title.getText();
                 String taskDescription = description.getText();
+                String selectedCategory = (String) category.getSelectedItem(); // Get selected category
                 if (!taskTitle.isEmpty() && !taskDescription.isEmpty()) {
-                    taskListPanel.addTask(taskTitle, taskDescription); // Pass to TaskListPanel
+                    taskListPanel.addTask(taskTitle, taskDescription, selectedCategory); // Pass to TaskListPanel
                     title.setText("");
                     description.setText("");
                 }

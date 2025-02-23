@@ -7,7 +7,7 @@ import tasklr.createPanel;
 
 public class totaltask {
     public static JPanel createTotalTaskPanel() {
-        JPanel panel = createPanel.panel( null, new BorderLayout(), new Dimension(100, 200));
+        JPanel panel = createPanel.panel( null, new BorderLayout(), new Dimension(100, 300));
         Border panel_border = BorderFactory.createLineBorder(new Color(0x0A4A7E), 1);
         panel.setBorder(panel_border);
 
@@ -15,7 +15,7 @@ public class totaltask {
         Border border = BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0x0A4A7E));
         CtrPanel.setBorder(border);
 
-        JPanel LblPanel = createPanel.panel(new Color(0x44759D), new BorderLayout(), new Dimension(0, 30));
+        JPanel LblPanel = createPanel.panel(null, new BorderLayout(), new Dimension(0, 50));
   
         int doneCtr = 0;
         JLabel CtrLbl = new JLabel("" + doneCtr, SwingConstants.CENTER);
@@ -25,7 +25,7 @@ public class totaltask {
         
 
         JLabel Lbl = new JLabel("TOTAL TASK", SwingConstants.CENTER);
-        Lbl.setForeground(Color.WHITE);
+        Lbl.setForeground(Color.BLACK);
         Lbl.setFont(new Font("Arial", Font.PLAIN, 16));
         LblPanel.add(Lbl, BorderLayout.CENTER);
 

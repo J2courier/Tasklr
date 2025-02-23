@@ -9,8 +9,8 @@ import java.awt.*;
 public class tasklist {
     public static JPanel createTaskList() { //create task list is a subpanel of a homePanel method
         //parent panel
-        JPanel panel = createPanel.panel(new Color(0x0A4A7E), new BorderLayout(), new Dimension(325, 0));
-        Border border = BorderFactory.createMatteBorder(2, 2, 2, 2, new Color(0x749AAD));
+        JPanel panel = createPanel.panel(new Color(0xE0E3E2), new BorderLayout(), new Dimension(325, 0));
+        Border border = BorderFactory.createMatteBorder(1, 0, 0, 1, new Color(0x749AAD));
         panel.setBorder(border);
         //child panels
         JPanel panel_header = createPanel.panel(null, new FlowLayout(FlowLayout.CENTER, 20, 15), new Dimension(0, 50));
@@ -20,8 +20,8 @@ public class tasklist {
         
         //label of header
         JLabel panel_header_lbl = new JLabel("TASK LIST");
-        panel_header_lbl.setFont(new Font("Arial", Font.BOLD, 16));
-        panel_header_lbl.setForeground(Color.WHITE);
+        panel_header_lbl.setFont(new Font("Arial", Font.BOLD, 24));
+        panel_header_lbl.setForeground(new Color(0x464646));
 
         //adding component into the panel
         panel_header.add(panel_header_lbl);//add label into the header

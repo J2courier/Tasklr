@@ -26,7 +26,7 @@ public class task {
         gbc.weightx = 0; // No extra space allocation
         gbc.anchor = GridBagConstraints.WEST; // Align in flex-start    
         gbc.fill = GridBagConstraints.NONE;
-        gbc.insets = new Insets(5, 15, 5, 0); // Margin around component
+        // gbc.insets = new Insets(5, 5, 5, 0); // Margin around component
         CenterContainer.add(taskListPanel.getTaskPanel(), gbc); // Call instance method
 
         gbc.gridx = 1;

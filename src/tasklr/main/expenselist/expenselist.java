@@ -11,8 +11,8 @@ import tasklr.createPanel;
 import java.awt.*;
 public class expenselist {
     public static JPanel createExpenseList() {
-        JPanel panel = createPanel.panel(new Color(0x0A4A7E), new BorderLayout(), new Dimension(325, 0));
-        Border border = BorderFactory.createMatteBorder(2, 2, 2, 2, new Color(0x749AAD));
+        JPanel panel = createPanel.panel(new Color(0xE0E3E2), new BorderLayout(), new Dimension(325, 0));
+        Border border = BorderFactory.createMatteBorder(1, 0, 0, 1, new Color(0x749AAD));
         panel.setBorder(border);
         //child panels
         JPanel panel_header = createPanel.panel(null, new FlowLayout(FlowLayout.CENTER, 20, 15), new Dimension(0, 50));
@@ -21,9 +21,9 @@ public class expenselist {
         JPanel panel_body = createPanel.panel(null, new BorderLayout(), new Dimension(0, 0));       
         
         //label of header
-        JLabel panel_header_lbl = new JLabel("Expense List");
-        panel_header_lbl.setFont(new Font("Arial", Font.PLAIN, 14));
-        panel_header_lbl.setForeground(Color.WHITE);
+        JLabel panel_header_lbl = new JLabel("EXPENSE LIST");
+        panel_header_lbl.setFont(new Font("Arial", Font.BOLD, 24));
+        panel_header_lbl.setForeground(new Color(0x464646));
 
         //adding component into the panel
         panel_header.add(panel_header_lbl);//add label into the header
