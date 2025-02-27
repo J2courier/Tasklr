@@ -3,7 +3,6 @@
 //utilties
 import javax.swing.*;
 import javax.swing.border.Border;
-
 import java.awt.*;
 //file pathing:
 import tasklr.createPanel;
@@ -23,13 +22,14 @@ public class Tasklr extends JFrame {
         setSize(1200, 1170);
         setLayout(new BorderLayout());
         setMinimumSize(new Dimension(1800, 1170));
-        getContentPane().setBackground(new Color(0xE0E3E2));
+        getContentPane().setBackground(new Color(0xFFFFFF));
         setDefaultCloseOperation(EXIT_ON_CLOSE);
+        
         ImageIcon appIcon = new ImageIcon("C:/Users/ADMIN/Desktop/Tasklr/resource/icons/AppLogo.png");
         setIconImage(appIcon.getImage());
         
-        JPanel body = createPanel.panel(new Color(0xE0E3E2), new CardLayout(), new Dimension(0, 0));
-        JPanel navbar = createPanel.panel(new Color(0x3066EF), new FlowLayout(FlowLayout.CENTER, 10, 40), new Dimension(100, 0));
+        JPanel body = createPanel.panel(new Color(0xFFFFFF), new CardLayout(), new Dimension(0, 0));
+        JPanel navbar = createPanel.panel(new Color(0x191919), new FlowLayout(FlowLayout.CENTER, 10, 40), new Dimension(70, 0));
         // Border border = BorderFactory.createLineBorder(new Color(0xFFFFFF), 1);
         // navbar.setBorder(border);
         add(body, BorderLayout.CENTER);
@@ -72,7 +72,7 @@ public class Tasklr extends JFrame {
     }
         
     public static JPanel homePanel(String username) {
-        JPanel homePanel = createPanel.panel(new Color(0xE0E3E2), new GridBagLayout(), new Dimension(100, 100));
+        JPanel homePanel = createPanel.panel(new Color(0xf1f3f6), new GridBagLayout(), new Dimension(100, 100));
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.fill = GridBagConstraints.BOTH;
         gbc.weightx = 1;
@@ -91,6 +91,7 @@ public class Tasklr extends JFrame {
         SwingUtilities.invokeLater(() -> {
             new Tasklr("admin").setVisible(true);
             // new login().setVisible(true);
+            
         });
     }
 }

@@ -4,14 +4,17 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 import tasklr.createPanel;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+
 public class unpaid {
     public static JPanel createUnpaidPanel(){
         JPanel panel = createPanel.panel( null, new BorderLayout(), new Dimension(100, 300));
-        Border panel_border = BorderFactory.createLineBorder(new Color(0x0A4A7E), 1);
+        Border panel_border = BorderFactory.createLineBorder(new Color(0xB9B9B9), 1);
         panel.setBorder(panel_border);
 
         JPanel CtrPanel = createPanel.panel(null, new BorderLayout(), new Dimension(0, 170));
-        Border border = BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0x0A4A7E));
+        Border border = BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0xB9B9B9));
         CtrPanel.setBorder(border);
 
         JPanel LblPanel = createPanel.panel(null, new BorderLayout(), new Dimension(0, 50));
@@ -26,6 +29,12 @@ public class unpaid {
         JLabel Lbl = new JLabel("UNPAID", SwingConstants.CENTER);
         Lbl.setForeground(Color.BLACK);
         Lbl.setFont(new Font("Arial", Font.PLAIN, 16));
+        Lbl.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                new PopUpFrame(Lbl.getText()).setVisible(true);
+            }
+        });
         LblPanel.add(Lbl, BorderLayout.CENTER);
 
         // Add the components

@@ -25,40 +25,47 @@ public class LoginPanel {
         gbc.insets = new Insets(5, 10, 10, 10);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        JLabel usernameLabel = new JLabel("Username");
-        usernameLabel.setForeground(Color.BLACK);
+        ImageIcon CompLogo = new ImageIcon("C://Users//ADMIN//Desktop//Tasklr//resource//icons//logo1.png");
+        JLabel logoLabel = new JLabel(CompLogo);
         gbc.gridx = 0;
         gbc.gridy = 0;
+        gbc.gridwidth = 2;
+        loginPanel.add(logoLabel, gbc);
+
+        JLabel usernameLabel = new JLabel("Username");
+        usernameLabel.setForeground(Color.BLACK);
+        
+        gbc.gridy = 1;
         gbc.gridwidth = 2;
         loginPanel.add(usernameLabel, gbc);
 
         usernameField = new JTextField(50);
         usernameField.setPreferredSize(new Dimension(500, 40));
-        gbc.gridy = 1;
+        gbc.gridy = 2;
         loginPanel.add(usernameField, gbc);
 
         JLabel passwordLabel = new JLabel("Password");
         passwordLabel.setForeground(Color.BLACK);
-        gbc.gridy = 2;
+        gbc.gridy = 3;
         loginPanel.add(passwordLabel, gbc);
 
         passwordField = new JPasswordField(50);
         passwordField.setPreferredSize(new Dimension(500, 40));
-        gbc.gridy = 3;
+        gbc.gridy = 4;
         loginPanel.add(passwordField, gbc);
 
         loginButton = new JButton("Login");
         loginButton.setFocusable(false);
         loginButton.setPreferredSize(new Dimension(0, 40));
         loginButton.setBackground(new Color(0x2E5AEA));
-        gbc.gridy = 4;
+        gbc.gridy = 5;
         loginPanel.add(loginButton, gbc);
 
         signupButton = new JButton("Sign Up");
         signupButton.setFocusable(false);
         signupButton.setPreferredSize(new Dimension(0, 40));
         signupButton.setBackground(new Color(0x2E5AEA));
-        gbc.gridy = 5;
+        gbc.gridy = 6;
         loginPanel.add(signupButton, gbc);
 
         KeyAdapter enterKeyListener = new KeyAdapter() {

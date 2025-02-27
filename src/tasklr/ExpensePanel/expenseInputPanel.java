@@ -1,29 +1,28 @@
-package tasklr.TaskPanel;
+package tasklr.ExpensePanel;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import tasklr.createButton;
 import tasklr.createPanel;
-import tasklr.main.overveiw.totaltask; // Import totaltask
+import tasklr.main.overveiw.totalexpense; // Import totalexpense
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-//? FONT: Segoe UI Variable
-public class InputPanel {
-    private JPanel inputPanel;
-    private TaskListPanel taskListPanel; // Reference to TaskListPanel
-    private totaltask totalTaskPanel; // Reference to totaltask
 
-    public InputPanel(TaskListPanel taskListPanel, totaltask totalTaskPanel) {
-        this.taskListPanel = taskListPanel;
-        this.totalTaskPanel = totalTaskPanel;
+public class expenseInputPanel {
+    private JPanel inputPanel;
+    private expenseListPanel expenseListPanel; // Reference to expenseListPanel
+    private totalexpense totalExpensePanel; // Reference to totalexpense
+
+    public expenseInputPanel(expenseListPanel expenseListPanel, totalexpense totalExpensePanel) {
+        this.expenseListPanel = expenseListPanel;
+        this.totalExpensePanel = totalExpensePanel;
 
         inputPanel = createPanel.panel(null, new GridBagLayout(), new Dimension(700, 1100));
         inputPanel.setVisible(false); // Set visibility to false initially
 
         JLabel addTitle = new JLabel("ADD TITLE");
         addTitle.setForeground(Color.BLACK);
-        // addTitle.setBorder(inputContainerBorder);
         addTitle.setFont(new Font("Segoe UI Variable", Font.BOLD, 16));
         addTitle.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0));
         
@@ -38,7 +37,6 @@ public class InputPanel {
 
         JLabel addDescription = new JLabel("ADD DESCRIPTION");
         addDescription.setForeground(Color.BLACK);
-        // addDescription.setBorder(inputContainerBorder);
         addDescription.setFont(new Font("Segoe UI Variable", Font.BOLD, 16));
         addDescription.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0));
 
@@ -51,12 +49,11 @@ public class InputPanel {
         description.setWrapStyleWord(true); // Wrap at word boundaries
         JScrollPane descriptionScrollPane = new JScrollPane(description);
         descriptionScrollPane.setPreferredSize(new Dimension(0, 100)); // Set preferred size for the scroll pane
-        Border descriptionBorder = BorderFactory.createMatteBorder(1, 1, 1, 1, new Color(0xB7B7B7));
-        descriptionScrollPane.setBorder(descriptionBorder);
+        // Border descriptionBorder = BorderFactory.createMatteBorder(1, 1, 1, 1, new Color(0xB7B7B7));
+        // descriptionScrollPane.setBorder(descriptionBorder);
 
         JLabel addCategory = new JLabel("ADD CATEGORY");
         addCategory.setForeground(Color.BLACK);
-        // addCategory.setBorder(inputContainerBorder);
         addCategory.setFont(new Font("Segoe UI Variable", Font.BOLD, 16));
         addCategory.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0));
         String[] options = {"Shopping Task", "Marketing Task", "Sales Task", "Urgent Task", "Personal Task"};
@@ -77,8 +74,8 @@ public class InputPanel {
                 String taskDescription = description.getText();
                 String selectedCategory = (String) category.getSelectedItem(); // Get selected category
                 if (!taskTitle.isEmpty() && !taskDescription.isEmpty()) {
-                    taskListPanel.addTask(taskTitle, taskDescription, selectedCategory); // Pass to TaskListPanel
-                    totalTaskPanel.incrementCounter(); // Increment the counter in totaltask
+                    expenseListPanel.addTask(taskTitle, taskDescription, selectedCategory); // Pass to expenseListPanel
+                    totalExpensePanel.incrementCounter(); // Increment the counter in totalexpense
                     title.setText("");
                     description.setText("");
                 }
@@ -100,7 +97,6 @@ public class InputPanel {
         addComponent(inputPanel, cancelBtn, 0, 6, 1, 1, new Insets(5, 15, 300, 5), 0.0);
         addComponent(inputPanel, AddBtn, 1, 6, 1, 1, new Insets(5, 5, 300, 15), 0.0);
         addComponent(inputPanel, spacer, 0, 7, 2, 1, new Insets(5, 5, 5, 15), 0.0);
-
     }
 
     public JPanel getInputPanel() {

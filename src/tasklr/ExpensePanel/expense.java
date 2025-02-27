@@ -1,42 +1,34 @@
 package tasklr.ExpensePanel;
 
 import javax.swing.BorderFactory;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JTextField;
-import javax.swing.SwingConstants;
+import javax.swing.*;
 import javax.swing.border.Border;
-
 import tasklr.createPanel;
-
+import tasklr.TaskPanel.InputPanel;
+import tasklr.TaskPanel.TaskListPanel;  
 import java.awt.*;
+import tasklr.main.overveiw.totalexpense; // Import totalexpense
+
 public class expense {
-    public static JPanel createExpensePanel(){
-        JPanel panel = createPanel.panel(new Color(0xE0E3E2), new GridBagLayout(), new Dimension(100, 100));
+    public static JPanel createExpensePanel() {
+        // Main panel of task page
+        JPanel panel = createPanel.panel(null, new BorderLayout(), new Dimension(100, 100));
         Border panelBorder = BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0x6D6D6D));
         panel.setBorder(panelBorder);
-        JPanel expenseContainer = createPanel.panel(new Color(0x292E34), new BorderLayout(), new Dimension(300, 1));
-        Border border = BorderFactory.createLineBorder(new Color(0x6D6D6D), 1);
-        expenseContainer.setBorder(border);
-        expenseContainer.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        JPanel inputContainer = createPanel.panel(new Color(0x292E34), new GridBagLayout(), new Dimension(500, 0));
         
-        panel.add(inputContainer);
-        panel.add(expenseContainer);
+        // Center panel
+        JPanel CenterContainer = createPanel.panel(new Color(0xf1f3f6), new BorderLayout(), new Dimension(0, 0));
+        panel.add(CenterContainer, BorderLayout.CENTER);
 
-        JLabel taskLabel = new JLabel("Task");
-        taskLabel.setFont(new Font("Arial", Font.BOLD, 20));
-        taskLabel.setVerticalAlignment(SwingConstants.CENTER);
-        taskLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        JPanel taskContainerHeadLabel = createPanel.panel(new Color(0x292E34), new BorderLayout(), new Dimension(95, 50));
-        taskContainerHeadLabel.add(taskLabel, BorderLayout.CENTER);
-        expenseContainer.add(taskContainerHeadLabel, BorderLayout.NORTH);
+        // Create instances of expenseListPanel, expenseInputPanel, and totalexpense
+        expenseListPanel expenseListPanel = new expenseListPanel(); 
+        totalexpense totalExpensePanel = new totalexpense(); // Create totalexpense instance
+        expenseInputPanel inputPanel = new expenseInputPanel(expenseListPanel, totalExpensePanel); // Pass reference to totalexpense
+        expenseListPanel.setInputPanel(inputPanel.getInputPanel()); // Set inputPanel reference
 
-        JPanel taskListContainer = createPanel.panel(new Color(0x292E34), new BorderLayout(), new Dimension(95, 0));
-        expenseContainer.add(taskListContainer, BorderLayout.SOUTH);
+        CenterContainer.add(expenseListPanel.getTaskPanel(), BorderLayout.WEST);
+        CenterContainer.add(inputPanel.getInputPanel(), BorderLayout.CENTER);
 
-        JTextField titleField = new JTextField(50);
-        inputContainer.add(titleField);
         return panel; 
     }
 }

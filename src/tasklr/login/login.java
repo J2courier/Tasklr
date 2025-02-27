@@ -14,18 +14,23 @@ import tasklr.main.Tasklr;
 import tasklr.signup.signup;
 
 public class login extends JFrame {
+
     public login() {
+        pack();
         setTitle("Login");
         setSize(700, 920);
         setLayout(new GridBagLayout());
+        setLocationRelativeTo(null);
+        // setResizable(false);
         setMinimumSize(new Dimension(900, 1000));
-        getContentPane().setBackground(new Color(0xE0E3E2));
+        getContentPane().setBackground(new Color(0xf1f3f6));
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         ImageIcon appIcon = new ImageIcon("C:/Users/ADMIN/Desktop/Tasklr/resource/icons/AppLogo.png");
         setIconImage(appIcon.getImage());
 
-        LoginPanel loginPanel = new LoginPanel();
+        LoginPanel loginPanel = new LoginPanel();//creating instance of LoginPanel class
 
+        //adding action listener to login button
         loginPanel.addLoginListener(e -> {
             String username = loginPanel.getUsername();
             String password = loginPanel.getPassword();
