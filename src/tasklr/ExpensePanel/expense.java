@@ -4,8 +4,6 @@ import javax.swing.BorderFactory;
 import javax.swing.*;
 import javax.swing.border.Border;
 import tasklr.createPanel;
-import tasklr.TaskPanel.InputPanel;
-import tasklr.TaskPanel.TaskListPanel;  
 import java.awt.*;
 import tasklr.main.overveiw.totalexpense; // Import totalexpense
 
