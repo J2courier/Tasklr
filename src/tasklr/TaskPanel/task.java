@@ -18,14 +18,15 @@ public class task {
         panel.add(CenterContainer, BorderLayout.CENTER);
 
         // Create instances of TaskListPanel, InputPanel, and totaltask
-        TaskListPanel taskListPanel = new TaskListPanel(); 
+        TaskListPanel taskListPanel = new TaskListPanel(CenterContainer); // Pass CenterContainer parameter
         totaltask totalTaskPanel = new totaltask(); // Create totaltask instance
         InputPanel inputPanel = new InputPanel(taskListPanel, totalTaskPanel); // Pass reference to totaltask
+        SelectedPanel selectedPanel = new SelectedPanel();
         taskListPanel.setInputPanel(inputPanel.getInputPanel()); // Set inputPanel reference
 
         CenterContainer.add(taskListPanel.getTaskPanel(), BorderLayout.WEST);
+        CenterContainer.add(selectedPanel.createEditPanel(), BorderLayout.CENTER);
         CenterContainer.add(inputPanel.getInputPanel(), BorderLayout.CENTER);
-
 
         return panel; 
     }

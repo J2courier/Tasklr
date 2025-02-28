@@ -1,4 +1,4 @@
-package tasklr.signup;
+package tasklr.authentication;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -12,7 +12,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import javax.swing.border.Border;
 
-import tasklr.login.login;
 import tasklr.main.Tasklr;
 
 public class signup extends JFrame {
@@ -21,12 +20,14 @@ public class signup extends JFrame {
     private JPasswordField confirmPasswordField;
 
     public signup() {
-        setTitle("Login and Sign up"); // Set window title
-        setSize(1200, 920); // Set window size
-        setLayout(new GridBagLayout()); // Use GridBagLayout for flexible layout management
-        setMinimumSize(new Dimension(1800, 1000)); // Set minimum size of the window
-        getContentPane().setBackground(new Color(0x1C2128)); // Set background color
-        setDefaultCloseOperation(EXIT_ON_CLOSE); // Ensure application closes when window is closed
+        pack();
+        setTitle("Sign up"); 
+        setSize(1200, 920); 
+        setLayout(new GridBagLayout()); 
+        setLocationRelativeTo(null);
+        setMinimumSize(new Dimension(900, 1000));
+        getContentPane().setBackground(new Color(0xf1f3f6)); 
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
         
         // Set application icon
         ImageIcon appIcon = new ImageIcon("C:/Users/ADMIN/Desktop/Tasklr/resource/icons/AppLogo.png");
@@ -34,17 +35,16 @@ public class signup extends JFrame {
 
         // Create main signup panel
         JPanel signupPanel = new JPanel(new GridBagLayout());
-        Border signupBorder = BorderFactory.createMatteBorder(1, 1, 1, 1, new Color(0x6D6D6D));
-        signupPanel.setBorder(signupBorder);
+
         signupPanel.setPreferredSize(new Dimension(700, 700)); // Set panel size
-        signupPanel.setBackground(new Color(0x292E34)); // Set panel background color
+        signupPanel.setBackground(new Color(0xf1f3f6)); // Set panel background color
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(5, 10, 10, 10);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
         // Username field
         JLabel createUsernameLabel = new JLabel("Create Username");
-        createUsernameLabel.setForeground(Color.WHITE);
+        createUsernameLabel.setForeground(Color.BLACK);
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridwidth = 2;
@@ -57,7 +57,7 @@ public class signup extends JFrame {
 
         // Password field
         JLabel createPasswordLabel = new JLabel("Create Password");
-        createPasswordLabel.setForeground(Color.WHITE);
+        createPasswordLabel.setForeground(Color.BLACK);
         gbc.gridy = 2;
         signupPanel.add(createPasswordLabel, gbc);
 
@@ -68,7 +68,7 @@ public class signup extends JFrame {
 
         // Confirm password field
         JLabel confirmPasswordLabel = new JLabel("Confirm Password");
-        confirmPasswordLabel.setForeground(Color.WHITE);
+        confirmPasswordLabel.setForeground(Color.BLACK);
         gbc.gridy = 4;
         signupPanel.add(confirmPasswordLabel, gbc);
 
@@ -80,6 +80,7 @@ public class signup extends JFrame {
         // Signup button
         JButton signupButton = new JButton("Sign Up");
         signupButton.setFocusable(false);
+        signupButton.setForeground(Color.WHITE);
         signupButton.setPreferredSize(new Dimension(0, 40));
         signupButton.setBackground(new Color(0x2E5AEA));    
         gbc.gridy = 6;
@@ -87,15 +88,16 @@ public class signup extends JFrame {
 
         // Login label and button
         JLabel loginLabel = new JLabel("Already have an account?");
-        loginLabel.setForeground(Color.WHITE);
+        loginLabel.setForeground(Color.BLACK);
         gbc.gridy = 7;
         gbc.gridwidth = 1;
         signupPanel.add(loginLabel, gbc);
 
         JButton loginButton = new JButton("Login");
         loginButton.setFocusable(false);
+        loginButton.setForeground(Color.WHITE);
         loginButton.setPreferredSize(new Dimension(0, 40));
-        loginButton.setBackground(new Color(0xFFFFFF));
+        loginButton.setBackground(new Color(0x2E5AEA));
         gbc.gridx = 1;
         signupPanel.add(loginButton, gbc);
 
@@ -156,12 +158,12 @@ public class signup extends JFrame {
 
     // Method to insert user into database
     private boolean insertUser(String username, String hashedPassword) {
-        String url = "jdbc:mysql://localhost:3306/user_accounts";
+        String url = "jdbc:mysql://localhost:3306/tasklrdb";
         String user = "JFCompany";
         String pass = "";
 
         try (Connection conn = DriverManager.getConnection(url, user, pass)) {
-            String query = "INSERT INTO fields (userName, userPassword) VALUES (?, ?)";
+            String query = "INSERT INTO users (username, userpassword) VALUES (?, ?)";
             try (PreparedStatement stmt = conn.prepareStatement(query)) {
                 stmt.setString(1, username);
                 stmt.setString(2, hashedPassword);

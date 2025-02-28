@@ -8,6 +8,9 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 public class done {
+    private static int doneCtr = 0;
+    private static JLabel CtrLbl;
+
     public static JPanel createDonePanel() {
         JPanel panel = createPanel.panel( null, new BorderLayout(), new Dimension(100, 300));
         Border panel_border = BorderFactory.createLineBorder(new Color(0xB9B9B9), 1);
@@ -19,8 +22,7 @@ public class done {
 
         JPanel LblPanel = createPanel.panel(null, new BorderLayout(), new Dimension(0, 50));
   
-        int doneCtr = 0;
-        JLabel CtrLbl = new JLabel("" + doneCtr, SwingConstants.CENTER);
+        CtrLbl = new JLabel("" + doneCtr, SwingConstants.CENTER);
         CtrLbl.setForeground(new Color(0x414141));
         CtrLbl.setFont(new Font("Arial", Font.BOLD, 50));
         CtrPanel.add(CtrLbl, BorderLayout.CENTER);
@@ -43,6 +45,13 @@ public class done {
 
 
         return panel;
+    }
+
+    public static void incrementDoneCtr() {
+        doneCtr++;
+        if (CtrLbl != null) {
+            CtrLbl.setText("" + doneCtr);
+        }
     }
 }
 //done is a component of overview

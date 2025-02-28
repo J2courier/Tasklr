@@ -35,28 +35,12 @@ public class expenseInputPanel {
         title.setFont(new Font("Arial", Font.PLAIN, 16));
         title.setPreferredSize(new Dimension(0, 30));
 
-        JLabel addDescription = new JLabel("ADD DESCRIPTION");
-        addDescription.setForeground(Color.BLACK);
-        addDescription.setFont(new Font("Segoe UI Variable", Font.BOLD, 16));
-        addDescription.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0));
 
-        JTextArea description = new JTextArea(1, 50); // Set rows and columns
-        description.setBackground(null);
-        description.setForeground(Color.BLACK);
-        description.setCaretColor(Color.BLACK);
-        description.setFont(new Font("Segoe UI Variable", Font.PLAIN, 14));
-        description.setLineWrap(true); // Enable line wrapping
-        description.setWrapStyleWord(true); // Wrap at word boundaries
-        JScrollPane descriptionScrollPane = new JScrollPane(description);
-        descriptionScrollPane.setPreferredSize(new Dimension(0, 100)); // Set preferred size for the scroll pane
-        // Border descriptionBorder = BorderFactory.createMatteBorder(1, 1, 1, 1, new Color(0xB7B7B7));
-        // descriptionScrollPane.setBorder(descriptionBorder);
-
-        JLabel addCategory = new JLabel("ADD CATEGORY");
+        JLabel addCategory = new JLabel("SET STATUS");
         addCategory.setForeground(Color.BLACK);
         addCategory.setFont(new Font("Segoe UI Variable", Font.BOLD, 16));
         addCategory.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0));
-        String[] options = {"Shopping Task", "Marketing Task", "Sales Task", "Urgent Task", "Personal Task"};
+        String[] options = {"paid", "unpaid"};
         JComboBox<String> category = new JComboBox<>(options);
         category.setPreferredSize(new Dimension(0, 30));
 
@@ -71,32 +55,29 @@ public class expenseInputPanel {
             @Override
             public void actionPerformed(ActionEvent e) {
                 String taskTitle = title.getText();
-                String taskDescription = description.getText();
+               
                 String selectedCategory = (String) category.getSelectedItem(); // Get selected category
-                if (!taskTitle.isEmpty() && !taskDescription.isEmpty()) {
-                    expenseListPanel.addTask(taskTitle, taskDescription, selectedCategory); // Pass to expenseListPanel
-                    totalExpensePanel.incrementCounter(); // Increment the counter in totalexpense
+                if (!taskTitle.isEmpty()) {
+                    expenseListPanel.addTask(taskTitle, selectedCategory); // Pass to expenseListPanel
+                    totalExpensePanel.incrementCounter(); //Increment the counter in totalexpense
                     title.setText("");
-                    description.setText("");
+                    inputPanel.setVisible(false); // Hide the input panel after adding the task
                 }
             }
         });
 
         cancelBtn.addActionListener(e -> {
             title.setText("");
-            description.setText("");
             inputPanel.setVisible(false); // Hide the input panel
         });
 
         addComponent(inputPanel, addTitle, 0, 0, 2, 1, new Insets(50, 15, 5, 15), 0.0);
         addComponent(inputPanel, title, 0, 1, 2, 1, new Insets(5, 15, 20, 15), 0.0);
-        addComponent(inputPanel, addDescription, 0, 2, 2, 1, new Insets(5, 15, 5, 15), 0.0);
-        addComponent(inputPanel, descriptionScrollPane, 0, 3, 2, 1, new Insets(5, 15, 20, 15), 0.1); // Use scroll pane
-        addComponent(inputPanel, addCategory, 0, 4, 2, 1, new Insets(5, 15, 5, 15), 0.0);
-        addComponent(inputPanel, category, 0, 5, 2, 1, new Insets(5, 15, 20, 15), 0.0);
-        addComponent(inputPanel, cancelBtn, 0, 6, 1, 1, new Insets(5, 15, 300, 5), 0.0);
-        addComponent(inputPanel, AddBtn, 1, 6, 1, 1, new Insets(5, 5, 300, 15), 0.0);
-        addComponent(inputPanel, spacer, 0, 7, 2, 1, new Insets(5, 5, 5, 15), 0.0);
+        addComponent(inputPanel, addCategory, 0, 2, 2, 1, new Insets(5, 15, 5, 15), 0.0);
+        addComponent(inputPanel, category, 0, 3, 2, 1, new Insets(5, 15, 20, 15), 0.0);
+        addComponent(inputPanel, cancelBtn, 0, 4, 1, 1, new Insets(5, 15, 300, 5), 0.0);
+        addComponent(inputPanel, AddBtn, 1, 4, 1, 1, new Insets(5, 5, 300, 15), 0.0);
+        addComponent(inputPanel, spacer, 0, 5, 2, 1, new Insets(5, 5, 5, 15), 0.0);
     }
 
     public JPanel getInputPanel() {

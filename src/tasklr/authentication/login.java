@@ -1,4 +1,4 @@
-package tasklr.login;
+package tasklr.authentication;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -7,21 +7,21 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import javax.swing.border.Border;
 
 import tasklr.main.Tasklr;
-import tasklr.signup.signup;
 
 public class login extends JFrame {
-
     public login() {
         pack();
         setTitle("Login");
         setSize(700, 920);
         setLayout(new GridBagLayout());
         setLocationRelativeTo(null);
-        // setResizable(false);
         setMinimumSize(new Dimension(900, 1000));
         getContentPane().setBackground(new Color(0xf1f3f6));
         setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -71,12 +71,12 @@ public class login extends JFrame {
     }
 
     private boolean validateUser(String username, String hashedPassword) {
-        String url = "jdbc:mysql://localhost:3306/user_accounts";
+        String url = "jdbc:mysql://localhost:3306/tasklrdb";
         String user = "JFCompany";
         String pass = "";
 
         try (Connection conn = DriverManager.getConnection(url, user, pass)) {
-            String query = "SELECT * FROM fields WHERE userName = ? AND userPassword = ?";
+            String query = "SELECT * FROM users WHERE username = ? AND password = ?";
             try (PreparedStatement stmt = conn.prepareStatement(query)) {
                 stmt.setString(1, username);
                 stmt.setString(2, hashedPassword);

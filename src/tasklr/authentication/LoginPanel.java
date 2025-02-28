@@ -1,4 +1,4 @@
-package tasklr.login;
+package tasklr.authentication;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -55,6 +55,7 @@ public class LoginPanel {
         loginPanel.add(passwordField, gbc);
 
         loginButton = new JButton("Login");
+        loginButton.setForeground(Color.WHITE);
         loginButton.setFocusable(false);
         loginButton.setPreferredSize(new Dimension(0, 40));
         loginButton.setBackground(new Color(0x2E5AEA));
@@ -62,6 +63,7 @@ public class LoginPanel {
         loginPanel.add(loginButton, gbc);
 
         signupButton = new JButton("Sign Up");
+        signupButton.setForeground(Color.WHITE);
         signupButton.setFocusable(false);
         signupButton.setPreferredSize(new Dimension(0, 40));
         signupButton.setBackground(new Color(0x2E5AEA));

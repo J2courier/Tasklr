@@ -54,12 +54,12 @@ public class InputPanel {
         Border descriptionBorder = BorderFactory.createMatteBorder(1, 1, 1, 1, new Color(0xB7B7B7));
         descriptionScrollPane.setBorder(descriptionBorder);
 
-        JLabel addCategory = new JLabel("ADD CATEGORY");
-        addCategory.setForeground(Color.BLACK);
-        // addCategory.setBorder(inputContainerBorder);
-        addCategory.setFont(new Font("Segoe UI Variable", Font.BOLD, 16));
-        addCategory.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0));
-        String[] options = {"Shopping Task", "Marketing Task", "Sales Task", "Urgent Task", "Personal Task"};
+        JLabel setStatus = new JLabel("SET STATUS");
+        setStatus.setForeground(Color.BLACK);
+        // setStatus.setBorder(inputContainerBorder);
+        setStatus.setFont(new Font("Segoe UI Variable", Font.BOLD, 16));
+        setStatus.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0));
+        String[] options = {"PENDING", "COMPLETED"};
         JComboBox<String> category = new JComboBox<>(options);
         category.setPreferredSize(new Dimension(0, 30));
 
@@ -81,6 +81,7 @@ public class InputPanel {
                     totalTaskPanel.incrementCounter(); // Increment the counter in totaltask
                     title.setText("");
                     description.setText("");
+                    inputPanel.setVisible(false);
                 }
             }
         });
@@ -95,7 +96,7 @@ public class InputPanel {
         addComponent(inputPanel, title, 0, 1, 2, 1, new Insets(5, 15, 20, 15), 0.0);
         addComponent(inputPanel, addDescription, 0, 2, 2, 1, new Insets(5, 15, 5, 15), 0.0);
         addComponent(inputPanel, descriptionScrollPane, 0, 3, 2, 1, new Insets(5, 15, 20, 15), 0.1); // Use scroll pane
-        addComponent(inputPanel, addCategory, 0, 4, 2, 1, new Insets(5, 15, 5, 15), 0.0);
+        addComponent(inputPanel, setStatus, 0, 4, 2, 1, new Insets(5, 15, 5, 15), 0.0);
         addComponent(inputPanel, category, 0, 5, 2, 1, new Insets(5, 15, 20, 15), 0.0);
         addComponent(inputPanel, cancelBtn, 0, 6, 1, 1, new Insets(5, 15, 300, 5), 0.0);
         addComponent(inputPanel, AddBtn, 1, 6, 1, 1, new Insets(5, 5, 300, 15), 0.0);

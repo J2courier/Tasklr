@@ -8,7 +8,7 @@ import java.awt.*;
 import tasklr.createPanel;
 import tasklr.ExpensePanel.expense;
 import tasklr.TaskPanel.task;
-import tasklr.login.login;
+import tasklr.authentication.login;
 import tasklr.main.expenselist.expenselist;
 import tasklr.main.overveiw.overview;
 import tasklr.main.tasklist.tasklist;
@@ -89,8 +89,8 @@ public class Tasklr extends JFrame {
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            new Tasklr("admin").setVisible(true);
-            // new login().setVisible(true);
+            // new Tasklr("admin").setVisible(true);
+            new login().setVisible(true);
             
         });
     }

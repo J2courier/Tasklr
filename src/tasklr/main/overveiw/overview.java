@@ -11,29 +11,15 @@ public class overview {
     public static JPanel createOverview(String username) {            
         //parent container of the overview
         JPanel panel = createPanel.panel(null, new GridBagLayout(), new Dimension(400, 0));
-        // Border panelBorder = BorderFactory.createMatteBorder(1, 1, 1, 1, new Color(0x6D6D6D));
-        // panel.setBorder(panelBorder);
-        //task components display
 
         JPanel profile = createPanel.panel(new Color(0xE0E3E2), new BorderLayout(), new Dimension(400, 125));
         profile.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 0));
-        // Border profileBorder = BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0xB9B9B9));
-        // profile.setBorder(profileBorder);
+    
         JLabel userLabel = new JLabel("WELCOME, " + username + "!");
         userLabel.setForeground(Color.BLACK);
         userLabel.setFont(new Font("Arial", Font.BOLD, 26));
         userLabel.setHorizontalAlignment(SwingConstants.CENTER);
         profile.add(userLabel, BorderLayout.WEST);
-
-        //task label and Panel
-        // JPanel task_overview_lbl = createPanel.panel(null, new BorderLayout(), new Dimension(100, 70));
-        // JLabel taskLabel = new JLabel("TASK OVERVIEW");
-        // taskLabel.setForeground(Color.BLACK);
-        // taskLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 16));
-        // taskLabel.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 0));
-        // task_overview_lbl.add(taskLabel, BorderLayout.CENTER);
-        // Border taskov_border = BorderFactory.createLineBorder(new Color(0xB9B9B9), 1);
-        // task_overview_lbl.setBorder(taskov_border);
 
         TaskOverview task_overview_lbl = new TaskOverview();
         

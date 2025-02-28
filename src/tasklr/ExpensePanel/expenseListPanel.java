@@ -61,21 +61,17 @@ public class expenseListPanel {
         this.inputPanel = inputPanel;
     }
 
-    public void addTask(String title, String desc, String category) {
+    public void addTask(String title, String category) {
         // Create a panel for the task
         JPanel taskPanel = new JPanel();
         taskPanel.setLayout(new BoxLayout(taskPanel, BoxLayout.Y_AXIS));
-        taskPanel.setBackground(new Color(0xE0E3E2)); // Match background color
+        taskPanel.setBackground(new Color(0xf1f3f6)); // Match background color
     
         // Title label
         JLabel titleLabel = new JLabel("<html><b>" + title + "</b></html>");
         titleLabel.setForeground(Color.BLACK);
         titleLabel.setFont(new Font("Arial", Font.BOLD, 20));
         titleLabel.setBorder(new EmptyBorder(10, 20, 10, 10));
-    
-        // Description label
-        JLabel descLabel = new JLabel("<html>" + desc + "</html>");
-        descLabel.setForeground(Color.BLACK);
     
         // Add components to the task panel
         taskPanel.add(titleLabel);
