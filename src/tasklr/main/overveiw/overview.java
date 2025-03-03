@@ -33,19 +33,19 @@ public class overview {
         Border expenseov_border = BorderFactory.createLineBorder(new Color(0xB9B9B9), 1);
         expense_overview_lbl.setBorder(expenseov_border);
         
-        
+    //object of TotalTaskPanel REU
+        TaskCounterPanel totalTasksPanel = new TaskCounterPanel(0, "Total Tasks");
+        TaskCounterPanel pendingTasksPanel = new TaskCounterPanel(0, "Pending");
+        TaskCounterPanel completedTasksPanel = new TaskCounterPanel(0, "Completed");
  
         JPanel spacer = createPanel.panel(null, null, new Dimension(100, 195));
 
         addComponent(panel, profile, 0, 0, 3, 1, new Insets(0, 0,0, 0));
         addComponent(panel, task_overview_lbl.createTaskOverviewHeader(), 0, 2, 3, 1, new Insets(0, 0, 10, 0));
-        addComponent(panel, ongoing.createOngoingPanel(), 0, 4, 1, 1, new Insets(5, 5, 10, 5));
-        addComponent(panel, done.createDonePanel(), 1, 4, 1, 1, new Insets(5, 5, 10, 5));
-        addComponent(panel, totaltask.createTotalTaskPanel(), 2, 4, 1, 1, new Insets(5, 0, 10,5));
-        addComponent(panel, expense_overview_lbl, 0, 6, 3, 1, new Insets(5, 5, 10, 0));
-        addComponent(panel, paid.createPaidPanel(), 0, 7, 1, 1, new Insets(5, 5, 10, 5));   
-        addComponent(panel, unpaid.createUnpaidPanel(), 1, 7,1, 1, new Insets(5, 5, 10, 5));
-        addComponent(panel, totalexpense.createTotalExpensePanel(), 2, 7, 1, 1, new Insets(5, 5, 10, 5));
+        addComponent(panel, pendingTasksPanel.createPanel(), 0, 4, 1, 1, new Insets(5, 5, 10, 5));
+        addComponent(panel, completedTasksPanel.createPanel(), 1, 4, 1, 1, new Insets(5, 5, 10, 5));
+        addComponent(panel, totalTasksPanel.createPanel(), 2, 4, 1, 1, new Insets(5, 0, 10,5));
+
         addComponent(panel, spacer, 0, 8, 3, 1, new Insets(5, 5, 5, 5));
     
         return panel;

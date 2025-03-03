@@ -1,23 +1,23 @@
-    package tasklr.main;
+package tasklr.main;
 
 //utilties
 import javax.swing.*;
-import javax.swing.border.Border;
 import java.awt.*;
 //file pathing:
 import tasklr.createPanel;
-import tasklr.ExpensePanel.expense;
+import tasklr.TaskPanel.TaskFetcher;
+import tasklr.TaskPanel.TaskListPanel;
 import tasklr.TaskPanel.task;
-import tasklr.authentication.login;
-import tasklr.main.expenselist.expenselist;
 import tasklr.main.overveiw.overview;
-import tasklr.main.tasklist.tasklist;
+import tasklr.authentication.login;
 
 public class Tasklr extends JFrame {
     private String username;
+    private JPanel centerContainer; 
 
     public Tasklr(String username) {
-        this.username = username;
+        pack();
+        this.username = username;             
         setTitle("Tasklr");
         setSize(1200, 1170);
         setLayout(new BorderLayout());
@@ -36,19 +36,16 @@ public class Tasklr extends JFrame {
         add(navbar, BorderLayout.WEST);
         
 
-        ImageIcon homeBtn = new ImageIcon(new ImageIcon("C:/Users/ADMIN/Desktop/Tasklr/resource/icons/home.png").getImage().getScaledInstance(70, 70, Image.SCALE_SMOOTH));
-        ImageIcon taskBtn = new ImageIcon(new ImageIcon("C:/Users/ADMIN/Desktop/Tasklr/resource/icons/task.png").getImage().getScaledInstance(70, 70, Image.SCALE_SMOOTH));
-        ImageIcon expenseBtn = new ImageIcon(new ImageIcon("C:/Users/ADMIN/Desktop/Tasklr/resource/icons/expense.png").getImage().getScaledInstance(70, 70, Image.SCALE_SMOOTH));
+        ImageIcon homeBtn = new ImageIcon(new ImageIcon("C:/Users/ADMIN/Desktop/Tasklr/resource/icons/HomeLogo.png").getImage().getScaledInstance(40, 40, Image.SCALE_SMOOTH));
+        ImageIcon taskBtn = new ImageIcon(new ImageIcon("C:/Users/ADMIN/Desktop/Tasklr/resource/icons/TaskLogo.png").getImage().getScaledInstance(40, 40, Image.SCALE_SMOOTH));
         
         JLabel homeBtnIcon = new JLabel(homeBtn);
         JLabel taskBtnIcon = new JLabel(taskBtn);
-        JLabel expenseBtnIcon = new JLabel(expenseBtn);
         navbar.add(homeBtnIcon);
         navbar.add(taskBtnIcon);
-        navbar.add(expenseBtnIcon);    
+  
         body.add(homePanel(username), "homePanel");
         body.add(task.createTaskPanel(), "taskPanel");
-        body.add(expense.createExpensePanel(), "expensePanel");
         
         CardLayout cardLayout = (CardLayout) body.getLayout();
         
@@ -63,12 +60,7 @@ public class Tasklr extends JFrame {
                 cardLayout.show(body, "taskPanel");
             }
         });
-        
-        expenseBtnIcon.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                cardLayout.show(body, "expensePanel");
-            }
-        });
+    
     }
         
     public static JPanel homePanel(String username) {
@@ -85,13 +77,16 @@ public class Tasklr extends JFrame {
         return homePanel;
     }
 
-    
-
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             // new Tasklr("admin").setVisible(true);
             new login().setVisible(true);
-            
+
+            Tasklr tasklrInstance = new Tasklr("admin");
+
+            TaskListPanel taskListPanel = new TaskListPanel(tasklrInstance.centerContainer);
+            TaskFetcher tf = new TaskFetcher();
+            tf.getUserTasks();;
         });
     }
 }

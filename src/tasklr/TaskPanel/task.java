@@ -4,7 +4,6 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import tasklr.createPanel;
 import java.awt.*;
-import tasklr.main.overveiw.totaltask; // Import totaltask
 
 public class task {
     public static JPanel createTaskPanel() {
@@ -19,8 +18,8 @@ public class task {
 
         // Create instances of TaskListPanel, InputPanel, and totaltask
         TaskListPanel taskListPanel = new TaskListPanel(CenterContainer); // Pass CenterContainer parameter
-        totaltask totalTaskPanel = new totaltask(); // Create totaltask instance
-        InputPanel inputPanel = new InputPanel(taskListPanel, totalTaskPanel); // Pass reference to totaltask
+       
+        InputPanel inputPanel = new InputPanel(taskListPanel); // Pass reference to totaltask
         SelectedPanel selectedPanel = new SelectedPanel();
         taskListPanel.setInputPanel(inputPanel.getInputPanel()); // Set inputPanel reference
 

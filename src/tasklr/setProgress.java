@@ -2,8 +2,6 @@ package tasklr;
 
 import javax.swing.*;
 import java.awt.*;
-import tasklr.main.overveiw.ongoing;
-import tasklr.main.overveiw.done;
 
 public class setProgress extends JFrame {
     private static boolean isOngoingSet = false;

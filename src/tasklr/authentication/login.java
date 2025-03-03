@@ -1,22 +1,21 @@
 package tasklr.authentication;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import javax.swing.border.Border;
-
 import tasklr.main.Tasklr;
+import tasklr.TaskPanel.TaskListPanel;
+import tasklr.authentication.UserSession; // Import UserSession
 
 public class login extends JFrame {
+    private JPanel centerContainer; // Declare centerContainer
+
     public login() {
+        centerContainer = new JPanel(new BorderLayout()); // Initialize centerContainer
+        centerContainer.setBackground(new Color(0xf1f3f6)); // Set background color
+
         pack();
         setTitle("Login");
         setSize(700, 920);
@@ -28,15 +27,20 @@ public class login extends JFrame {
         ImageIcon appIcon = new ImageIcon("C:/Users/ADMIN/Desktop/Tasklr/resource/icons/AppLogo.png");
         setIconImage(appIcon.getImage());
 
-        LoginPanel loginPanel = new LoginPanel();//creating instance of LoginPanel class
+        LoginPanel loginPanel = new LoginPanel(); // Creating instance of LoginPanel class
 
-        //adding action listener to login button
+        // Adding action listener to login button
         loginPanel.addLoginListener(e -> {
             String username = loginPanel.getUsername();
             String password = loginPanel.getPassword();
             String hashedPassword = hashPassword(password);
 
-            if (validateUser(username, hashedPassword)) {
+            int userId = validateUser(username, hashedPassword);
+            if (userId != -1) { 
+                String sessionToken = generateSessionToken();
+                UserSession.createSession(userId, username, sessionToken);
+                TaskListPanel taskListPanel = new TaskListPanel(centerContainer);
+                taskListPanel.fetchAndDisplayTasks();
                 new Tasklr(username).setVisible(true);
                 dispose();
             } else {
@@ -70,24 +74,33 @@ public class login extends JFrame {
         }
     }
 
-    private boolean validateUser(String username, String hashedPassword) {
+    // Updated to return userId instead of boolean
+    private int validateUser(String username, String hashedPassword) {
         String url = "jdbc:mysql://localhost:3306/tasklrdb";
         String user = "JFCompany";
         String pass = "";
-
+    
         try (Connection conn = DriverManager.getConnection(url, user, pass)) {
-            String query = "SELECT * FROM users WHERE username = ? AND password = ?";
+            String query = "SELECT id, username FROM users WHERE username = ? AND password = ?";
             try (PreparedStatement stmt = conn.prepareStatement(query)) {
                 stmt.setString(1, username);
                 stmt.setString(2, hashedPassword);
                 try (ResultSet rs = stmt.executeQuery()) {
-                    return rs.next();
+                    if (rs.next()) {
+                        int userId = rs.getInt("id"); // Get the user ID
+                        return userId; 
+                    }
                 }
             }
         } catch (SQLException ex) {
             ex.printStackTrace();
             JOptionPane.showMessageDialog(this, "Error validating user: " + ex.getMessage());
-            return false;
         }
+        return -1; // Return -1 if user is not valid
+    }
+    
+
+    private String generateSessionToken() {
+        return java.util.UUID.randomUUID().toString(); 
     }
 }

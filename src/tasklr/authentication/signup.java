@@ -163,7 +163,7 @@ public class signup extends JFrame {
         String pass = "";
 
         try (Connection conn = DriverManager.getConnection(url, user, pass)) {
-            String query = "INSERT INTO users (username, userpassword) VALUES (?, ?)";
+            String query = "INSERT INTO users (username, password) VALUES (?, ?)";
             try (PreparedStatement stmt = conn.prepareStatement(query)) {
                 stmt.setString(1, username);
                 stmt.setString(2, hashedPassword);
