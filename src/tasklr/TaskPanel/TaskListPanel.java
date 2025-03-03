@@ -4,7 +4,10 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import java.util.List;  
-import java.util.ArrayList; 
+import java.util.ArrayList;
+
+import tasklr.HoverButtonEffect;
+import tasklr.HoverPanelEffect;
 import tasklr.createButton;
 import tasklr.createPanel;
 import java.awt.*;
@@ -36,16 +39,23 @@ public class TaskListPanel {
         taskPanel.setBorder(taskContainerBorder);
     
         // Header
-        JPanel taskContainerHeader = createPanel.panel(new Color(0x191919), new BorderLayout(), new Dimension(0, 70));
+        JPanel taskContainerHeader = createPanel.panel(new Color(0xf1f3f6), new BorderLayout(), new Dimension(0, 70));
+        // taskContainerHeader.setBorder(BorderFactory.createEmptyBorder(0, 0, 20, 0));
+        JPanel spacerTop = createPanel.panel(new Color(0xf1f3f6), new BorderLayout(), new Dimension(0, 10));
+        JPanel spacerBottom = createPanel.panel(new Color(0xf1f3f6), new BorderLayout(), new Dimension(0, 10));
     
         JLabel taskContainerLabel = new JLabel("ADDED TASKS");
         taskContainerLabel.setFont(new Font("Arial", Font.BOLD, 24));
-        taskContainerLabel.setForeground(new Color(0xe8eaed));
+        taskContainerLabel.setForeground(new Color(0x363636));
         taskContainerLabel.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 0));
         taskContainerHeader.add(taskContainerLabel, BorderLayout.CENTER);
     
-        JButton addTaskBtn = createButton.button("ADD TASK", null, new Color(0xe8eaed), null, false);
-        addTaskBtn.setPreferredSize(new Dimension(100, 0));
+        JButton addTaskBtn = createButton.button("ADD TASK", null, new Color(0x363636), null, false);
+        addTaskBtn.setPreferredSize(new Dimension(100, 40));
+        addTaskBtn.setBorder(new EmptyBorder(0, 0, 0, 20));
+        addTaskBtn.setHorizontalAlignment(SwingConstants.CENTER);
+        addTaskBtn.setVerticalAlignment(SwingConstants.CENTER);
+        new HoverButtonEffect(addTaskBtn, null, new Color(0x0065D9), Color.BLACK, Color.WHITE);
         addTaskBtn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -55,11 +65,14 @@ public class TaskListPanel {
             }
         });
         taskContainerHeader.add(addTaskBtn, BorderLayout.EAST);
+        taskContainerHeader.add(spacerTop, BorderLayout.NORTH);
+        taskContainerHeader.add(spacerBottom, BorderLayout.SOUTH);
     
         // Scrollable Task Panel
         taskContainerScrollPanel = new JPanel();
         taskContainerScrollPanel.setLayout(new BoxLayout(taskContainerScrollPanel, BoxLayout.Y_AXIS));
         taskContainerScrollPanel.setBackground(new Color(0xf1f3f6));
+        taskContainerScrollPanel.setPreferredSize(new Dimension(0, 0));
     
         JScrollPane scrollPane = new JScrollPane(taskContainerScrollPanel);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
@@ -79,7 +92,6 @@ public class TaskListPanel {
         }
     }
     
-
     public JPanel getTaskPanel() {
         return taskPanel;
     }
@@ -92,18 +104,31 @@ public class TaskListPanel {
         JPanel taskItemPanel = new JPanel();
         taskItemPanel.setLayout(new BoxLayout(taskItemPanel, BoxLayout.X_AXIS));
         taskItemPanel.setBackground(new Color(0xf1f3f6));
-        taskItemPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40)); // Control height while allowing width to expand
-        
+        taskItemPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
+        taskItemPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        new HoverPanelEffect(taskItemPanel, null, new Color(0x74A5DE));
+    
         JLabel titleLabel = new JLabel(title + " - " + status);
         titleLabel.setFont(new Font("Arial", Font.BOLD, 16));
         titleLabel.setBorder(new EmptyBorder(10, 20, 10, 10));
+        titleLabel.setAlignmentY(Component.CENTER_ALIGNMENT);
         
+        titleLabel.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent evt) {
+                selectedPanel.createEditPanel().setVisible(true);
+                centerContainer.revalidate();
+                centerContainer.repaint();
+        
+                System.out.println("✅ SelectedPanel is now visible!");
+            }
+        });
+    
         taskItemPanel.add(titleLabel);
-        taskItemPanel.add(Box.createHorizontalGlue()); // This will push everything to the left
+        taskItemPanel.add(Box.createHorizontalGlue());
         taskContainerScrollPanel.add(taskItemPanel);
         taskContainerScrollPanel.add(Box.createVerticalStrut(5)); // Add spacing between tasks
-        
-        // Ensure JScrollPane updates properly
+    
         taskContainerScrollPanel.revalidate();
         taskContainerScrollPanel.repaint();
     }

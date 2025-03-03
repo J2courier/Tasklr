@@ -12,7 +12,6 @@ public class SelectedPanel {
     public JPanel createEditPanel() { // Corrected method name
         JPanel panel = createPanel.panel(null, new GridBagLayout(), new Dimension(700, 1100));
         panel.setVisible(false); 
-
         JLabel Title = new JLabel("ADD TITLE");
         Title.setFont(new Font("Segoe UI Variable", Font.BOLD, 34));
 

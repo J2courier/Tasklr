@@ -21,6 +21,7 @@ public class task {
        
         InputPanel inputPanel = new InputPanel(taskListPanel); // Pass reference to totaltask
         SelectedPanel selectedPanel = new SelectedPanel();
+        // selectedPanel.createEditPanel().setVisible(false);
         taskListPanel.setInputPanel(inputPanel.getInputPanel()); // Set inputPanel reference
 
         CenterContainer.add(taskListPanel.getTaskPanel(), BorderLayout.WEST);
