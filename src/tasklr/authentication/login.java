@@ -6,16 +6,15 @@ import java.awt.*;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import tasklr.main.Tasklr;
-import tasklr.TaskPanel.TaskListPanel;
-import tasklr.authentication.UserSession; // Import UserSession
+
+import tasklr.authentication.UserSession;
 
 public class login extends JFrame {
-    private JPanel centerContainer; // Declare centerContainer
+    private JPanel centerContainer; 
 
     public login() {
-        centerContainer = new JPanel(new BorderLayout()); // Initialize centerContainer
-        centerContainer.setBackground(new Color(0xf1f3f6)); // Set background color
-
+        centerContainer = new JPanel(new BorderLayout()); 
+        centerContainer.setBackground(new Color(0xf1f3f6)); 
         pack();
         setTitle("Login");
         setSize(700, 920);
@@ -27,7 +26,7 @@ public class login extends JFrame {
         ImageIcon appIcon = new ImageIcon("C:/Users/ADMIN/Desktop/Tasklr/resource/icons/AppLogo.png");
         setIconImage(appIcon.getImage());
 
-        LoginPanel loginPanel = new LoginPanel(); // Creating instance of LoginPanel class
+        LoginPanel loginPanel = new LoginPanel(); 
 
         // Adding action listener to login button
         loginPanel.addLoginListener(e -> {
@@ -39,8 +38,6 @@ public class login extends JFrame {
             if (userId != -1) { 
                 String sessionToken = generateSessionToken();
                 UserSession.createSession(userId, username, sessionToken);
-                TaskListPanel taskListPanel = new TaskListPanel(centerContainer);
-                taskListPanel.fetchAndDisplayTasks();
                 new Tasklr(username).setVisible(true);
                 dispose();
             } else {

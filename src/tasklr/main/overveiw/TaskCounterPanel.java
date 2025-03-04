@@ -58,4 +58,11 @@ public class TaskCounterPanel {
         }
     }
 
+    public void updateCount(int newCount) {
+        this.taskCount = newCount;
+        if (countLabel != null) {
+            countLabel.setText(String.valueOf(newCount));
+        }
+    }
+
 }

@@ -4,7 +4,8 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import tasklr.createPanel;
 import java.awt.*;
-
+import tasklr.TaskPanel.TaskFetcher;
+import java.util.Map;
 
 public class overview {
 
@@ -37,8 +38,16 @@ public class overview {
         TaskCounterPanel totalTasksPanel = new TaskCounterPanel(0, "Total Tasks");
         TaskCounterPanel pendingTasksPanel = new TaskCounterPanel(0, "Pending");
         TaskCounterPanel completedTasksPanel = new TaskCounterPanel(0, "Completed");
+
+        // Fetch task counts and update panels
+        TaskFetcher taskFetcher = new TaskFetcher();
+        Map<String, Integer> taskCounts = taskFetcher.getTaskCounts();
+        
+        totalTasksPanel.updateCount(taskCounts.getOrDefault("total", 0));
+        pendingTasksPanel.updateCount(taskCounts.getOrDefault("pending", 0));
+        completedTasksPanel.updateCount(taskCounts.getOrDefault("completed", 0));
  
-        JPanel spacer = createPanel.panel(null, null, new Dimension(100, 195));
+        JPanel spacer = createPanel.panel(null, null, new Dimension(100, 500));
 
         addComponent(panel, profile, 0, 0, 3, 1, new Insets(0, 0,0, 0));
         addComponent(panel, task_overview_lbl.createTaskOverviewHeader(), 0, 2, 3, 1, new Insets(0, 0, 10, 0));

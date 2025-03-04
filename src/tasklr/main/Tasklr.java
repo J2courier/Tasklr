@@ -6,7 +6,7 @@ import java.awt.*;
 //file pathing:
 import tasklr.createPanel;
 import tasklr.TaskPanel.TaskFetcher;
-import tasklr.TaskPanel.TaskListPanel;
+
 import tasklr.TaskPanel.task;
 import tasklr.main.overveiw.overview;
 import tasklr.authentication.login;
@@ -45,7 +45,7 @@ public class Tasklr extends JFrame {
         navbar.add(taskBtnIcon);
   
         body.add(homePanel(username), "homePanel");
-        body.add(task.createTaskPanel(), "taskPanel");
+        body.add(task.createTaskPanel(username), "taskPanel");
         
         CardLayout cardLayout = (CardLayout) body.getLayout();
         
@@ -69,7 +69,7 @@ public class Tasklr extends JFrame {
         gbc.fill = GridBagConstraints.BOTH;
         gbc.weightx = 1;
         gbc.weighty = 1.0;
-        // gbc.insets = new Insets(10, 5, 10, 5); // Add margin
+        
         gbc.gridx = 0;
         gbc.gridy = 0;       
         homePanel.add(overview.createOverview(username), gbc);//just call the sub class tasklist and access the method
@@ -81,10 +81,6 @@ public class Tasklr extends JFrame {
         SwingUtilities.invokeLater(() -> {
             // new Tasklr("admin").setVisible(true);
             new login().setVisible(true);
-
-            Tasklr tasklrInstance = new Tasklr("admin");
-
-            TaskListPanel taskListPanel = new TaskListPanel(tasklrInstance.centerContainer);
             TaskFetcher tf = new TaskFetcher();
             tf.getUserTasks();;
         });
