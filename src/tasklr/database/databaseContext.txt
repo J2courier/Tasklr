@@ -1,0 +1,23 @@
+Context on Data Base
+
+I am using Xampp phpMyAdmin for localhost/server and database
+The useraccounts of phpMyAdmin is JFCompany and password is empty
+the database I have in this project is named in "tasklrdb" with tables of:
+- users with fields:
+    - id
+    - username
+    - password 
+    -created_at
+- tasks
+    - id
+    - user_id
+    - title
+    - status
+    - due_date
+    - created_at
+- sessions
+    - id
+    - user_id
+    - session_token
+    - created_at
+
