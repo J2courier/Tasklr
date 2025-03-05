@@ -3,7 +3,7 @@ package tasklr.main.tasklist;
 import javax.swing.*;
 import javax.swing.border.Border;
 
-import tasklr.createPanel;
+import tasklr.utilities.createPanel;
 
 import java.awt.*;
 public class tasklist {

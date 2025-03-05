@@ -3,12 +3,11 @@ package tasklr.main;
 //utilties
 import javax.swing.*;
 import java.awt.*;
-//file pathing:
-import tasklr.createPanel;
-import tasklr.TaskPanel.TaskFetcher;
 
-import tasklr.TaskPanel.task;
+import tasklr.main.TaskPanel.TaskFetcher;
+import tasklr.main.TaskPanel.task;
 import tasklr.main.overveiw.overview;
+import tasklr.utilities.createPanel;
 import tasklr.authentication.login;
 
 public class Tasklr extends JFrame {

@@ -1,17 +1,19 @@
-package tasklr.TaskPanel;
+package tasklr.main.TaskPanel;
 
 
 import com.toedter.calendar.JDateChooser;
 import javax.swing.*;
 import javax.swing.border.Border;
-import tasklr.ComponentUtil;
-import tasklr.createPanel;
-import tasklr.createButton;
+
 import tasklr.authentication.UserSession;
+import tasklr.utilities.ComponentUtil;
+import tasklr.utilities.HoverPanelEffect;
+import tasklr.utilities.createButton;
+import tasklr.utilities.createPanel;
+
 import java.awt.*;
 import java.util.List;
 import java.sql.*;
-import tasklr.HoverPanelEffect;
 
 public class task {
     private static DefaultListModel<String> taskListModel;

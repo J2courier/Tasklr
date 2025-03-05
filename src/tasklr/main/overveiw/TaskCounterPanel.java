@@ -2,10 +2,12 @@ package tasklr.main.overveiw;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+
+import tasklr.utilities.createPanel;
+
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import tasklr.createPanel;
 
 public class TaskCounterPanel {
     private int taskCount;

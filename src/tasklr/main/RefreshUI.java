@@ -1,8 +1,10 @@
 package tasklr.main;
 
 import javax.swing.*;
+
+import tasklr.main.TaskPanel.TaskFetcher;
 import tasklr.main.overveiw.TaskCounterPanel;
-import tasklr.TaskPanel.TaskFetcher;
+
 import java.util.Map;
 
 public class RefreshUI extends SwingWorker<Void, Void> {

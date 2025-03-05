@@ -1,5 +1,5 @@
 
-package tasklr;
+package tasklr.utilities;
 
 /**
  *

@@ -1,7 +1,9 @@
 package tasklr.main.overveiw;
 import javax.swing.*;
 import javax.swing.border.Border;
-import tasklr.createPanel;
+
+import tasklr.utilities.createPanel;
+
 import java.awt.*;
 
 public class TaskOverview {

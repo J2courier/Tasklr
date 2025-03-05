@@ -2,9 +2,10 @@ package tasklr.main.overveiw;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import tasklr.createPanel;
+
 import java.awt.*;
 import tasklr.main.RefreshUI;
+import tasklr.utilities.createPanel;
 
 public class overview {
 

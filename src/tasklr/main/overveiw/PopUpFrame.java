@@ -2,7 +2,7 @@ package tasklr.main.overveiw;
 
 import javax.swing.*;
 
-import tasklr.createPanel;
+import tasklr.utilities.createPanel;
 
 import java.awt.*;
 public class PopUpFrame extends JFrame{

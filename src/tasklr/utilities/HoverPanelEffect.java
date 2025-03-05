@@ -1,4 +1,4 @@
-package tasklr;
+package tasklr.utilities;
 
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
