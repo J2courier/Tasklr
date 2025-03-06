@@ -1,6 +1,5 @@
 package tasklr.main.TaskPanel;
 
-
 import com.toedter.calendar.JDateChooser;
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -16,8 +15,13 @@ import java.util.List;
 import java.sql.*;
 
 public class task {
+    private static final String url = "jdbc:mysql://localhost:3306/tasklrdb";
+    private static final String dbUser = "JFCompany";
+    private static final String dbPass = "";
     private static DefaultListModel<String> taskListModel;
     private static JList<String> taskList;
+    private static JPanel taskContainer;
+    private static JScrollPane scrollPane;
 
     public static JPanel createTaskPanel(String username) {
         JPanel panel = createPanel.panel(new Color(0xf1f3f6), new BorderLayout(), new Dimension(100, 100));
@@ -85,7 +89,7 @@ public class task {
             if (insertTask(title, dueDate)) {
                 titleField.setText("");
                 dateChooser.setDate(null);
-                refreshTaskList();
+                refreshTaskContainer();
             }
         });
 
@@ -126,21 +130,13 @@ public class task {
         return false;
     }
 
-    private static void refreshTaskList() {
-        // Get the parent container (mainPanel)
-        Container parent = taskList.getParent();
-        while (!(parent instanceof JScrollPane)) {
-            parent = parent.getParent();
-            if (parent == null) return;
-        }
-        JScrollPane scrollPane = (JScrollPane) parent;
+    private static void refreshTaskContainer() {
+        if (taskContainer == null) return;
         
-        // Create new task container
-        JPanel taskContainer = createPanel.panel(null, null, null);
-        taskContainer.setLayout(new BoxLayout(taskContainer, BoxLayout.Y_AXIS));
-        taskContainer.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-
-        // Add tasks
+        // Clear existing tasks
+        taskContainer.removeAll();
+        
+        // Fetch and add tasks
         List<String[]> tasks = TaskFetcher.getUserTasks();
         for (String[] task : tasks) {
             JPanel taskPanel = createTaskItemPanel(task[0]);
@@ -148,10 +144,14 @@ public class task {
             taskContainer.add(Box.createRigidArea(new Dimension(0, 5)));
         }
 
-        // Update the scroll pane with new content
-        scrollPane.setViewportView(taskContainer);
-        scrollPane.revalidate();
-        scrollPane.repaint();
+        // Ensure the UI updates
+        taskContainer.revalidate();
+        taskContainer.repaint();
+        
+        if (scrollPane != null) {
+            scrollPane.revalidate();
+            scrollPane.repaint();
+        }
     }
 
     private static JPanel createListContainer() {
@@ -159,24 +159,16 @@ public class task {
         Border border = BorderFactory.createMatteBorder(1, 0, 0, 1, new Color(0x749AAD));
         mainPanel.setBorder(border);
 
-        // Create a panel that will contain all task panels
-        JPanel taskContainer = createPanel.panel(null, null, null);
+        // Store this container as a class field so we can access it later
+        taskContainer = createPanel.panel(null, null, null);
         taskContainer.setLayout(new BoxLayout(taskContainer, BoxLayout.Y_AXIS));
-        
-        // Add some padding to the container
         taskContainer.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         // Fetch and add tasks
-        List<String[]> tasks = TaskFetcher.getUserTasks();
-        for (String[] task : tasks) {
-            JPanel taskPanel = createTaskItemPanel(task[0]);
-            taskContainer.add(taskPanel);
-            // Add some vertical spacing between panels
-            taskContainer.add(Box.createRigidArea(new Dimension(0, 5)));
-        }
+        refreshTaskContainer();
 
         // Wrap the container in a scroll pane
-        JScrollPane scrollPane = new JScrollPane(taskContainer);
+        scrollPane = new JScrollPane(taskContainer); // Store as class field
         scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
         
@@ -185,31 +177,96 @@ public class task {
     }
 
     private static JPanel createTaskItemPanel(String title) {
-        // Create main panel without border initially
+        // Main panel with fixed height and flexible width
         JPanel panel = createPanel.panel(new Color(0xE0E3E2), new BorderLayout(), new Dimension(0, 50));
         
-        // Create an inner panel to hold the content with consistent padding
+        // Inner panel for consistent padding and content positioning
         JPanel contentPanel = createPanel.panel(null, new BorderLayout(), null);
         contentPanel.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
         
+        // Task title label
         JLabel titleLabel = new JLabel(title);
         titleLabel.setFont(new Font("Segoe UI Variable", Font.PLAIN, 14));
+        
+        // Button panel for edit and delete
+        JPanel buttonPanel = createPanel.panel(new Color(0xE0E3E2), new FlowLayout(FlowLayout.RIGHT, 5, 0), null);
+        
+        // Edit button
+        JButton editBtn = new JButton("Edit");
+        editBtn.setFont(new Font("Segoe UI Variable", Font.PLAIN, 12));
+        editBtn.setFocusPainted(false);
+        editBtn.addActionListener(e -> {
+            String newTitle = JOptionPane.showInputDialog(panel, "Edit task:", title);
+            if (newTitle != null && !newTitle.trim().isEmpty()) {
+                try (Connection conn = DriverManager.getConnection(url, dbUser, dbPass)) {
+                    String query = "UPDATE tasks SET title = ? WHERE title = ? AND user_id = ?";
+                    try (PreparedStatement stmt = conn.prepareStatement(query)) {
+                        stmt.setString(1, newTitle.trim());
+                        stmt.setString(2, title);
+                        stmt.setInt(3, UserSession.getUserId());
+                        
+                        int result = stmt.executeUpdate();
+                        if (result > 0) {
+                            JOptionPane.showMessageDialog(panel, "Task updated successfully!");
+                            refreshTaskContainer(); // Use the new refresh method
+                        }
+                    }
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                    JOptionPane.showMessageDialog(panel, "Error updating task: " + ex.getMessage());
+                }
+            }
+        });
+    
+        // Delete button
+        JButton deleteBtn = new JButton("Delete");
+        deleteBtn.setFont(new Font("Segoe UI Variable", Font.PLAIN, 12));
+        deleteBtn.setFocusPainted(false);
+        deleteBtn.addActionListener(e -> {
+            int confirm = JOptionPane.showConfirmDialog(
+                panel,
+                "Are you sure you want to delete this task?",
+                "Confirm Delete",
+                JOptionPane.YES_NO_OPTION
+            );
+            
+            if (confirm == JOptionPane.YES_OPTION) {
+                try (Connection conn = DriverManager.getConnection(url, dbUser, dbPass)) {
+                    String query = "DELETE FROM tasks WHERE title = ? AND user_id = ?";
+                    try (PreparedStatement stmt = conn.prepareStatement(query)) {
+                        stmt.setString(1, title);
+                        stmt.setInt(2, UserSession.getUserId());
+                        
+                        int result = stmt.executeUpdate();
+                        if (result > 0) {
+                            JOptionPane.showMessageDialog(panel, "Task deleted successfully!");
+                            refreshTaskContainer(); // Use the new refresh method
+                        }
+                    }
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                    JOptionPane.showMessageDialog(panel, "Error deleting task: " + ex.getMessage());
+                }
+            }
+        });
+    
+        // Add buttons to button panel
+        buttonPanel.add(editBtn);
+        buttonPanel.add(deleteBtn);
+        
+        // Add components to content panel
         contentPanel.add(titleLabel, BorderLayout.CENTER);
+        contentPanel.add(buttonPanel, BorderLayout.EAST);
         
-        // Add content panel to main panel
         panel.add(contentPanel, BorderLayout.CENTER);
-        
-        // Set the line border separately
         panel.setBorder(BorderFactory.createLineBorder(new Color(0x749AAD), 1));
-        
-        // Make the panel maintain its height but stretch horizontally
         panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
-
-        // Add hover effect
+    
+        // Hover effect configuration
         Color defaultColor = new Color(0xE0E3E2);
         Color hoverColor = new Color(0xCACFCE); 
         new HoverPanelEffect(panel, defaultColor, hoverColor);
-
+    
         return panel;
     }
 }
