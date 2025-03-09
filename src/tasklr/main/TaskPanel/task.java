@@ -41,7 +41,7 @@ public class task {
         JPanel inputPanel = createPanel.panel(null, new GridBagLayout(), new Dimension(0, 0));
         
         // Username label showing logged-in user
-        JLabel usernameLabel = new JLabel("Hello, " + username + "!");
+        JLabel usernameLabel = new JLabel("Hello " + username + "!");
         usernameLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 80));
         
         // Paragraph area for task description
@@ -96,8 +96,8 @@ public class task {
         JPanel spacer = createPanel.panel(null, null, new Dimension(0, 300));
         
         // Add components using ComponentUtil
-        ComponentUtil.addComponent(inputPanel, usernameLabel, 0, 0, 2, 1, new Insets(10, 20, 10, 5), 0);
-        ComponentUtil.addComponent(inputPanel, paragraph, 0, 1, 2, 1, new Insets(10, 40, 20, 10), 0);
+        ComponentUtil.addComponent(inputPanel, usernameLabel, 0, 0, 2, 1, new Insets(10, 10, 10, 5), 0);
+        ComponentUtil.addComponent(inputPanel, paragraph, 0, 1, 2, 1, new Insets(10, 10, 20, 10), 0);
         ComponentUtil.addComponent(inputPanel, AddTaskComponent, 0, 2, 2, 1, new Insets(20, 10, 10, 5), 0);
         ComponentUtil.addComponent(inputPanel, AddDueComponent, 0, 3, 1, 1, new Insets(5, 10, 10, 5), 0);
         ComponentUtil.addComponent(inputPanel, spacer, 0, 4, 2, 1, new Insets(10, 10, 10, 10), 0);
@@ -189,7 +189,7 @@ public class task {
         titleLabel.setFont(new Font("Segoe UI Variable", Font.PLAIN, 14));
         
         // Button panel for edit and delete
-        JPanel buttonPanel = createPanel.panel(new Color(0xE0E3E2), new FlowLayout(FlowLayout.RIGHT, 5, 0), null);
+        JPanel buttonPanel = createPanel.panel(null, new FlowLayout(FlowLayout.RIGHT, 5, 0), null);
         
         // Edit button
         JButton editBtn = new JButton("Edit");
@@ -264,7 +264,7 @@ public class task {
     
         // Hover effect configuration
         Color defaultColor = new Color(0xE0E3E2);
-        Color hoverColor = new Color(0xCACFCE); 
+        Color hoverColor = new Color(0xE8EAED); 
         new HoverPanelEffect(panel, defaultColor, hoverColor);
     
         return panel;

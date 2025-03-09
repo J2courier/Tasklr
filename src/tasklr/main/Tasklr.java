@@ -4,6 +4,7 @@ package tasklr.main;
 import javax.swing.*;
 import java.awt.*;
 
+import tasklr.main.quizPanel.StudyPanel;
 import tasklr.main.TaskPanel.TaskFetcher;
 import tasklr.main.TaskPanel.task;
 import tasklr.main.overveiw.overview;
@@ -37,14 +38,19 @@ public class Tasklr extends JFrame {
 
         ImageIcon homeBtn = new ImageIcon(new ImageIcon("C:/Users/ADMIN/Desktop/Tasklr/resource/icons/HomeLogo.png").getImage().getScaledInstance(40, 40, Image.SCALE_SMOOTH));
         ImageIcon taskBtn = new ImageIcon(new ImageIcon("C:/Users/ADMIN/Desktop/Tasklr/resource/icons/TaskLogo.png").getImage().getScaledInstance(40, 40, Image.SCALE_SMOOTH));
-        
+        ImageIcon quizBtn = new ImageIcon(new ImageIcon("C:/Users/ADMIN/Desktop/Tasklr/resource/icons/AddQuizWhite.png").getImage().getScaledInstance(40, 40, Image.SCALE_SMOOTH));
+
         JLabel homeBtnIcon = new JLabel(homeBtn);
         JLabel taskBtnIcon = new JLabel(taskBtn);
+        JLabel quizBtnIcon = new JLabel(quizBtn);
+        
         navbar.add(homeBtnIcon);
         navbar.add(taskBtnIcon);
+        navbar.add(quizBtnIcon);
   
         body.add(homePanel(username), "homePanel");
         body.add(task.createTaskPanel(username), "taskPanel");
+        body.add(StudyPanel.createStudyPanel(username), "quizPanel");
         
         CardLayout cardLayout = (CardLayout) body.getLayout();
         
@@ -57,6 +63,12 @@ public class Tasklr extends JFrame {
         taskBtnIcon.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 cardLayout.show(body, "taskPanel");
+            }
+        });
+        
+        quizBtnIcon.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                cardLayout.show(body, "quizPanel");
             }
         });
     
