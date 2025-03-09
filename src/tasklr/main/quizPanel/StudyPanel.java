@@ -37,8 +37,10 @@ public class StudyPanel {
         Border navBorder = BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0x749AAD));
         navPanel.setBorder(navBorder);
 
-        JButton flashcardBtn = createButton.button("Flashcards", null, new Color(0x0065D9),null, false);
-        JButton quizzerBtn = createButton.button("Quizzer", null, new Color(0x0065D9), null, false);
+        JButton flashcardBtn = createButton.button("Flashcards", new Color(0x0082FC), Color.WHITE,null, false);
+        flashcardBtn.setPreferredSize(new Dimension(100, 40));
+        JButton quizzerBtn = createButton.button("Quizzer", new Color(0x0082FC), Color.WHITE, null, false);
+        quizzerBtn.setPreferredSize(new Dimension(100, 40));
 
         flashcardBtn.addActionListener(e -> cardLayout.show(cardPanel, "flashcard"));
         quizzerBtn.addActionListener(e -> cardLayout.show(cardPanel, "quizzer"));

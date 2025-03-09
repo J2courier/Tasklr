@@ -15,7 +15,6 @@ public class FlashcardPanel {
     private static final String dbPass = "";
     private static JPanel quizContainer;
     private static JScrollPane scrollPane;
-    // Add these new fields
     private static CardLayout cardLayout;
     private static JPanel mainCardPanel;
     private static JPanel inputPanel;
@@ -37,10 +36,9 @@ public class FlashcardPanel {
         mainCardPanel.add(flashcardModePanel, "flashcardMode");
         
         JPanel listContainer = createListContainer();
-        
+
         panel.add(mainCardPanel, BorderLayout.CENTER);
         panel.add(listContainer, BorderLayout.WEST);
-        
         return panel;
     }
 
@@ -108,7 +106,6 @@ public class FlashcardPanel {
         ComponentUtil.addComponent(inputPanel, definitionLabel, 0, 4, 1, 1, new Insets(5, 10, 5, 5), 0);
         ComponentUtil.addComponent(inputPanel, definitionScroll, 0, 5, 2, 1, new Insets(0, 10, 10, 5), 0);
         ComponentUtil.addComponent(inputPanel, buttonPanel, 0, 6, 2, 1, new Insets(0, 10, 10, 5), 0);
-        
         return inputPanel;
     }
 
@@ -135,8 +132,6 @@ public class FlashcardPanel {
 
     private static void refreshQuizContainer() {
         if (quizContainer == null) return;
-        
-        // Clear existing content
         quizContainer.removeAll();
         
         try (Connection conn = DriverManager.getConnection(url, dbUser, dbPass)) {
@@ -187,13 +182,32 @@ public class FlashcardPanel {
         JPanel mainPanel = createPanel.panel(null, new BorderLayout(), new Dimension(400, 0));
         mainPanel.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 1, new Color(0x749AAD)));
 
-        // Create title panel
+        // Create title panel with FlowLayout to accommodate both title and button
         JPanel titlePanel = createPanel.panel(null, new BorderLayout(), null);
         titlePanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         
+        // Create a container for the title and view button
+        JPanel headerContainer = createPanel.panel(null, new BorderLayout(), null);
+        
+        // Add title label
         JLabel titleLabel = new JLabel("My Flashcards");
         titleLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 18));
-        titlePanel.add(titleLabel, BorderLayout.CENTER);
+        headerContainer.add(titleLabel, BorderLayout.WEST);
+        
+        // Create and style view button
+        JButton viewButton = createButton.button("View All", null, Color.WHITE, null, false);
+        viewButton.setBackground(new Color(0x0065D9));
+        viewButton.setFont(new Font("Segoe UI Variable", Font.PLAIN, 12));
+        viewButton.setPreferredSize(new Dimension(80, 30));
+        
+        // Add action listener to view button
+        viewButton.addActionListener(e -> cardLayout.show(mainCardPanel, "flashcardMode"));
+        
+        // Add button to header container
+        headerContainer.add(viewButton, BorderLayout.EAST);
+        
+        // Add header container to title panel
+        titlePanel.add(headerContainer, BorderLayout.CENTER);
 
         // Initialize quiz container
         quizContainer = createPanel.panel(Color.WHITE, null, null);
@@ -210,8 +224,6 @@ public class FlashcardPanel {
         // Add components to main panel
         mainPanel.add(titlePanel, BorderLayout.NORTH);
         mainPanel.add(scrollPane, BorderLayout.CENTER);
-
-        // Initial load of flashcards
         refreshQuizContainer();
 
         return mainPanel;
@@ -291,38 +303,41 @@ public class FlashcardPanel {
             }
         });
         
-        // Set cursor for better UX
         contentPanel.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        
-        // Assemble all panels
         contentPanel.add(textPanel, BorderLayout.CENTER);
         contentPanel.add(buttonPanel, BorderLayout.EAST);
         panel.add(contentPanel, BorderLayout.CENTER);
-        
         return panel;
     }
-    // Add new method for flashcard mode panel
+   
     private static JPanel createFlashcardModePanel() {
-        JPanel panel = createPanel.panel(null, new BorderLayout(), new Dimension(100, 100));
+        // Main container that will be scrollable
+        JPanel mainContainer = createPanel.panel(Color.WHITE, new BorderLayout(), null);
+        mainContainer.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         
-        // Create container for flashcards
-        JPanel cardsContainer = createPanel.panel(null, null, null);
-        cardsContainer.setLayout(new BoxLayout(cardsContainer, BoxLayout.Y_AXIS));
-        cardsContainer.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        // Create back button panel (this will stay fixed at top)
+        JPanel buttonPanel = createPanel.panel(null, new FlowLayout(FlowLayout.LEFT), null);
+        buttonPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         
-        // Add back button
         JButton backButton = createButton.button("Back to Input", null, Color.WHITE, null, false);
         backButton.setBackground(new Color(0x0065D9));
         backButton.setPreferredSize(new Dimension(120, 40));
         backButton.addActionListener(e -> cardLayout.show(mainCardPanel, "input"));
-        
-        JPanel buttonPanel = createPanel.panel(null, new FlowLayout(FlowLayout.LEFT), null);
-        buttonPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         buttonPanel.add(backButton);
         
-        // Add title
-        JLabel titleLabel = new JLabel("Flashcards", SwingConstants.CENTER);
+        // Content panel that will hold title and cards
+        JPanel contentPanel = createPanel.panel(Color.WHITE, new BorderLayout(), null);
+        contentPanel.setBorder(BorderFactory.createEmptyBorder(20, 0, 0, 0));
+        
+        // Create title
+        JLabel titleLabel = new JLabel("Study Mode", SwingConstants.CENTER);
         titleLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 24));
+        titleLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 20, 0));
+        
+        buttonPanel.add(titleLabel);
+        // Create container for flashcards with BoxLayout
+        JPanel cardsContainer = createPanel.panel(Color.WHITE, null, null);
+        cardsContainer.setLayout(new BoxLayout(cardsContainer, BoxLayout.Y_AXIS));
         
         // Load flashcards
         try (Connection conn = DriverManager.getConnection(url, dbUser, dbPass)) {
@@ -334,6 +349,7 @@ public class FlashcardPanel {
                 while (rs.next()) {
                     JPanel cardPanel = createFlashcardModeItem(rs.getString("term"), rs.getString("definition"));
                     cardsContainer.add(cardPanel);
+                    // Add spacing between cards
                     cardsContainer.add(Box.createRigidArea(new Dimension(0, 10)));
                 }
             }
@@ -341,36 +357,66 @@ public class FlashcardPanel {
             ex.printStackTrace();
         }
         
-        JScrollPane scrollPane = new JScrollPane(cardsContainer);
+        // Add cards container to content panel
+        contentPanel.add(cardsContainer, BorderLayout.CENTER);
+        
+        // Add content panel to main container
+        mainContainer.add(contentPanel, BorderLayout.CENTER);
+        
+        // Create the main scroll pane that will contain everything except the back button
+        JScrollPane scrollPane = new JScrollPane(mainContainer);
         scrollPane.setBorder(null);
+        scrollPane.getVerticalScrollBar().setUnitIncrement(16); // Smoother scrolling
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         
-        panel.add(buttonPanel, BorderLayout.NORTH);
-        panel.add(titleLabel, BorderLayout.CENTER);
-        panel.add(scrollPane, BorderLayout.SOUTH);
+        // Final panel to hold both fixed button panel and scrollable content
+        JPanel finalPanel = createPanel.panel(null, new BorderLayout(), new Dimension(100, 100));
+        finalPanel.add(buttonPanel, BorderLayout.NORTH); // Fixed at top
+        finalPanel.add(scrollPane, BorderLayout.CENTER); // Scrollable content
         
-        return panel;
+        return finalPanel;
     }
     
     private static JPanel createFlashcardModeItem(String term, String definition) {
-        JPanel panel = createPanel.panel(new Color(0xFFFFFF), new BorderLayout(), new Dimension(0, 150));
+
+        JPanel panel = createPanel.panel(null, new BorderLayout(), new Dimension(0, 150));
+        panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 150)); 
         panel.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(new Color(0x749AAD), 1),
             BorderFactory.createEmptyBorder(15, 15, 15, 15)
         ));
         
+        // Add hover effect
+        panel.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                panel.setBackground(new Color(0xF5F5F5));
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                panel.setBackground(new Color(0xFFFFFF));
+            }
+        });
+        
+        // Term panel
+        JPanel termPanel = createPanel.panel(null, new FlowLayout(FlowLayout.LEFT), null);
+        termPanel.setOpaque(false);
+        
         JLabel termLabel = new JLabel(term);
         termLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 18));
-        
+        termPanel.add(termLabel);
+    
         JTextArea definitionArea = new JTextArea(definition);
         definitionArea.setFont(new Font("Segoe UI Variable", Font.PLAIN, 14));
         definitionArea.setLineWrap(true);
         definitionArea.setWrapStyleWord(true);
         definitionArea.setEditable(false);
-        definitionArea.setBackground(new Color(0xFFFFFF));
+        definitionArea.setBackground(panel.getBackground());
         
-        panel.add(termLabel, BorderLayout.NORTH);
-        panel.add(definitionArea, BorderLayout.CENTER);
-        
+        JScrollPane definitionScroll = new JScrollPane(definitionArea);
+        definitionScroll.setBorder(null);
+        definitionScroll.setBackground(panel.getBackground());
+    
+        panel.add(termPanel, BorderLayout.NORTH);
+        panel.add(definitionScroll, BorderLayout.CENTER);
         return panel;
     }
 
