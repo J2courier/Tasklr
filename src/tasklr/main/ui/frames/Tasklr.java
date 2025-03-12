@@ -1,13 +1,13 @@
-package tasklr.main;
+package tasklr.main.ui.frames;
 
 //utilties
 import javax.swing.*;
 import java.awt.*;
 
-import tasklr.main.quizPanel.StudyPanel;
-import tasklr.main.TaskPanel.TaskFetcher;
-import tasklr.main.TaskPanel.task;
-import tasklr.main.overveiw.overview;
+import tasklr.main.ui.panels.TaskPanel.TaskFetcher;
+import tasklr.main.ui.panels.TaskPanel.task;
+import tasklr.main.ui.panels.overveiw.overview;
+import tasklr.main.ui.panels.quizPanel.StudyPanel;
 import tasklr.utilities.createPanel;
 import tasklr.authentication.login;
 

@@ -1,4 +1,4 @@
-package tasklr.main.overveiw;
+package tasklr.main.ui.components;
 
 import javax.swing.*;
 import javax.swing.border.Border;

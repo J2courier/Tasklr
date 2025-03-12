@@ -1,4 +1,4 @@
-package tasklr.main.TaskPanel;
+package tasklr.main.ui.panels.TaskPanel;
 
 import java.sql.*;
 import java.util.ArrayList;

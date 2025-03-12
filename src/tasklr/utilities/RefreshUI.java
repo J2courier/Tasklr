@@ -1,9 +1,9 @@
-package tasklr.main;
+package tasklr.utilities;
 
 import javax.swing.*;
 
-import tasklr.main.TaskPanel.TaskFetcher;
-import tasklr.main.overveiw.TaskCounterPanel;
+import tasklr.main.ui.components.TaskCounterPanel;
+import tasklr.main.ui.panels.TaskPanel.TaskFetcher;
 
 import java.util.Map;
 

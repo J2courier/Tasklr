@@ -5,9 +5,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import tasklr.main.Tasklr;
 
 import tasklr.authentication.UserSession;
+import tasklr.main.ui.frames.Tasklr;
 
 public class login extends JFrame {
     private JPanel centerContainer; 

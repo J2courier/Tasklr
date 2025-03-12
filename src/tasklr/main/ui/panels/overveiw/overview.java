@@ -1,10 +1,12 @@
-package tasklr.main.overveiw;
+package tasklr.main.ui.panels.overveiw;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 
 import java.awt.*;
-import tasklr.main.RefreshUI;
+
+import tasklr.main.ui.components.TaskCounterPanel;
+import tasklr.utilities.RefreshUI;
 import tasklr.utilities.createPanel;
 
 public class overview {

@@ -16,7 +16,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import javax.swing.border.Border;
 
-import tasklr.main.Tasklr;
+import tasklr.main.ui.frames.Tasklr;
 
 public class signup extends JFrame {
     private JTextField createUsernameField;

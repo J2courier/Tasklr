@@ -1,4 +1,4 @@
-package tasklr.main.quizPanel;
+package tasklr.main.ui.panels.quizPanel;
 
 import javax.swing.*;
 import javax.swing.border.Border;
