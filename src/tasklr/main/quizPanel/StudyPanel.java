@@ -11,7 +11,7 @@ public class StudyPanel {
     private static JPanel cardPanel;
 
     public static JPanel createStudyPanel(String username) {
-        JPanel mainPanel = createPanel.panel(new Color(0xf1f3f6), new BorderLayout(), new Dimension(100, 100));
+        JPanel mainPanel = createPanel.panel(new Color(0xFFFFFF), new BorderLayout(), new Dimension(100, 100));
         Border mainBorder = BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0x6D6D6D));
         mainPanel.setBorder(mainBorder);
 
@@ -33,8 +33,8 @@ public class StudyPanel {
     }
 
     private static JPanel createNavPanel() {
-        JPanel navPanel = createPanel.panel(new Color(0xFFFFFF), new FlowLayout(FlowLayout.LEFT), new Dimension(0, 50));
-        Border navBorder = BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0x749AAD));
+        JPanel navPanel = createPanel.panel(new Color(0xE0E3E2), new FlowLayout(FlowLayout.LEFT), new Dimension(0, 50));
+        Border navBorder = BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0xE0E3E2));
         navPanel.setBorder(navBorder);
 
         JButton flashcardBtn = createButton.button("Flashcards", new Color(0x0082FC), Color.WHITE,null, false);

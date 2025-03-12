@@ -3,11 +3,15 @@ package tasklr.authentication;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import javax.swing.border.Border;
@@ -18,6 +22,7 @@ public class signup extends JFrame {
     private JTextField createUsernameField;
     private JTextField createPasswordField;
     private JPasswordField confirmPasswordField;
+    private JButton signupButton; // Add this field to access the button
 
     public signup() {
         pack();
@@ -77,14 +82,28 @@ public class signup extends JFrame {
         gbc.gridy = 5;
         signupPanel.add(confirmPasswordField, gbc);
 
-        // Signup button
-        JButton signupButton = new JButton("Sign Up");
+        // Create signup button
+        signupButton = new JButton("Sign Up"); // Store reference to the button
         signupButton.setFocusable(false);
         signupButton.setForeground(Color.WHITE);
         signupButton.setPreferredSize(new Dimension(0, 40));
         signupButton.setBackground(new Color(0x2E5AEA));    
         gbc.gridy = 6;
         signupPanel.add(signupButton, gbc);
+
+        // Add KeyListener to all input fields
+        KeyAdapter enterKeyListener = new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                    signupButton.doClick();
+                }
+            }
+        };
+
+        createUsernameField.addKeyListener(enterKeyListener);
+        createPasswordField.addKeyListener(enterKeyListener);
+        confirmPasswordField.addKeyListener(enterKeyListener);
 
         // Login label and button
         JLabel loginLabel = new JLabel("Already have an account?");
@@ -109,14 +128,15 @@ public class signup extends JFrame {
                 String password = createPasswordField.getText();
                 String confirmPassword = new String(confirmPasswordField.getPassword());
 
-                if (password.equals(confirmPassword)) { // Check if passwords match
-                    String hashedPassword = hashPassword(password); // Hash the password
-                    if (insertUser(username, hashedPassword)) { // Insert user into database
+                if (password.equals(confirmPassword)) {
+                    String hashedPassword = hashPassword(password);
+                    if (insertUser(username, hashedPassword)) {
                         createUsernameField.setText("");
                         createPasswordField.setText("");
                         confirmPasswordField.setText("");
-                        new Tasklr(username).setVisible(true); // Open main Tasklr application
-                        dispose(); // Close signup window
+                        // UserSession is already created in insertUser
+                        new Tasklr(username).setVisible(true);
+                        dispose();
                     }
                 } else {
                     JOptionPane.showMessageDialog(signup.this, "Passwords do not match!");
@@ -161,20 +181,56 @@ public class signup extends JFrame {
         String url = "jdbc:mysql://localhost:3306/tasklrdb";
         String user = "JFCompany";
         String pass = "";
-
+        
         try (Connection conn = DriverManager.getConnection(url, user, pass)) {
+            // Start transaction
+            conn.setAutoCommit(false);
+            
+            // Insert user and get generated ID
             String query = "INSERT INTO users (username, password) VALUES (?, ?)";
-            try (PreparedStatement stmt = conn.prepareStatement(query)) {
+            try (PreparedStatement stmt = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
                 stmt.setString(1, username);
                 stmt.setString(2, hashedPassword);
-                stmt.executeUpdate();
-                JOptionPane.showMessageDialog(this, "Registered Successfully!");
-                return true;
+                
+                int result = stmt.executeUpdate();
+                
+                if (result > 0) {
+                    // Get the generated user ID
+                    try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
+                        if (generatedKeys.next()) {
+                            int userId = generatedKeys.getInt(1);
+                            
+                            // Generate session token
+                            String sessionToken = java.util.UUID.randomUUID().toString();
+                            
+                            // Insert session record
+                            String sessionQuery = "INSERT INTO sessions (user_id, session_token) VALUES (?, ?)";
+                            try (PreparedStatement sessionStmt = conn.prepareStatement(sessionQuery)) {
+                                sessionStmt.setInt(1, userId);
+                                sessionStmt.setString(2, sessionToken);
+                                sessionStmt.executeUpdate();
+                                
+                                // Commit transaction
+                                conn.commit();
+                                
+                                // Create user session
+                                UserSession.createSession(userId, username, sessionToken);
+                                
+                                JOptionPane.showMessageDialog(this, "Registered Successfully!");
+                                return true;
+                            }
+                        }
+                    }
+                }
+            } catch (SQLException ex) {
+                // Rollback on error
+                conn.rollback();
+                throw ex;
             }
         } catch (SQLException ex) {
             ex.printStackTrace();
             JOptionPane.showMessageDialog(this, "Error inserting user: " + ex.getMessage());
-            return false;
         }
+        return false;
     }
 }

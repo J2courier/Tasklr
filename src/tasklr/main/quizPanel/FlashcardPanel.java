@@ -43,7 +43,7 @@ public class FlashcardPanel {
     }
 
     private static JPanel createFlashcardInputPanel(String username) {
-        JPanel inputPanel = createPanel.panel(null, new GridBagLayout(), new Dimension(0, 0));
+        JPanel inputPanel = createPanel.panel(Color.WHITE, new GridBagLayout(), new Dimension(0, 0));
         
         // Welcome message
         JLabel usernameLabel = new JLabel("Hello " + username + "!");
@@ -180,7 +180,7 @@ public class FlashcardPanel {
     public static JPanel createListContainer() {
         // Create main panel with fixed width
         JPanel mainPanel = createPanel.panel(null, new BorderLayout(), new Dimension(400, 0));
-        mainPanel.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 1, new Color(0x749AAD)));
+        // mainPanel.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 1, new Color(0xFFFFFF)));
 
         // Create title panel with FlowLayout to accommodate both title and button
         JPanel titlePanel = createPanel.panel(null, new BorderLayout(), null);
