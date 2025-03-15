@@ -159,18 +159,18 @@ public class task {
         Border border = BorderFactory.createMatteBorder(1, 0, 0, 1, new Color(0x749AAD));
         mainPanel.setBorder(border);
 
-        // Store this container as a class field so we can access it later
         taskContainer = createPanel.panel(null, null, null);
         taskContainer.setLayout(new BoxLayout(taskContainer, BoxLayout.Y_AXIS));
         taskContainer.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        // Fetch and add tasks
         refreshTaskContainer();
 
-        // Wrap the container in a scroll pane
-        scrollPane = new JScrollPane(taskContainer); // Store as class field
+        scrollPane = new JScrollPane(taskContainer);
         scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+        
+        // Improve scroll speed - multiply by panel height (50) plus spacing (5)
+        scrollPane.getVerticalScrollBar().setUnitIncrement((50 + 5) * 3);
         
         mainPanel.add(scrollPane, BorderLayout.CENTER);
         return mainPanel;

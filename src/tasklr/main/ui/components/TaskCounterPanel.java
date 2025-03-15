@@ -1,70 +1,56 @@
 package tasklr.main.ui.components;
 
 import javax.swing.*;
-import javax.swing.border.Border;
-
-import tasklr.utilities.createPanel;
-
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 
-public class TaskCounterPanel {
-    private int taskCount;
-    private JLabel countLabel;
-    private String taskType;
-
-    public TaskCounterPanel(int taskCount, String taskType) {
-        this.taskCount = taskCount;
-        this.taskType = taskType;
+public class TaskCounterPanel extends BaseComponent {
+    private static final Color BORDER_COLOR = new Color(0x749AAD);
+    private static final int PANEL_WIDTH = 200;
+    private static final int PANEL_HEIGHT = 100;
+    
+    private final JLabel counterLabel;
+    private final String title;
+    private int count;
+    
+    public TaskCounterPanel(int initialCount, String title) {
+        super(new BorderLayout());
+        this.count = initialCount;
+        this.title = title;
+        this.counterLabel = new JLabel(String.valueOf(count), SwingConstants.CENTER);
+        setupPanel();
     }
-
-    public JPanel createPanel() {
-        JPanel panel = createPanel.panel(null, new BorderLayout(), new Dimension(100, 300));
-        Border panelBorder = BorderFactory.createLineBorder(new Color(0xB9B9B9), 1);
-        panel.setBorder(panelBorder);
-
-        JPanel countPanel = createPanel.panel(null, new BorderLayout(), new Dimension(0, 170));
-        Border border = BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0xB9B9B9));
-        countPanel.setBorder(border);
-
-        JPanel labelPanel = createPanel.panel(null, new BorderLayout(), new Dimension(0, 50));
-
-        countLabel = new JLabel(String.valueOf(taskCount), SwingConstants.CENTER);
-        countLabel.setForeground(new Color(0x414141));
-        countLabel.setFont(new Font("Arial", Font.BOLD, 50));
-        countPanel.add(countLabel, BorderLayout.CENTER);
-
-        JLabel taskLabel = new JLabel(taskType.toUpperCase(), SwingConstants.CENTER);
-        taskLabel.setForeground(Color.BLACK);
-        taskLabel.setFont(new Font("Arial", Font.PLAIN, 16));
-        taskLabel.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                new PopUpFrame(taskLabel.getText()).setVisible(true);
-            }
-        });
-        labelPanel.add(taskLabel, BorderLayout.CENTER);
-
-        // Add the components
-        panel.add(countPanel, BorderLayout.CENTER);
-        panel.add(labelPanel, BorderLayout.SOUTH);
-
-        return panel;
+    
+    private void setupPanel() {
+        setupSize(new Dimension(PANEL_WIDTH, PANEL_HEIGHT));
+        setupBorder(BORDER_COLOR);
+        setupLabels();
     }
-
-    public void updateTaskCount(int newCount) {
-        this.taskCount = newCount;
-        if (countLabel != null) {
-            countLabel.setText(String.valueOf(newCount));
-        }
+    
+    private void setupLabels() {
+        // Title label
+        JLabel titleLabel = new JLabel(title, SwingConstants.CENTER);
+        titleLabel.setFont(TITLE_FONT);
+        
+        // Counter label
+        counterLabel.setFont(COUNTER_FONT);
+        
+        // Add labels to panel
+        add(titleLabel, BorderLayout.NORTH);
+        add(counterLabel, BorderLayout.CENTER);
     }
-
+    
     public void updateCount(int newCount) {
-        this.taskCount = newCount;
-        if (countLabel != null) {
-            countLabel.setText(String.valueOf(newCount));
-        }
+        this.count = newCount;
+        SwingUtilities.invokeLater(() -> 
+            counterLabel.setText(String.valueOf(newCount))
+        );
     }
-
+    
+    public int getCount() {
+        return count;
+    }
+    
+    public JPanel createPanel() {
+        return this;
+    }
 }

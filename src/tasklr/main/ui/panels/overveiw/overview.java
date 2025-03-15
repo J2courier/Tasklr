@@ -1,10 +1,9 @@
 package tasklr.main.ui.panels.overveiw;
 
 import javax.swing.*;
-import javax.swing.border.Border;
-
 import java.awt.*;
-
+import tasklr.main.ui.components.ComponentFactory;
+import tasklr.main.ui.components.TaskCounterPanel;
 import tasklr.main.ui.components.TaskCounterPanel;
 import tasklr.utilities.RefreshUI;
 import tasklr.utilities.createPanel;
@@ -23,22 +22,18 @@ public class overview {
         userLabel.setHorizontalAlignment(SwingConstants.CENTER);
         profile.add(userLabel, BorderLayout.WEST);
 
-        TaskOverview task_overview_lbl = new TaskOverview();
-
-        // ✅ Task Counter Panels
         TaskCounterPanel totalTasksPanel = new TaskCounterPanel(0, "Total Tasks");
         TaskCounterPanel pendingTasksPanel = new TaskCounterPanel(0, "Pending");
         TaskCounterPanel completedTasksPanel = new TaskCounterPanel(0, "Completed");
 
-        // ✅ Start the refresh worker (moved down to avoid multiple calls)
+
         RefreshUI refreshUI = new RefreshUI(totalTasksPanel, pendingTasksPanel, completedTasksPanel);
         refreshUI.execute();
 
         JPanel spacer = createPanel.panel(null, null, new Dimension(100, 500));
 
-        // ✅ Add Components
         addComponent(panel, profile, 0, 0, 3, 1, new Insets(0, 0, 0, 0));
-        addComponent(panel, task_overview_lbl.createTaskOverviewHeader(), 0, 2, 3, 1, new Insets(0, 0, 10, 0));
+        addComponent(panel, TaskOverview.createTaskOverviewHeader(), 0, 2, 3, 1, new Insets(0, 0, 10, 0));
         addComponent(panel, pendingTasksPanel.createPanel(), 0, 4, 1, 1, new Insets(5, 5, 10, 5));
         addComponent(panel, completedTasksPanel.createPanel(), 1, 4, 1, 1, new Insets(5, 5, 10, 5));
         addComponent(panel, totalTasksPanel.createPanel(), 2, 4, 1, 1, new Insets(5, 0, 10, 5));

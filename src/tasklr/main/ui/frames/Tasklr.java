@@ -9,7 +9,7 @@ import tasklr.main.ui.panels.TaskPanel.task;
 import tasklr.main.ui.panels.overveiw.overview;
 import tasklr.main.ui.panels.quizPanel.StudyPanel;
 import tasklr.utilities.createPanel;
-import tasklr.authentication.login;
+import tasklr.authentication.Login;
 
 public class Tasklr extends JFrame {
     private String username;
@@ -50,7 +50,7 @@ public class Tasklr extends JFrame {
   
         body.add(homePanel(username), "homePanel");
         body.add(task.createTaskPanel(username), "taskPanel");
-        body.add(StudyPanel.createStudyPanel(username), "quizPanel");
+        body.add(StudyPanel.createStudyPanel(), "quizPanel");
         
         CardLayout cardLayout = (CardLayout) body.getLayout();
         
@@ -91,7 +91,7 @@ public class Tasklr extends JFrame {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             // new Tasklr("admin").setVisible(true);
-            new login().setVisible(true);
+            new Login().setVisible(true);
             TaskFetcher tf = new TaskFetcher();
             tf.getUserTasks();;
         });

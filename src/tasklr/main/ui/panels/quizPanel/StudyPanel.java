@@ -10,7 +10,7 @@ public class StudyPanel {
     private static CardLayout cardLayout;
     private static JPanel cardPanel;
 
-    public static JPanel createStudyPanel(String username) {
+    public static JPanel createStudyPanel() {
         JPanel mainPanel = createPanel.panel(new Color(0xFFFFFF), new BorderLayout(), new Dimension(100, 100));
         Border mainBorder = BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0x6D6D6D));
         mainPanel.setBorder(mainBorder);
@@ -25,8 +25,8 @@ public class StudyPanel {
         cardPanel.setLayout(cardLayout);
 
         // Add panels to card layout
-        cardPanel.add(FlashcardPanel.createFlashcardPanel(username), "flashcard");
-        cardPanel.add(QuizzerPanel.createQuizzerPanel(username), "quizzer");
+        cardPanel.add(FlashcardPanel.createFlashcardPanel(), "flashcard");
+        cardPanel.add(QuizzerPanel.createQuizzerPanel(), "quizzer");
 
         mainPanel.add(cardPanel, BorderLayout.CENTER);
         return mainPanel;

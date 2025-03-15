@@ -21,7 +21,7 @@ public class QuizzerPanel {
     private static ScheduledExecutorService scheduler;
     private static ScheduledFuture<?> refreshTask;
     
-    public static JPanel createQuizzerPanel(String username) {
+    public static JPanel createQuizzerPanel() {
         JPanel panel = createPanel.panel(null, new BorderLayout(), new Dimension(100, 100));
         
         // Create and add list container
@@ -36,11 +36,9 @@ public class QuizzerPanel {
     }
 
     private static JPanel createListContainer() {
-        // Create main panel with fixed width
         JPanel mainPanel = createPanel.panel(null, new BorderLayout(), new Dimension(400, 0));
         mainPanel.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 1, new Color(0x749AAD)));
 
-        // Create title panel
         JPanel titlePanel = createPanel.panel(null, new BorderLayout(), null);
         titlePanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         
@@ -48,19 +46,19 @@ public class QuizzerPanel {
         titleLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 18));
         titlePanel.add(titleLabel, BorderLayout.CENTER);
 
-        // Initialize quiz container
         quizContainer = createPanel.panel(Color.WHITE, null, null);
         quizContainer.setLayout(new BoxLayout(quizContainer, BoxLayout.Y_AXIS));
         quizContainer.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        // Create scroll pane
         scrollPane = new JScrollPane(quizContainer);
         scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
         scrollPane.setBorder(null);
         scrollPane.getViewport().setBackground(Color.WHITE);
+        
+        // Improve scroll speed - multiply by panel height plus spacing
+        scrollPane.getVerticalScrollBar().setUnitIncrement((80 + 5) * 3);
 
-        // Add components to main panel
         mainPanel.add(titlePanel, BorderLayout.NORTH);
         mainPanel.add(scrollPane, BorderLayout.CENTER);
 

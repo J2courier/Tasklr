@@ -1,97 +1,157 @@
 package tasklr.authentication;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import javax.swing.border.Border;
-
+import java.sql.*;
 import tasklr.main.ui.frames.Tasklr;
+import tasklr.utilities.DatabaseManager;
 
-public class signup extends JFrame {
-    private JTextField createUsernameField;
-    private JTextField createPasswordField;
-    private JPasswordField confirmPasswordField;
-    private JButton signupButton; // Add this field to access the button
+public class Signup extends JFrame {
+    private static final int WINDOW_WIDTH = 1200;
+    private static final int WINDOW_HEIGHT = 920;
+    private static final int MIN_WIDTH = 900;
+    private static final int MIN_HEIGHT = 1000;
+    private static final int PANEL_SIZE = 700;
+    private static final int FIELD_WIDTH = 500;
+    private static final int FIELD_HEIGHT = 40;
+    private static final Color BACKGROUND_COLOR = new Color(0xf1f3f6);
+    private static final Color BUTTON_COLOR = new Color(0x2E5AEA);
+    private static final String APP_ICON_PATH = "C:/Users/ADMIN/Desktop/Tasklr/resource/icons/AppLogo.png";
 
-    public signup() {
+    private final JTextField createUsernameField;
+    private final JTextField createPasswordField;
+    private final JPasswordField confirmPasswordField;
+    private final JButton signupButton;
+    private final JPanel signupPanel;
+
+    public Signup() {
+        createUsernameField = createTextField();
+        createPasswordField = createTextField();
+        confirmPasswordField = createPasswordField();
+        signupButton = createButton("Sign Up");
+        signupPanel = createSignupPanel();
+
+        initializeFrame();
+        setupComponents();
+        setupListeners();
+    }
+
+    private void initializeFrame() {
         pack();
-        setTitle("Sign up"); 
-        setSize(1200, 920); 
-        setLayout(new GridBagLayout()); 
+        setTitle("Sign up");
+        setSize(WINDOW_WIDTH, WINDOW_HEIGHT);
+        setLayout(new GridBagLayout());
         setLocationRelativeTo(null);
-        setMinimumSize(new Dimension(900, 1000));
-        getContentPane().setBackground(new Color(0xf1f3f6)); 
+        setMinimumSize(new Dimension(MIN_WIDTH, MIN_HEIGHT));
+        getContentPane().setBackground(BACKGROUND_COLOR);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
-        
-        // Set application icon
-        ImageIcon appIcon = new ImageIcon("C:/Users/ADMIN/Desktop/Tasklr/resource/icons/AppLogo.png");
-        setIconImage(appIcon.getImage());
+        setIconImage(new ImageIcon(APP_ICON_PATH).getImage());
+    }
 
-        // Create main signup panel
-        JPanel signupPanel = new JPanel(new GridBagLayout());
+    private JPanel createSignupPanel() {
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.setPreferredSize(new Dimension(PANEL_SIZE, PANEL_SIZE));
+        panel.setBackground(BACKGROUND_COLOR);
+        return panel;
+    }
 
-        signupPanel.setPreferredSize(new Dimension(700, 700)); // Set panel size
-        signupPanel.setBackground(new Color(0xf1f3f6)); // Set panel background color
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(5, 10, 10, 10);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
+    private JTextField createTextField() {
+        JTextField field = new JTextField(50);
+        field.setPreferredSize(new Dimension(FIELD_WIDTH, FIELD_HEIGHT));
+        return field;
+    }
 
-        // Username field
-        JLabel createUsernameLabel = new JLabel("Create Username");
-        createUsernameLabel.setForeground(Color.BLACK);
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.gridwidth = 2;
-        signupPanel.add(createUsernameLabel, gbc);
+    private JPasswordField createPasswordField() {
+        JPasswordField field = new JPasswordField(50);
+        field.setPreferredSize(new Dimension(FIELD_WIDTH, FIELD_HEIGHT));
+        return field;
+    }
 
-        createUsernameField = new JTextField(50);
-        createUsernameField.setPreferredSize(new Dimension(500, 40));
-        gbc.gridy = 1;
-        signupPanel.add(createUsernameField, gbc);
+    private JButton createButton(String text) {
+        JButton button = new JButton(text);
+        button.setFocusable(false);
+        button.setForeground(Color.WHITE);
+        button.setPreferredSize(new Dimension(0, FIELD_HEIGHT));
+        button.setBackground(BUTTON_COLOR);
+        return button;
+    }
 
-        // Password field
-        JLabel createPasswordLabel = new JLabel("Create Password");
-        createPasswordLabel.setForeground(Color.BLACK);
-        gbc.gridy = 2;
-        signupPanel.add(createPasswordLabel, gbc);
+    private void setupComponents() {
+        GridBagConstraints gbc = createGridBagConstraints();
 
-        createPasswordField = new JTextField(50);
-        createPasswordField.setPreferredSize(new Dimension(500, 40));
-        gbc.gridy = 3;
-        signupPanel.add(createPasswordField, gbc);
+        // Username components
+        addLabelAndField(gbc, "Create Username", createUsernameField, 0);
 
-        // Confirm password field
-        JLabel confirmPasswordLabel = new JLabel("Confirm Password");
-        confirmPasswordLabel.setForeground(Color.BLACK);
-        gbc.gridy = 4;
-        signupPanel.add(confirmPasswordLabel, gbc);
+        // Password components
+        addLabelAndField(gbc, "Create Password", createPasswordField, 2);
 
-        confirmPasswordField = new JPasswordField(50);
-        confirmPasswordField.setPreferredSize(new Dimension(500, 40));
-        gbc.gridy = 5;
-        signupPanel.add(confirmPasswordField, gbc);
+        // Confirm password components
+        addLabelAndField(gbc, "Confirm Password", confirmPasswordField, 4);
 
-        // Create signup button
-        signupButton = new JButton("Sign Up"); // Store reference to the button
-        signupButton.setFocusable(false);
-        signupButton.setForeground(Color.WHITE);
-        signupButton.setPreferredSize(new Dimension(0, 40));
-        signupButton.setBackground(new Color(0x2E5AEA));    
+        // Signup button
         gbc.gridy = 6;
         signupPanel.add(signupButton, gbc);
 
-        // Add KeyListener to all input fields
+        // Login section
+        setupLoginSection(gbc);
+
+        // Add signup panel to frame
+        addPanelToFrame();
+    }
+
+    private GridBagConstraints createGridBagConstraints() {
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(5, 10, 10, 10);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridwidth = 2;
+        return gbc;
+    }
+
+    private void addLabelAndField(GridBagConstraints gbc, String labelText, JComponent field, int gridy) {
+        JLabel label = new JLabel(labelText);
+        label.setForeground(Color.BLACK);
+        gbc.gridy = gridy;
+        signupPanel.add(label, gbc);
+
+        gbc.gridy = gridy + 1;
+        signupPanel.add(field, gbc);
+    }
+
+    private void setupLoginSection(GridBagConstraints gbc) {
+        JLabel loginLabel = new JLabel("Already have an account?");
+        loginLabel.setForeground(Color.BLACK);
+        gbc.gridy = 7;
+        gbc.gridwidth = 1;
+        signupPanel.add(loginLabel, gbc);
+
+        JButton loginButton = createButton("Login");
+        gbc.gridx = 1;
+        signupPanel.add(loginButton, gbc);
+
+        loginButton.addActionListener(e -> {
+            new Login().setVisible(true);
+            dispose();
+        });
+    }
+
+    private void addPanelToFrame() {
+        GridBagConstraints frameGbc = new GridBagConstraints();
+        frameGbc.gridx = 0;
+        frameGbc.gridy = 0;
+        frameGbc.anchor = GridBagConstraints.CENTER;
+        add(signupPanel, frameGbc);
+    }
+
+    private void setupListeners() {
+        setupKeyListeners();
+        setupSignupButtonListener();
+    }
+
+    private void setupKeyListeners() {
         KeyAdapter enterKeyListener = new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
@@ -104,64 +164,35 @@ public class signup extends JFrame {
         createUsernameField.addKeyListener(enterKeyListener);
         createPasswordField.addKeyListener(enterKeyListener);
         confirmPasswordField.addKeyListener(enterKeyListener);
-
-        // Login label and button
-        JLabel loginLabel = new JLabel("Already have an account?");
-        loginLabel.setForeground(Color.BLACK);
-        gbc.gridy = 7;
-        gbc.gridwidth = 1;
-        signupPanel.add(loginLabel, gbc);
-
-        JButton loginButton = new JButton("Login");
-        loginButton.setFocusable(false);
-        loginButton.setForeground(Color.WHITE);
-        loginButton.setPreferredSize(new Dimension(0, 40));
-        loginButton.setBackground(new Color(0x2E5AEA));
-        gbc.gridx = 1;
-        signupPanel.add(loginButton, gbc);
-
-        // Signup button action listener
-        signupButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String username = createUsernameField.getText();
-                String password = createPasswordField.getText();
-                String confirmPassword = new String(confirmPasswordField.getPassword());
-
-                if (password.equals(confirmPassword)) {
-                    String hashedPassword = hashPassword(password);
-                    if (insertUser(username, hashedPassword)) {
-                        createUsernameField.setText("");
-                        createPasswordField.setText("");
-                        confirmPasswordField.setText("");
-                        // UserSession is already created in insertUser
-                        new Tasklr(username).setVisible(true);
-                        dispose();
-                    }
-                } else {
-                    JOptionPane.showMessageDialog(signup.this, "Passwords do not match!");
-                }
-            }
-        });
-
-        // Login button action listener
-        loginButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                new login().setVisible(true); // Open login window
-                dispose(); // Close signup window
-            }
-        });
-
-        // Add signup panel to frame
-        GridBagConstraints frameGbc = new GridBagConstraints();
-        frameGbc.gridx = 0;
-        frameGbc.gridy = 0;
-        frameGbc.anchor = GridBagConstraints.CENTER;
-        add(signupPanel, frameGbc);
     }
 
-    // Method to hash password using SHA-256
+    private void setupSignupButtonListener() {
+        signupButton.addActionListener(e -> handleSignup());
+    }
+
+    private void handleSignup() {
+        String username = createUsernameField.getText();
+        String password = createPasswordField.getText();
+        String confirmPassword = new String(confirmPasswordField.getPassword());
+
+        if (password.equals(confirmPassword)) {
+            String hashedPassword = hashPassword(password);
+            if (insertUser(username, hashedPassword)) {
+                clearFields();
+                new Tasklr(username).setVisible(true);
+                dispose();
+            }
+        } else {
+            JOptionPane.showMessageDialog(this, "Passwords do not match!");
+        }
+    }
+
+    private void clearFields() {
+        createUsernameField.setText("");
+        createPasswordField.setText("");
+        confirmPasswordField.setText("");
+    }
+
     private String hashPassword(String password) {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
@@ -176,54 +207,21 @@ public class signup extends JFrame {
         }
     }
 
-    // Method to insert user into database
     private boolean insertUser(String username, String hashedPassword) {
-        String url = "jdbc:mysql://localhost:3306/tasklrdb";
-        String user = "JFCompany";
-        String pass = "";
-        
-        try (Connection conn = DriverManager.getConnection(url, user, pass)) {
-            // Start transaction
+        try (Connection conn = DatabaseManager.getConnection()) {
             conn.setAutoCommit(false);
             
-            // Insert user and get generated ID
-            String query = "INSERT INTO users (username, password) VALUES (?, ?)";
-            try (PreparedStatement stmt = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
-                stmt.setString(1, username);
-                stmt.setString(2, hashedPassword);
-                
-                int result = stmt.executeUpdate();
-                
-                if (result > 0) {
-                    // Get the generated user ID
-                    try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
-                        if (generatedKeys.next()) {
-                            int userId = generatedKeys.getInt(1);
-                            
-                            // Generate session token
-                            String sessionToken = java.util.UUID.randomUUID().toString();
-                            
-                            // Insert session record
-                            String sessionQuery = "INSERT INTO sessions (user_id, session_token) VALUES (?, ?)";
-                            try (PreparedStatement sessionStmt = conn.prepareStatement(sessionQuery)) {
-                                sessionStmt.setInt(1, userId);
-                                sessionStmt.setString(2, sessionToken);
-                                sessionStmt.executeUpdate();
-                                
-                                // Commit transaction
-                                conn.commit();
-                                
-                                // Create user session
-                                UserSession.createSession(userId, username, sessionToken);
-                                
-                                JOptionPane.showMessageDialog(this, "Registered Successfully!");
-                                return true;
-                            }
-                        }
-                    }
+            try {
+                int userId = insertUserRecord(conn, username, hashedPassword);
+                if (userId != -1) {
+                    String sessionToken = insertSessionRecord(conn, userId);
+                    conn.commit();
+                    
+                    UserSession.createSession(userId, username, sessionToken);
+                    JOptionPane.showMessageDialog(this, "Registered Successfully!");
+                    return true;
                 }
             } catch (SQLException ex) {
-                // Rollback on error
                 conn.rollback();
                 throw ex;
             }
@@ -232,5 +230,35 @@ public class signup extends JFrame {
             JOptionPane.showMessageDialog(this, "Error inserting user: " + ex.getMessage());
         }
         return false;
+    }
+
+    private int insertUserRecord(Connection conn, String username, String hashedPassword) throws SQLException {
+        String query = "INSERT INTO users (username, password) VALUES (?, ?)";
+        try (PreparedStatement stmt = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
+            stmt.setString(1, username);
+            stmt.setString(2, hashedPassword);
+            
+            int result = stmt.executeUpdate();
+            if (result > 0) {
+                try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
+                    if (generatedKeys.next()) {
+                        return generatedKeys.getInt(1);
+                    }
+                }
+            }
+        }
+        return -1;
+    }
+    
+    private String insertSessionRecord(Connection conn, int userId) throws SQLException {
+        String sessionToken = java.util.UUID.randomUUID().toString();
+        String sessionQuery = "INSERT INTO sessions (user_id, session_token) VALUES (?, ?)";
+        
+        try (PreparedStatement sessionStmt = conn.prepareStatement(sessionQuery)) {
+            sessionStmt.setInt(1, userId);
+            sessionStmt.setString(2, sessionToken);
+            sessionStmt.executeUpdate();
+            return sessionToken;
+        }
     }
 }

@@ -1,76 +1,138 @@
 package tasklr.authentication;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
 public class LoginPanel {
-    private JPanel loginPanel;
-    private JTextField usernameField;
-    private JPasswordField passwordField;
-    private JButton loginButton;
-    private JButton signupButton;
-
+    private static final int FIELD_WIDTH = 500;
+    private static final int FIELD_HEIGHT = 40;
+    private static final int BUTTON_HEIGHT = 40;
+    private static final Color BUTTON_COLOR = new Color(0x2E5AEA);
+    private static final Color TEXT_COLOR = Color.WHITE;
+    private static final String LOGO_PATH = "C://Users//ADMIN//Desktop//Tasklr//resource//icons//logo1.png";
+    private static final Dimension PANEL_SIZE = new Dimension(700, 700);
+    
+    private final JPanel loginPanel;
+    private final JTextField usernameField;
+    private final JPasswordField passwordField;
+    private final JButton loginButton;
+    private final JButton signupButton;
+    
     public LoginPanel() {
-        loginPanel = new JPanel(new GridBagLayout());
-        // Border loginBorder = BorderFactory.createMatteBorder(1, 1, 1, 1, new Color(0x6D6D6D));
-        // loginPanel.setBorder(loginBorder);
-        loginPanel.setPreferredSize(new Dimension(700, 700));
-        loginPanel.setBackground(null);
+        loginPanel = createMainPanel();
+        usernameField = createTextField();
+        passwordField = createPasswordField();
+        loginButton = createButton("Login");
+        signupButton = createButton("Sign Up");
+        
+        setupLayout();
+        setupKeyListeners();
+    }
 
+    private JPanel createMainPanel() {
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.setPreferredSize(PANEL_SIZE);
+        panel.setBackground(null);
+        return panel;
+    }
+
+    private JTextField createTextField() {
+        JTextField field = new JTextField(50);
+        field.setPreferredSize(new Dimension(FIELD_WIDTH, FIELD_HEIGHT));
+        return field;
+    }
+
+    private JPasswordField createPasswordField() {
+        JPasswordField field = new JPasswordField(50);
+        field.setPreferredSize(new Dimension(FIELD_WIDTH, FIELD_HEIGHT));
+        return field;
+    }
+
+    private JButton createButton(String text) {
+        JButton button = new JButton(text);
+        button.setForeground(TEXT_COLOR);
+        button.setFocusable(false);
+        button.setPreferredSize(new Dimension(0, BUTTON_HEIGHT));
+        button.setBackground(BUTTON_COLOR);
+        return button;
+    }
+
+    private void setupLayout() {
+        GridBagConstraints gbc = createGridBagConstraints();
+
+        // Add logo
+        addLogo(gbc);
+
+        // Add username components
+        addUsernameComponents(gbc);
+
+        // Add password components
+        addPasswordComponents(gbc);
+
+        // Add buttons
+        addButtons(gbc);
+    }
+
+    private GridBagConstraints createGridBagConstraints() {
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(5, 10, 10, 10);
         gbc.fill = GridBagConstraints.HORIZONTAL;
+        return gbc;
+    }
 
-        ImageIcon CompLogo = new ImageIcon("C://Users//ADMIN//Desktop//Tasklr//resource//icons//logo1.png");
-        JLabel logoLabel = new JLabel(CompLogo);
+    private void addLogo(GridBagConstraints gbc) {
+        ImageIcon compLogo = new ImageIcon(LOGO_PATH);
+        JLabel logoLabel = new JLabel(compLogo);
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridwidth = 2;
         loginPanel.add(logoLabel, gbc);
+    }
 
-        JLabel usernameLabel = new JLabel("Username");
-        usernameLabel.setForeground(Color.BLACK);
-        
+    private void addUsernameComponents(GridBagConstraints gbc) {
+        JLabel usernameLabel = createLabel("Username");
         gbc.gridy = 1;
         gbc.gridwidth = 2;
         loginPanel.add(usernameLabel, gbc);
 
-        usernameField = new JTextField(50);
-        usernameField.setPreferredSize(new Dimension(500, 40));
         gbc.gridy = 2;
         loginPanel.add(usernameField, gbc);
+    }
 
-        JLabel passwordLabel = new JLabel("Password");
-        passwordLabel.setForeground(Color.BLACK);
+    private void addPasswordComponents(GridBagConstraints gbc) {
+        JLabel passwordLabel = createLabel("Password");
         gbc.gridy = 3;
         loginPanel.add(passwordLabel, gbc);
 
-        passwordField = new JPasswordField(50);
-        passwordField.setPreferredSize(new Dimension(500, 40));
         gbc.gridy = 4;
         loginPanel.add(passwordField, gbc);
+    }
 
-        loginButton = new JButton("Login");
-        loginButton.setForeground(Color.WHITE);
-        loginButton.setFocusable(false);
-        loginButton.setPreferredSize(new Dimension(0, 40));
-        loginButton.setBackground(new Color(0x2E5AEA));
+    private void addButtons(GridBagConstraints gbc) {
         gbc.gridy = 5;
         loginPanel.add(loginButton, gbc);
 
-        signupButton = new JButton("Sign Up");
-        signupButton.setForeground(Color.WHITE);
-        signupButton.setFocusable(false);
-        signupButton.setPreferredSize(new Dimension(0, 40));
-        signupButton.setBackground(new Color(0x2E5AEA));
         gbc.gridy = 6;
         loginPanel.add(signupButton, gbc);
+    }
 
-        KeyAdapter enterKeyListener = new KeyAdapter() {
+    private JLabel createLabel(String text) {
+        JLabel label = new JLabel(text);
+        label.setForeground(Color.BLACK);
+        return label;
+    }
+
+    private void setupKeyListeners() {
+        KeyAdapter enterKeyListener = createEnterKeyListener();
+        usernameField.addKeyListener(enterKeyListener);
+        passwordField.addKeyListener(enterKeyListener);
+    }
+
+    private KeyAdapter createEnterKeyListener() {
+        return new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
                 if (e.getKeyCode() == KeyEvent.VK_ENTER) {
@@ -78,11 +140,9 @@ public class LoginPanel {
                 }
             }
         };
-
-        usernameField.addKeyListener(enterKeyListener);
-        passwordField.addKeyListener(enterKeyListener);
     }
 
+    // Public methods - these remain unchanged to maintain compatibility
     public JPanel getLoginPanel() {
         return loginPanel;
     }
