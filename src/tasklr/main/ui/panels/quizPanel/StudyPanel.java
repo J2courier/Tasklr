@@ -9,6 +9,7 @@ import java.awt.*;
 public class StudyPanel {
     private static CardLayout cardLayout;
     private static JPanel cardPanel;
+    private static final Color BACKGROUND_COLOR = new Color(0xFFFFFF);
 
     public static JPanel createStudyPanel() {
         JPanel mainPanel = createPanel.panel(new Color(0xFFFFFF), new BorderLayout(), new Dimension(100, 100));
@@ -33,10 +34,15 @@ public class StudyPanel {
     }
 
     private static JPanel createNavPanel() {
-        JPanel navPanel = createPanel.panel(new Color(0xE0E3E2), new FlowLayout(FlowLayout.LEFT), new Dimension(0, 50));
+        JPanel navPanel = createPanel.panel(BACKGROUND_COLOR, new FlowLayout(FlowLayout.LEFT), new Dimension(0, 50));
         Border navBorder = BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0xE0E3E2));
         navPanel.setBorder(navBorder);
 
+        JLabel navLabel = new JLabel("Study Mode");
+        navLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 16));
+        navLabel.setForeground(new Color(0x1d1d1d));
+        navLabel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 1500));
+        navPanel.add(navLabel);
         JButton flashcardBtn = createButton.button("Flashcards", new Color(0x0082FC), Color.WHITE,null, false);
         flashcardBtn.setPreferredSize(new Dimension(100, 40));
         JButton quizzerBtn = createButton.button("Quizzer", new Color(0x0082FC), Color.WHITE, null, false);

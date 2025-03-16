@@ -1,3 +1,4 @@
+
 package tasklr.main.ui.panels.TaskPanel;
 
 import com.toedter.calendar.JDateChooser;
@@ -18,9 +19,9 @@ import java.sql.*;
 public class task {
     // Color constants
     private static final Color TEXT_COLOR = new Color(0x242424);
-    private static final Color BACKGROUND_COLOR = new Color(0xF1F3F6);
-    private static final Color TEXTFIELD_COLOR = new Color(0xFBFBFC);
-    private static final Color LIST_CONTAINER_COLOR = new Color(0xF1F3F6);
+    private static final Color BACKGROUND_COLOR = new Color(0xFFFFFF);
+    private static final Color TEXTFIELD_COLOR = new Color(0xFFFFFF);
+    private static final Color LIST_CONTAINER_COLOR = new Color(0xFFFFFF);
     private static final Color LIST_ITEM_COLOR = new Color(0xFBFBFC);
     private static final Color LIST_ITEM_HOVER_BG = new Color(0xE8EAED);
     private static final Color LIST_ITEM_HOVER_BORDER = new Color(0x0082FC);
@@ -40,11 +41,26 @@ public class task {
         JPanel panel = createPanel.panel(BACKGROUND_COLOR, new BorderLayout(), new Dimension(100, 100));
         Border panelBorder = BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0x6D6D6D));
         panel.setBorder(panelBorder);
-    
+
+        // Create header panel
+        JPanel headerPanel = createPanel.panel(new Color(0xF1F3F6), new BorderLayout(), new Dimension(0, 70));
+        headerPanel.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 0));
+        
+        JLabel headerLabel = new JLabel("TASK LIST");
+        headerLabel.setForeground(Color.BLACK);
+        headerLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 24));
+        headerPanel.add(headerLabel, BorderLayout.CENTER);
+
+        // Create content panel to hold input and list
+        JPanel contentPanel = createPanel.panel(BACKGROUND_COLOR, new BorderLayout(), null);
         JPanel inputPanel = createInputPanel(username);
         JPanel listContainer = createListContainer();
-        panel.add(inputPanel, BorderLayout.CENTER); 
-        panel.add(listContainer, BorderLayout.WEST); 
+        contentPanel.add(inputPanel, BorderLayout.CENTER); 
+        contentPanel.add(listContainer, BorderLayout.WEST); 
+
+        // Add both panels to main panel
+        panel.add(headerPanel, BorderLayout.NORTH);
+        panel.add(contentPanel, BorderLayout.CENTER);
 
         return panel;
     }
@@ -53,19 +69,14 @@ public class task {
     private static JPanel createInputPanel(String username) {
         JPanel inputPanel = createPanel.panel(BACKGROUND_COLOR, new GridBagLayout(), new Dimension(0, 0));
         
-        // Username label showing logged-in user
-        JLabel usernameLabel = new JLabel("Hello " + username + "!");
-        usernameLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 80));
-        usernameLabel.setForeground(TEXT_COLOR);
-        
-        // Paragraph area for task description
-        JLabel paragraph = new JLabel("Every task you add is a step closer to achieving your goals.");
-        paragraph.setFont(new Font("Segoe UI Variable", Font.PLAIN, 16));
-        paragraph.setForeground(TEXT_COLOR);
-        
         JLabel AddTaskLbl = new JLabel("Add Task");
         AddTaskLbl.setFont(new Font("Segoe UI Variable", Font.BOLD, 16));
         AddTaskLbl.setForeground(TEXT_COLOR);
+
+        // Title Label
+        JLabel titleLabel = new JLabel("TITLE");
+        titleLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 14));
+        titleLabel.setForeground(TEXT_COLOR);
 
         JTextField titleField = new JTextField(20);
         titleField.setPreferredSize(new Dimension(700, 40));
@@ -85,11 +96,11 @@ public class task {
 
         JPanel AddTaskComponent = createPanel.panel(TEXTFIELD_COLOR, new BorderLayout(), new Dimension(700, 40));
         AddTaskComponent.add(titleField, BorderLayout.CENTER);
-        
 
-        JLabel setDueLbl = new JLabel("Set Due Date");
-        setDueLbl.setFont(new Font("Segoe UI Variable", Font.BOLD, 16));
-        setDueLbl.setForeground(TEXT_COLOR);
+        // Date Label
+        JLabel dateLabel = new JLabel("MM/DD/YY");
+        dateLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 14));
+        dateLabel.setForeground(TEXT_COLOR);
         
         // Date components
         JDateChooser dateChooser = new JDateChooser();
@@ -126,11 +137,11 @@ public class task {
         JPanel spacer = createPanel.panel(BACKGROUND_COLOR, null, new Dimension(0, 300));
         
         // Add components using ComponentUtil
-        ComponentUtil.addComponent(inputPanel, usernameLabel, 0, 0, 2, 1, new Insets(10, 10, 10, 5), 0);
-        ComponentUtil.addComponent(inputPanel, paragraph, 0, 1, 2, 1, new Insets(10, 10, 20, 10), 0);
-        ComponentUtil.addComponent(inputPanel, AddTaskComponent, 0, 2, 2, 1, new Insets(20, 10, 10, 5), 0);
-        ComponentUtil.addComponent(inputPanel, AddDueComponent, 0, 3, 1, 1, new Insets(5, 10, 10, 5), 0);
-        ComponentUtil.addComponent(inputPanel, spacer, 0, 4, 2, 1, new Insets(10, 10, 10, 10), 0);
+        ComponentUtil.addComponent(inputPanel, titleLabel, 0, 1, 2, 1, new Insets(20, 10, 5, 5), 0);
+        ComponentUtil.addComponent(inputPanel, AddTaskComponent, 0, 2, 2, 1, new Insets(0, 10, 10, 5), 0);
+        ComponentUtil.addComponent(inputPanel, dateLabel, 0, 3, 2, 1, new Insets(10, 10, 5, 5), 0);
+        ComponentUtil.addComponent(inputPanel, AddDueComponent, 0, 4, 1, 1, new Insets(0, 10, 10, 5), 0);
+        ComponentUtil.addComponent(inputPanel, spacer, 0, 5, 2, 1, new Insets(10, 10, 10, 10), 0);
         
         return inputPanel;
     }
@@ -185,30 +196,50 @@ public class task {
     }
 
     private static JPanel createListContainer() {
-        JPanel mainPanel = createPanel.panel(LIST_CONTAINER_COLOR, new BorderLayout(), new Dimension(400, 0));
-        Border border = BorderFactory.createMatteBorder(1, 0, 0, 1, LIST_ITEM_HOVER_BORDER);
-        mainPanel.setBorder(border);
+        // Main panel with fixed width - increased width
+        JPanel mainPanel = createPanel.panel(LIST_CONTAINER_COLOR, new BorderLayout(), new Dimension(600, 0));
+        // Border border = BorderFactory.createMatteBorder(1, 0, 0, 1, LIST_ITEM_HOVER_BORDER);
+        // mainPanel.setBorder(border);
 
+        // Configure task container with BoxLayout (Y_AXIS)
         taskContainer = createPanel.panel(LIST_CONTAINER_COLOR, null, null);
         taskContainer.setLayout(new BoxLayout(taskContainer, BoxLayout.Y_AXIS));
         taskContainer.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
+        // Add initial tasks
         refreshTaskContainer();
 
-        scrollPane = new JScrollPane(taskContainer);
+        // Create a wrapper panel to properly contain the task container
+        JPanel wrapperPanel = createPanel.panel(LIST_CONTAINER_COLOR, new BorderLayout(), null);
+        wrapperPanel.add(taskContainer, BorderLayout.NORTH);
+        
+        // Add filler panel to push content to top and allow proper scrolling
+        JPanel fillerPanel = createPanel.panel(LIST_CONTAINER_COLOR, null, null);
+        wrapperPanel.add(fillerPanel, BorderLayout.CENTER);
+
+        // Configure ScrollPane with the wrapper panel
+        scrollPane = new JScrollPane(wrapperPanel);
         scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+        scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS); // Changed to ALWAYS
+        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        scrollPane.setBorder(null);
         
-        // Improve scroll speed - multiply by panel height (50) plus spacing (5)
-        scrollPane.getVerticalScrollBar().setUnitIncrement((50 + 5) * 3);
+        // Remove border from scroll pane
         
+        // Set viewport background to match container
+        scrollPane.getViewport().setBackground(LIST_CONTAINER_COLOR);
+
+        // Add ScrollPane to main panel
         mainPanel.add(scrollPane, BorderLayout.CENTER);
+
         return mainPanel;
     }
+    
+    
 
     private static JPanel createTaskItemPanel(String title) {
         // Main panel with fixed height and flexible width
-        JPanel panel = createPanel.panel(LIST_ITEM_COLOR, new BorderLayout(), new Dimension(0, 50));
+        JPanel panel = createPanel.panel(LIST_ITEM_COLOR, new BorderLayout(), new Dimension(0, 60));
         
         // Inner panel for consistent padding and content positioning
         JPanel contentPanel = createPanel.panel(LIST_ITEM_COLOR, new BorderLayout(), null);
@@ -328,7 +359,7 @@ public class task {
         contentPanel.add(buttonPanel, BorderLayout.EAST);
         
         panel.add(contentPanel, BorderLayout.CENTER);
-        panel.setBorder(BorderFactory.createLineBorder(LIST_ITEM_HOVER_BORDER, 1));
+        // panel.setBorder(BorderFactory.createLineBorder(LIST_ITEM_HOVER_BORDER, 1));
         panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 70));
 
         // Hover effect configuration

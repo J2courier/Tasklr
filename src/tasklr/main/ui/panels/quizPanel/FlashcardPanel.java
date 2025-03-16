@@ -1,12 +1,9 @@
 package tasklr.main.ui.panels.quizPanel;
 
 import javax.swing.*;
+import javax.swing.border.Border;
+import tasklr.utilities.*;
 import tasklr.authentication.UserSession;
-import tasklr.utilities.ComponentUtil;
-import tasklr.utilities.DatabaseManager;
-import tasklr.utilities.UIComponents;
-import tasklr.utilities.createButton;
-import tasklr.utilities.createPanel;
 import java.awt.*;
 import java.sql.*;
 
@@ -16,16 +13,31 @@ public class FlashcardPanel {
     private static CardLayout cardLayout;
     private static JPanel mainCardPanel;
     private static JPanel inputPanel;
+    private static final Color TEXT_COLOR = new Color(0x242424);
+    private static final Color BACKGROUND_COLOR = new Color(0xFFFFFF);
+    private static final Color TEXTFIELD_COLOR = new Color(0xFFFFFF);
+    private static final Color LIST_CONTAINER_COLOR = new Color(0xFFFFFF);
+    private static final Color LIST_ITEM_COLOR = new Color(0xFBFBFC);
+    private static final Color LIST_ITEM_HOVER_BG = new Color(0xE8EAED);
+    private static final Color LIST_ITEM_HOVER_BORDER = new Color(0x0082FC);
+    private static final Color PRIMARY_BUTTON_COLOR = new Color(0x275CE2);
+    private static final Color PRIMARY_BUTTON_HOVER = new Color(0x3B6FF0);
+    private static final Color PRIMARY_BUTTON_TEXT = Color.WHITE;
     
     public static JPanel createFlashcardPanel() {
-        JPanel panel = UIComponents.createListContainer("Flashcards", 800);
+        JPanel panel = createPanel.panel(BACKGROUND_COLOR, new BorderLayout(), new Dimension(100, 100));
+        Border panelBorder = BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0x6D6D6D));
+        panel.setBorder(panelBorder);
+
+        // Create content panel to hold input and list
+        JPanel contentPanel = createPanel.panel(BACKGROUND_COLOR, new BorderLayout(), null);
         
         // Create card layout panel
         mainCardPanel = new JPanel();
         cardLayout = new CardLayout();
         mainCardPanel.setLayout(cardLayout);
         
-        // Create input panel and store it in field
+        // Create input panel and flashcard mode panel
         inputPanel = createFlashcardInputPanel();
         JPanel flashcardModePanel = createFlashcardModePanel();
         
@@ -34,9 +46,13 @@ public class FlashcardPanel {
         mainCardPanel.add(flashcardModePanel, "flashcardMode");
         
         JPanel listContainer = createListContainer();
+        
+        contentPanel.add(mainCardPanel, BorderLayout.CENTER);
+        contentPanel.add(listContainer, BorderLayout.WEST);
 
-        panel.add(mainCardPanel, BorderLayout.CENTER);
-        panel.add(listContainer, BorderLayout.WEST);
+        // Add both panels to main panel
+        panel.add(contentPanel, BorderLayout.CENTER);
+
         return panel;
     }
 
@@ -109,13 +125,13 @@ public class FlashcardPanel {
                 "INSERT INTO quizzes (user_id, term, definition) VALUES (?, ?, ?)",
                 UserSession.getUserId(), term, definition
             );
-            JOptionPane.showMessageDialog(null, "Quiz added successfully!");
+            showCenteredOptionPane(null, "Quiz added successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
             refreshQuizContainer();
             refreshFlashcardMode();
             return true;
         } catch (SQLException ex) {
             ex.printStackTrace();
-            JOptionPane.showMessageDialog(null, "Error adding quiz: " + ex.getMessage());
+            showCenteredOptionPane(null, "Error adding quiz: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             return false;
         }
     }
@@ -164,134 +180,155 @@ public class FlashcardPanel {
     }
 
     public static JPanel createListContainer() {
-        JPanel mainPanel = createPanel.panel(null, new BorderLayout(), new Dimension(400, 0));
+        // Main panel with fixed width - increased from 400 to 600
+        JPanel mainPanel = createPanel.panel(LIST_CONTAINER_COLOR, new BorderLayout(), new Dimension(600, 0));
 
-        // Create title panel with FlowLayout to accommodate both title and button
-        JPanel titlePanel = createPanel.panel(null, new BorderLayout(), null);
-        titlePanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        
-        // Create a container for the title and view button
-        JPanel headerContainer = createPanel.panel(null, new BorderLayout(), null);
-        
-        // Add title label
-        JLabel titleLabel = new JLabel("My Flashcards");
-        titleLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 18));
-        headerContainer.add(titleLabel, BorderLayout.WEST);
-        
-        // Create and style view button
-        JButton viewButton = createButton.button("View All", null, Color.WHITE, null, false);
-        viewButton.setBackground(new Color(0x0065D9));
-        viewButton.setFont(new Font("Segoe UI Variable", Font.PLAIN, 12));
-        viewButton.setPreferredSize(new Dimension(80, 30));
-        
-        // Add action listener to view button
-        viewButton.addActionListener(e -> cardLayout.show(mainCardPanel, "flashcardMode"));
-        
-        // Add button to header container
-        headerContainer.add(viewButton, BorderLayout.EAST);
-        
-        // Add header container to title panel
-        titlePanel.add(headerContainer, BorderLayout.CENTER);
-
-        // Initialize quiz container
-        quizContainer = createPanel.panel(Color.WHITE, null, null);
+        // Configure quiz container with BoxLayout (Y_AXIS)
+        quizContainer = createPanel.panel(LIST_CONTAINER_COLOR, null, null);
         quizContainer.setLayout(new BoxLayout(quizContainer, BoxLayout.Y_AXIS));
         quizContainer.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        scrollPane = new JScrollPane(quizContainer);
-        scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
-        scrollPane.setBorder(null);
-        scrollPane.getViewport().setBackground(Color.WHITE);
+        // Create header panel
+        JPanel headerPanel = createPanel.panel(LIST_CONTAINER_COLOR, new BorderLayout(), null);
+        headerPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         
-        // Improve scroll speed - multiply by panel height (80) plus spacing (5)
-        scrollPane.getVerticalScrollBar().setUnitIncrement((80 + 5) * 3);
+        JLabel titleLabel = new JLabel("My Flashcards");
+        titleLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 18));
+        titleLabel.setForeground(TEXT_COLOR);
+        
+        JButton viewButton = createButton.button("View All", PRIMARY_BUTTON_COLOR, PRIMARY_BUTTON_TEXT, null, false);
+        viewButton.setPreferredSize(new Dimension(80, 35));
+        new HoverButtonEffect(viewButton, PRIMARY_BUTTON_COLOR, PRIMARY_BUTTON_HOVER, PRIMARY_BUTTON_TEXT, PRIMARY_BUTTON_TEXT);
+        viewButton.addActionListener(e -> cardLayout.show(mainCardPanel, "flashcardMode"));
+        
+        headerPanel.add(titleLabel, BorderLayout.WEST);
+        headerPanel.add(viewButton, BorderLayout.EAST);
 
-        mainPanel.add(titlePanel, BorderLayout.NORTH);
-        mainPanel.add(scrollPane, BorderLayout.CENTER);
+        // Add initial flashcards
         refreshQuizContainer();
+
+        // Create a wrapper panel to properly contain the quiz container
+        JPanel wrapperPanel = createPanel.panel(LIST_CONTAINER_COLOR, new BorderLayout(), null);
+        wrapperPanel.add(quizContainer, BorderLayout.NORTH);
+        
+        // Add filler panel to push content to top
+        JPanel fillerPanel = createPanel.panel(LIST_CONTAINER_COLOR, null, null);
+        wrapperPanel.add(fillerPanel, BorderLayout.CENTER);
+
+        // Configure ScrollPane
+        scrollPane = new JScrollPane(wrapperPanel);
+        scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        scrollPane.setBorder(null);
+        scrollPane.getViewport().setBackground(LIST_CONTAINER_COLOR);
+
+        mainPanel.add(headerPanel, BorderLayout.NORTH);
+        mainPanel.add(scrollPane, BorderLayout.CENTER);
 
         return mainPanel;
     }
 
     private static JPanel createQuizItemPanel(String term, String definition) {
-        // Create main panel with increased height
-        JPanel panel = createPanel.panel(new Color(0xE0E3E2), new BorderLayout(), new Dimension(0, 80));
-        panel.setBorder(BorderFactory.createLineBorder(new Color(0x749AAD), 1));
-        panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 80));
+        // Main panel with fixed height and flexible width
+        JPanel panel = createPanel.panel(LIST_ITEM_COLOR, new BorderLayout(), new Dimension(0, 60));
+        panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 70)); // This ensures proper width scaling
         
-        // Create content panel
-        JPanel contentPanel = createPanel.panel(null, new BorderLayout(), null);
-        contentPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
-        contentPanel.setOpaque(false);
+        // Inner panel for consistent padding
+        JPanel contentPanel = createPanel.panel(LIST_ITEM_COLOR, new BorderLayout(), null);
+        contentPanel.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
         
-        // Create text panel to hold both term and definition
-        JPanel textPanel = createPanel.panel(null, new GridLayout(2, 1, 0, 2), null);
-        textPanel.setOpaque(false);
+        // Text panel for term and definition
+        JPanel textPanel = createPanel.panel(LIST_ITEM_COLOR, new GridLayout(2, 1, 2, 2), null);
         
-        // Create term label
         JLabel termLabel = new JLabel(term);
         termLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 14));
+        termLabel.setForeground(TEXT_COLOR);
         
-        // Create definition label (shortened if too long)
-        String shortDefinition = definition.length() > 50 ? definition.substring(0, 47) + "..." : definition;
-        JLabel definitionLabel = new JLabel(shortDefinition);
+        JLabel definitionLabel = new JLabel(definition);
         definitionLabel.setFont(new Font("Segoe UI Variable", Font.PLAIN, 12));
         definitionLabel.setForeground(new Color(0x666666));
         
-        // Add labels to text panel
         textPanel.add(termLabel);
         textPanel.add(definitionLabel);
         
-        // Create buttons panel
+        // Button panel
         JPanel buttonPanel = createPanel.panel(null, new FlowLayout(FlowLayout.RIGHT, 5, 0), null);
-        buttonPanel.setOpaque(false);
         
-        // Create edit and delete buttons
-        JButton editBtn = new JButton("Edit");
-        JButton deleteBtn = new JButton("Delete");
-        editBtn.setFont(new Font("Segoe UI Variable", Font.PLAIN, 12));
-        deleteBtn.setFont(new Font("Segoe UI Variable", Font.PLAIN, 12));
-        
-        // Add buttons to button panel
-        buttonPanel.add(editBtn);
-        buttonPanel.add(deleteBtn);
-        
-        // Add action listeners (keeping your existing ones)
+        // Edit button
+        JButton editBtn = createButton.button("Edit", new Color(0xE9E9E9), new Color(0x242424), null, false);
+        editBtn.setPreferredSize(new Dimension(70, 40));
+        new HoverButtonEffect(editBtn, 
+            new Color(0xE9E9E9), // default background
+            new Color(0xBFBFBF), // hover background
+            new Color(0x242424), // default text
+            Color.WHITE         // hover text
+        );
+
+        // Delete button
+        JButton deleteBtn = createButton.button("Delete", new Color(0xFB2C36), Color.WHITE, null, false);
+        deleteBtn.setPreferredSize(new Dimension(70, 40));
+        new HoverButtonEffect(deleteBtn, 
+            new Color(0xFB2C36),  // default background
+            new Color(0xFF6467),  // hover background
+            Color.WHITE,          // default text
+            Color.WHITE          // hover text
+        );
+
         editBtn.addActionListener(e -> {
-            String newTerm = JOptionPane.showInputDialog(panel, "Edit term:", term);
-            String newDefinition = JOptionPane.showInputDialog(panel, "Edit definition:", definition);
+            JTextField termField = new JTextField(term);
+            JTextField definitionField = new JTextField(definition);
             
-            if (newTerm != null && newDefinition != null && 
-                !newTerm.trim().isEmpty() && !newDefinition.trim().isEmpty()) {
-                updateFlashcard(term, newTerm.trim(), newDefinition.trim());
+            JPanel editPanel = new JPanel(new GridLayout(4, 1));  // Changed from 'panel' to 'editPanel'
+            editPanel.add(new JLabel("Edit term:"));
+            editPanel.add(termField);
+            editPanel.add(new JLabel("Edit definition:"));
+            editPanel.add(definitionField);
+            
+            JOptionPane pane = new JOptionPane(editPanel, JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
+            JDialog dialog = pane.createDialog(null, "Edit Flashcard");
+            dialog.setLocationRelativeTo(null);
+            dialog.setVisible(true);
+            
+            Object result = pane.getValue();
+            if (result != null && (Integer) result == JOptionPane.OK_OPTION) {
+                String newTerm = termField.getText().trim();
+                String newDefinition = definitionField.getText().trim();
+                
+                if (!newTerm.isEmpty() && !newDefinition.isEmpty()) {
+                    updateFlashcard(term, newTerm, newDefinition);
+                }
             }
         });
         
         deleteBtn.addActionListener(e -> {
-            int confirm = JOptionPane.showConfirmDialog(
-                panel,
+            JOptionPane pane = new JOptionPane(
                 "Are you sure you want to delete this flashcard?",
-                "Confirm Delete",
+                JOptionPane.QUESTION_MESSAGE,
                 JOptionPane.YES_NO_OPTION
             );
+            JDialog dialog = pane.createDialog(null, "Confirm Delete");
+            dialog.setLocationRelativeTo(null);
+            dialog.setVisible(true);
             
-            if (confirm == JOptionPane.YES_OPTION) {
+            Object result = pane.getValue();
+            if (result != null && (Integer) result == JOptionPane.YES_OPTION) {
                 deleteFlashcard(term);
             }
         });
+
+        buttonPanel.add(editBtn);
+        buttonPanel.add(deleteBtn);
         
-        // Add mouse listener for flashcard mode
-        contentPanel.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                cardLayout.show(mainCardPanel, "flashcardMode");
-            }
-        });
-        
-        contentPanel.setCursor(new Cursor(Cursor.HAND_CURSOR));
         contentPanel.add(textPanel, BorderLayout.CENTER);
         contentPanel.add(buttonPanel, BorderLayout.EAST);
+        
         panel.add(contentPanel, BorderLayout.CENTER);
+        panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 70));
+
+        // Add hover effect
+        new HoverPanelEffect(panel, LIST_ITEM_COLOR, LIST_ITEM_HOVER_BG);
+
         return panel;
     }
    
@@ -416,12 +453,12 @@ public class FlashcardPanel {
                 "UPDATE quizzes SET term = ?, definition = ? WHERE term = ? AND user_id = ?",
                 newTerm, newDefinition, oldTerm, UserSession.getUserId()
             );
-            JOptionPane.showMessageDialog(null, "Flashcard updated successfully!");
+            showCenteredOptionPane(null, "Flashcard updated successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
             refreshQuizContainer();
             refreshFlashcardMode();
         } catch (SQLException ex) {
             ex.printStackTrace();
-            JOptionPane.showMessageDialog(null, "Error updating flashcard: " + ex.getMessage());
+            showCenteredOptionPane(null, "Error updating flashcard: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -431,12 +468,19 @@ public class FlashcardPanel {
                 "DELETE FROM quizzes WHERE term = ? AND user_id = ?",
                 term, UserSession.getUserId()
             );
-            JOptionPane.showMessageDialog(null, "Flashcard deleted successfully!");
+            showCenteredOptionPane(null, "Flashcard deleted successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
             refreshQuizContainer();
             refreshFlashcardMode();
         } catch (SQLException ex) {
             ex.printStackTrace();
-            JOptionPane.showMessageDialog(null, "Error deleting flashcard: " + ex.getMessage());
+            showCenteredOptionPane(null, "Error deleting flashcard: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
+    }
+
+    private static void showCenteredOptionPane(Component parentComponent, String message, String title, int messageType) {
+        JOptionPane pane = new JOptionPane(message, messageType);
+        JDialog dialog = pane.createDialog(parentComponent, title);
+        dialog.setLocationRelativeTo(null);
+        dialog.setVisible(true);
     }
 }

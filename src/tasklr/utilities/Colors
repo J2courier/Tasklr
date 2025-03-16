@@ -1,0 +1,5 @@
+- button base color for Login, Signup, Add Task, Add Flashcard, Add Quizzer : 0x3B82F6 blue
+- button hover color for Login, Signup, Add Task, Add Flashcard, Add Quizzer : 0x60A5FA light blue
+- button hover border color for Login, Signup, Add Task, Add Flashcard, Add Quizzer0xABABAB gray
+- button pressed state color for Login, Signup, Add Task, Add Flashcard, Add Quizzer : 0x2563EB dark blue
+

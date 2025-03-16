@@ -1,6 +1,7 @@
 package tasklr.main.ui.panels.quizPanel;
 
 import javax.swing.*;
+import tasklr.utilities.HoverPanelEffect;
 import tasklr.utilities.ComponentUtil;
 import tasklr.utilities.createButton;
 import tasklr.utilities.createPanel;
@@ -20,9 +21,19 @@ public class QuizzerPanel {
     private static JScrollPane scrollPane;
     private static ScheduledExecutorService scheduler;
     private static ScheduledFuture<?> refreshTask;
+    private static final Color TEXT_COLOR = new Color(0x242424);
+    private static final Color BACKGROUND_COLOR = new Color(0xFFFFFF);
+    private static final Color TEXTFIELD_COLOR = new Color(0xFFFFFF);
+    private static final Color LIST_CONTAINER_COLOR = new Color(0xFFFFFF);
+    private static final Color LIST_ITEM_COLOR = new Color(0xFBFBFC);
+    private static final Color LIST_ITEM_HOVER_BG = new Color(0xE8EAED);
+    private static final Color LIST_ITEM_HOVER_BORDER = new Color(0x0082FC);
+    private static final Color PRIMARY_BUTTON_COLOR = new Color(0x275CE2);
+    private static final Color PRIMARY_BUTTON_HOVER = new Color(0x3B6FF0);
+    private static final Color PRIMARY_BUTTON_TEXT = Color.WHITE;
     
     public static JPanel createQuizzerPanel() {
-        JPanel panel = createPanel.panel(null, new BorderLayout(), new Dimension(100, 100));
+        JPanel panel = createPanel.panel(BACKGROUND_COLOR, new BorderLayout(), new Dimension(100, 100));
         
         // Create and add list container
         JPanel listContainer = createListContainer();
@@ -31,22 +42,22 @@ public class QuizzerPanel {
         // Start the auto-refresh mechanism
         startAutoRefresh();
         
-        
         return panel;
     }
 
     private static JPanel createListContainer() {
-        JPanel mainPanel = createPanel.panel(null, new BorderLayout(), new Dimension(400, 0));
-        mainPanel.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 1, new Color(0x749AAD)));
+        JPanel mainPanel = createPanel.panel(LIST_CONTAINER_COLOR, new BorderLayout(), new Dimension(600, 0));
+        mainPanel.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 1, LIST_ITEM_HOVER_BORDER));
 
-        JPanel titlePanel = createPanel.panel(null, new BorderLayout(), null);
+        JPanel titlePanel = createPanel.panel(LIST_CONTAINER_COLOR, new BorderLayout(), null);
         titlePanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         
         JLabel titleLabel = new JLabel("Available Flashcards");
         titleLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 18));
+        titleLabel.setForeground(TEXT_COLOR);
         titlePanel.add(titleLabel, BorderLayout.CENTER);
 
-        quizContainer = createPanel.panel(Color.WHITE, null, null);
+        quizContainer = createPanel.panel(BACKGROUND_COLOR, null, null);
         quizContainer.setLayout(new BoxLayout(quizContainer, BoxLayout.Y_AXIS));
         quizContainer.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
@@ -54,7 +65,7 @@ public class QuizzerPanel {
         scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
         scrollPane.setBorder(null);
-        scrollPane.getViewport().setBackground(Color.WHITE);
+        scrollPane.getViewport().setBackground(BACKGROUND_COLOR);
         
         // Improve scroll speed - multiply by panel height plus spacing
         scrollPane.getVerticalScrollBar().setUnitIncrement((80 + 5) * 3);
@@ -89,7 +100,12 @@ public class QuizzerPanel {
         }, 0, 2, TimeUnit.SECONDS);
     }
 
-   
+    private static void showCenteredOptionPane(Component parentComponent, String message, String title, int messageType) {
+        JOptionPane pane = new JOptionPane(message, messageType);
+        JDialog dialog = pane.createDialog(parentComponent, title);
+        dialog.setLocationRelativeTo(null);
+        dialog.setVisible(true);
+    }
 
     public static synchronized void refreshQuizContainer() {
         if (quizContainer == null) return;
@@ -116,7 +132,7 @@ public class QuizzerPanel {
                     if (!hasItems) {
                         JLabel noItemsLabel = new JLabel("No flashcards available for quiz!");
                         noItemsLabel.setFont(new Font("Segoe UI Variable", Font.PLAIN, 14));
-                        noItemsLabel.setForeground(new Color(0x707070));
+                        noItemsLabel.setForeground(TEXT_COLOR);
                         noItemsLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
                         quizContainer.add(noItemsLabel);
                     }
@@ -124,7 +140,7 @@ public class QuizzerPanel {
             }
         } catch (SQLException ex) {
             ex.printStackTrace();
-            JOptionPane.showMessageDialog(null, "Error fetching flashcards: " + ex.getMessage());
+            showCenteredOptionPane(null, "Error fetching flashcards: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
 
         // Ensure UI updates happen on EDT
@@ -140,8 +156,8 @@ public class QuizzerPanel {
     }
 
     private static JPanel createQuizItemPanel(String term, String definition) {
-        JPanel panel = createPanel.panel(new Color(0xE0E3E2), new BorderLayout(), new Dimension(0, 80));
-        panel.setBorder(BorderFactory.createLineBorder(new Color(0x749AAD), 1));
+        JPanel panel = createPanel.panel(LIST_ITEM_COLOR, new BorderLayout(), new Dimension(0, 80));
+        panel.setBorder(BorderFactory.createLineBorder(LIST_ITEM_HOVER_BORDER, 1));
         panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 80));
         
         JPanel contentPanel = createPanel.panel(null, new BorderLayout(), null);
@@ -153,16 +169,21 @@ public class QuizzerPanel {
         
         JLabel termLabel = new JLabel(term);
         termLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 14));
+        termLabel.setForeground(TEXT_COLOR);
+        
         String shortDefinition = definition.length() > 50 ? definition.substring(0, 47) + "..." : definition;
         JLabel definitionLabel = new JLabel(shortDefinition);
         definitionLabel.setFont(new Font("Segoe UI Variable", Font.PLAIN, 12));
-        definitionLabel.setForeground(new Color(0x666666));
+        definitionLabel.setForeground(TEXT_COLOR);
         
         textPanel.add(termLabel);
         textPanel.add(definitionLabel);
         
         contentPanel.add(textPanel, BorderLayout.CENTER);
         panel.add(contentPanel, BorderLayout.CENTER);
+
+        // Add hover effect
+        new HoverPanelEffect(panel, LIST_ITEM_COLOR, LIST_ITEM_HOVER_BG);
         
         return panel;
     }

@@ -14,6 +14,9 @@ public class UIComponents {
     }
 
     public static JPanel createListContainer(String title, int width) {
+        // If no specific width is provided, use 600 as default
+        width = (width <= 0) ? 600 : width;
+        
         JPanel mainPanel = new JPanel(new BorderLayout());
         mainPanel.setPreferredSize(new Dimension(width, 0));
         mainPanel.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 1, new Color(0x749AAD)));
