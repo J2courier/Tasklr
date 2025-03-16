@@ -93,7 +93,7 @@ public class Tasklr extends JFrame {
             // new Tasklr("admin").setVisible(true);
             new Login().setVisible(true);
             TaskFetcher tf = new TaskFetcher();
-            tf.getUserTasks();;
+            tf.getUserTasks();
         });
     }
 }

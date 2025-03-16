@@ -1,9 +1,12 @@
+
 package tasklr.authentication;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.*;
@@ -19,19 +22,24 @@ public class Signup extends JFrame {
     private static final int FIELD_WIDTH = 500;
     private static final int FIELD_HEIGHT = 40;
     private static final Color BACKGROUND_COLOR = new Color(0xf1f3f6);
-    private static final Color BUTTON_COLOR = new Color(0x2E5AEA);
+    private static final Color BUTTON_BASE_COLOR = new Color(0x3B82F6);    // New base color
+    private static final Color BUTTON_HOVER_COLOR = new Color(0x60A5FA);   // Hover color
+    private static final Color BUTTON_PRESSED_COLOR = new Color(0x2563EB); // Pressed color
+    private static final Color TEXT_COLOR = Color.WHITE;
     private static final String APP_ICON_PATH = "C:/Users/ADMIN/Desktop/Tasklr/resource/icons/AppLogo.png";
 
     private final JTextField createUsernameField;
-    private final JTextField createPasswordField;
+    private final JPasswordField createPasswordField;
     private final JPasswordField confirmPasswordField;
+    private final JCheckBox showPasswordCheckBox;    // Single checkbox for both fields
     private final JButton signupButton;
     private final JPanel signupPanel;
 
     public Signup() {
         createUsernameField = createTextField();
-        createPasswordField = createTextField();
+        createPasswordField = createPasswordField();
         confirmPasswordField = createPasswordField();
+        showPasswordCheckBox = createShowPasswordCheckBox();  // Create single checkbox
         signupButton = createButton("Sign Up");
         signupPanel = createSignupPanel();
 
@@ -73,11 +81,58 @@ public class Signup extends JFrame {
 
     private JButton createButton(String text) {
         JButton button = new JButton(text);
+        button.setForeground(TEXT_COLOR);
         button.setFocusable(false);
-        button.setForeground(Color.WHITE);
         button.setPreferredSize(new Dimension(0, FIELD_HEIGHT));
-        button.setBackground(BUTTON_COLOR);
+        button.setBackground(BUTTON_BASE_COLOR);
+        
+        // Add hover and pressed effects
+        button.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                button.setBackground(BUTTON_HOVER_COLOR);
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                button.setBackground(BUTTON_BASE_COLOR);
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+                button.setBackground(BUTTON_PRESSED_COLOR);
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                if (button.contains(e.getPoint())) {
+                    button.setBackground(BUTTON_HOVER_COLOR);
+                } else {
+                    button.setBackground(BUTTON_BASE_COLOR);
+                }
+            }
+        });
+
+        // Remove button borders and focus painting
+        button.setBorderPainted(false);
+        button.setFocusPainted(false);
+        button.setContentAreaFilled(true);
+        button.setOpaque(true);
+
         return button;
+    }
+
+    private JCheckBox createShowPasswordCheckBox() {
+        JCheckBox checkBox = new JCheckBox("Show Passwords");
+        checkBox.setFocusable(false);
+        checkBox.setForeground(Color.BLACK);
+        checkBox.setOpaque(true);
+        checkBox.addActionListener(e -> {
+            char echoChar = checkBox.isSelected() ? (char) 0 : '•';
+            createPasswordField.setEchoChar(echoChar);
+            confirmPasswordField.setEchoChar(echoChar);
+        });
+        return checkBox;
     }
 
     private void setupComponents() {
@@ -88,12 +143,23 @@ public class Signup extends JFrame {
 
         // Password components
         addLabelAndField(gbc, "Create Password", createPasswordField, 2);
-
+        
         // Confirm password components
+        gbc.gridy = 4;
         addLabelAndField(gbc, "Confirm Password", confirmPasswordField, 4);
+        
+        // Add single show password checkbox
+        gbc.gridy = 6;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.anchor = GridBagConstraints.WEST;
+        signupPanel.add(showPasswordCheckBox, gbc);
+        
+        // Reset constraints
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.CENTER;
 
         // Signup button
-        gbc.gridy = 6;
+        gbc.gridy = 7;
         signupPanel.add(signupButton, gbc);
 
         // Login section
@@ -123,12 +189,12 @@ public class Signup extends JFrame {
 
     private void setupLoginSection(GridBagConstraints gbc) {
         JLabel loginLabel = new JLabel("Already have an account?");
-        loginLabel.setForeground(Color.BLACK);
-        gbc.gridy = 7;
+        loginLabel.setForeground(new Color(0x275CE2));
+        gbc.gridy = 9;
         gbc.gridwidth = 1;
         signupPanel.add(loginLabel, gbc);
 
-        JButton loginButton = createButton("Login");
+        JButton loginButton = createButton("Login");  // Using the new createButton method
         gbc.gridx = 1;
         signupPanel.add(loginButton, gbc);
 
@@ -223,11 +289,30 @@ public class Signup extends JFrame {
                 }
             } catch (SQLException ex) {
                 conn.rollback();
-                throw ex;
+                // Check for duplicate entry error
+                if (ex.getErrorCode() == 1062) { // MySQL duplicate entry error code
+                    JOptionPane.showMessageDialog(this,
+                        "Account Already Existing!",
+                        "Registration Error",
+                        JOptionPane.ERROR_MESSAGE);
+                } else {
+                    throw ex;
+                }
             }
         } catch (SQLException ex) {
             ex.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Error inserting user: " + ex.getMessage());
+            // Check for connection error
+            if (ex.getErrorCode() == 0) { // Connection error
+                JOptionPane.showMessageDialog(this,
+                    "Database Connection Failed.",
+                    "Connection Error",
+                    JOptionPane.ERROR_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(this,
+                    "Error inserting user: " + ex.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            }
         }
         return false;
     }

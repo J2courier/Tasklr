@@ -9,12 +9,25 @@ import tasklr.utilities.ComponentUtil;
 import tasklr.utilities.HoverPanelEffect;
 import tasklr.utilities.createButton;
 import tasklr.utilities.createPanel;
+import tasklr.utilities.HoverButtonEffect;
 
 import java.awt.*;
 import java.util.List;
 import java.sql.*;
 
 public class task {
+    // Color constants
+    private static final Color TEXT_COLOR = new Color(0x242424);
+    private static final Color BACKGROUND_COLOR = new Color(0xF1F3F6);
+    private static final Color TEXTFIELD_COLOR = new Color(0xFBFBFC);
+    private static final Color LIST_CONTAINER_COLOR = new Color(0xF1F3F6);
+    private static final Color LIST_ITEM_COLOR = new Color(0xFBFBFC);
+    private static final Color LIST_ITEM_HOVER_BG = new Color(0xE8EAED);
+    private static final Color LIST_ITEM_HOVER_BORDER = new Color(0x0082FC);
+    private static final Color PRIMARY_BUTTON_COLOR = new Color(0x275CE2);
+    private static final Color PRIMARY_BUTTON_HOVER = new Color(0x3B6FF0);
+    private static final Color PRIMARY_BUTTON_TEXT = Color.WHITE;
+
     private static final String url = "jdbc:mysql://localhost:3306/tasklrdb";
     private static final String dbUser = "JFCompany";
     private static final String dbPass = "";
@@ -24,7 +37,7 @@ public class task {
     private static JScrollPane scrollPane;
 
     public static JPanel createTaskPanel(String username) {
-        JPanel panel = createPanel.panel(new Color(0xf1f3f6), new BorderLayout(), new Dimension(100, 100));
+        JPanel panel = createPanel.panel(BACKGROUND_COLOR, new BorderLayout(), new Dimension(100, 100));
         Border panelBorder = BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0x6D6D6D));
         panel.setBorder(panelBorder);
     
@@ -38,41 +51,53 @@ public class task {
     
 
     private static JPanel createInputPanel(String username) {
-        JPanel inputPanel = createPanel.panel(null, new GridBagLayout(), new Dimension(0, 0));
+        JPanel inputPanel = createPanel.panel(BACKGROUND_COLOR, new GridBagLayout(), new Dimension(0, 0));
         
         // Username label showing logged-in user
         JLabel usernameLabel = new JLabel("Hello " + username + "!");
         usernameLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 80));
+        usernameLabel.setForeground(TEXT_COLOR);
         
         // Paragraph area for task description
         JLabel paragraph = new JLabel("Every task you add is a step closer to achieving your goals.");
         paragraph.setFont(new Font("Segoe UI Variable", Font.PLAIN, 16));
-        paragraph.setForeground(new Color(0x707070));
+        paragraph.setForeground(TEXT_COLOR);
         
         JLabel AddTaskLbl = new JLabel("Add Task");
         AddTaskLbl.setFont(new Font("Segoe UI Variable", Font.BOLD, 16));
+        AddTaskLbl.setForeground(TEXT_COLOR);
 
         JTextField titleField = new JTextField(20);
         titleField.setPreferredSize(new Dimension(700, 40));
+        titleField.setBackground(TEXTFIELD_COLOR);
+        titleField.setForeground(TEXT_COLOR);
 
-        JButton addTaskBtn = createButton.button("Add Task", null, Color.WHITE, null, false);
-        addTaskBtn.setBackground(new Color(0x0065D9));
+        JButton addTaskBtn = createButton.button("Add Task", PRIMARY_BUTTON_COLOR, PRIMARY_BUTTON_TEXT, null, false);
         addTaskBtn.setPreferredSize(new Dimension(70, 40));
+        addTaskBtn.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                addTaskBtn.setBackground(PRIMARY_BUTTON_HOVER);
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                addTaskBtn.setBackground(PRIMARY_BUTTON_COLOR);
+            }
+        });
 
-        JPanel AddTaskComponent = createPanel.panel(new Color(0xD9D9D9), new BorderLayout(), new Dimension(700, 40));
+        JPanel AddTaskComponent = createPanel.panel(TEXTFIELD_COLOR, new BorderLayout(), new Dimension(700, 40));
         AddTaskComponent.add(titleField, BorderLayout.CENTER);
         
 
         JLabel setDueLbl = new JLabel("Set Due Date");
         setDueLbl.setFont(new Font("Segoe UI Variable", Font.BOLD, 16));
+        setDueLbl.setForeground(TEXT_COLOR);
         
         // Date components
         JDateChooser dateChooser = new JDateChooser();
         dateChooser.setPreferredSize(new Dimension(640, 40));
         dateChooser.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 10));
+        dateChooser.setBackground(TEXTFIELD_COLOR);
 
- 
-        JPanel AddDueComponent = createPanel.panel(new Color(0xD9D9D9), new BorderLayout(), new Dimension(700, 40));
+        JPanel AddDueComponent = createPanel.panel(TEXTFIELD_COLOR, new BorderLayout(), new Dimension(700, 40));
         AddDueComponent.add(dateChooser, BorderLayout.CENTER);
         AddDueComponent.add(addTaskBtn, BorderLayout.EAST);
 
@@ -82,7 +107,12 @@ public class task {
             java.util.Date dueDate = dateChooser.getDate();
             
             if (title.isEmpty()) {
-                JOptionPane.showMessageDialog(null, "Please enter a task title!");
+                JOptionPane.showMessageDialog(
+                    SwingUtilities.getWindowAncestor(addTaskBtn), // parent component
+                    "Please enter a task title!",
+                    "Input Required",
+                    JOptionPane.WARNING_MESSAGE
+                );
                 return;
             }
             
@@ -93,7 +123,7 @@ public class task {
             }
         });
 
-        JPanel spacer = createPanel.panel(null, null, new Dimension(0, 300));
+        JPanel spacer = createPanel.panel(BACKGROUND_COLOR, null, new Dimension(0, 300));
         
         // Add components using ComponentUtil
         ComponentUtil.addComponent(inputPanel, usernameLabel, 0, 0, 2, 1, new Insets(10, 10, 10, 5), 0);
@@ -155,11 +185,11 @@ public class task {
     }
 
     private static JPanel createListContainer() {
-        JPanel mainPanel = createPanel.panel(null, new BorderLayout(), new Dimension(400, 0));
-        Border border = BorderFactory.createMatteBorder(1, 0, 0, 1, new Color(0x749AAD));
+        JPanel mainPanel = createPanel.panel(LIST_CONTAINER_COLOR, new BorderLayout(), new Dimension(400, 0));
+        Border border = BorderFactory.createMatteBorder(1, 0, 0, 1, LIST_ITEM_HOVER_BORDER);
         mainPanel.setBorder(border);
 
-        taskContainer = createPanel.panel(null, null, null);
+        taskContainer = createPanel.panel(LIST_CONTAINER_COLOR, null, null);
         taskContainer.setLayout(new BoxLayout(taskContainer, BoxLayout.Y_AXIS));
         taskContainer.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
@@ -178,25 +208,47 @@ public class task {
 
     private static JPanel createTaskItemPanel(String title) {
         // Main panel with fixed height and flexible width
-        JPanel panel = createPanel.panel(new Color(0xE0E3E2), new BorderLayout(), new Dimension(0, 50));
+        JPanel panel = createPanel.panel(LIST_ITEM_COLOR, new BorderLayout(), new Dimension(0, 50));
         
         // Inner panel for consistent padding and content positioning
-        JPanel contentPanel = createPanel.panel(null, new BorderLayout(), null);
+        JPanel contentPanel = createPanel.panel(LIST_ITEM_COLOR, new BorderLayout(), null);
         contentPanel.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
         
         // Task title label
         JLabel titleLabel = new JLabel(title);
         titleLabel.setFont(new Font("Segoe UI Variable", Font.PLAIN, 14));
+        titleLabel.setForeground(TEXT_COLOR);
         
         // Button panel for edit and delete
         JPanel buttonPanel = createPanel.panel(null, new FlowLayout(FlowLayout.RIGHT, 5, 0), null);
         
         // Edit button
-        JButton editBtn = new JButton("Edit");
-        editBtn.setFont(new Font("Segoe UI Variable", Font.PLAIN, 12));
-        editBtn.setFocusPainted(false);
+        JButton editBtn = createButton.button("Edit", new Color(0xE9E9E9), new Color(0x242424), null, false);
+        editBtn.setPreferredSize(new Dimension(70, 40));
+        new HoverButtonEffect(editBtn, 
+            new Color(0xE9E9E9), // default background
+            new Color(0xBFBFBF), // hover background
+            new Color(0x242424), // default text
+            Color.WHITE         // hover text
+        );
+
+        // Delete button
+        JButton deleteBtn = createButton.button("Delete", new Color(0xFB2C36), Color.WHITE, null, false);
+        deleteBtn.setPreferredSize(new Dimension(70, 40));
+        new HoverButtonEffect(deleteBtn, 
+            new Color(0xFB2C36),  // default background
+            new Color(0xFF6467),  // hover background
+            Color.WHITE,          // default text
+            Color.WHITE          // hover text
+        );
+
+        // Keep existing action listeners
         editBtn.addActionListener(e -> {
-            String newTitle = JOptionPane.showInputDialog(panel, "Edit task:", title);
+            String newTitle = JOptionPane.showInputDialog(
+                SwingUtilities.getWindowAncestor(editBtn), // parent component
+                "Edit task:",
+                title
+            );
             if (newTitle != null && !newTitle.trim().isEmpty()) {
                 try (Connection conn = DriverManager.getConnection(url, dbUser, dbPass)) {
                     String query = "UPDATE tasks SET title = ? WHERE title = ? AND user_id = ?";
@@ -207,27 +259,34 @@ public class task {
                         
                         int result = stmt.executeUpdate();
                         if (result > 0) {
-                            JOptionPane.showMessageDialog(panel, "Task updated successfully!");
-                            refreshTaskContainer(); // Use the new refresh method
+                            JOptionPane.showMessageDialog(
+                                SwingUtilities.getWindowAncestor(editBtn), // parent component
+                                "Task updated successfully!",
+                                "Success",
+                                JOptionPane.INFORMATION_MESSAGE
+                            );
+                            refreshTaskContainer();
                         }
                     }
                 } catch (SQLException ex) {
                     ex.printStackTrace();
-                    JOptionPane.showMessageDialog(panel, "Error updating task: " + ex.getMessage());
+                    JOptionPane.showMessageDialog(
+                        SwingUtilities.getWindowAncestor(editBtn), // parent component
+                        "Error updating task: " + ex.getMessage(),
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE
+                    );
                 }
             }
         });
-    
-        // Delete button
-        JButton deleteBtn = new JButton("Delete");
-        deleteBtn.setFont(new Font("Segoe UI Variable", Font.PLAIN, 12));
-        deleteBtn.setFocusPainted(false);
+
         deleteBtn.addActionListener(e -> {
             int confirm = JOptionPane.showConfirmDialog(
-                panel,
+                SwingUtilities.getWindowAncestor(deleteBtn), // parent component
                 "Are you sure you want to delete this task?",
                 "Confirm Delete",
-                JOptionPane.YES_NO_OPTION
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.QUESTION_MESSAGE
             );
             
             if (confirm == JOptionPane.YES_OPTION) {
@@ -239,17 +298,27 @@ public class task {
                         
                         int result = stmt.executeUpdate();
                         if (result > 0) {
-                            JOptionPane.showMessageDialog(panel, "Task deleted successfully!");
-                            refreshTaskContainer(); // Use the new refresh method
+                            JOptionPane.showMessageDialog(
+                                SwingUtilities.getWindowAncestor(deleteBtn), // parent component
+                                "Task deleted successfully!",
+                                "Success",
+                                JOptionPane.INFORMATION_MESSAGE
+                            );
+                            refreshTaskContainer();
                         }
                     }
                 } catch (SQLException ex) {
                     ex.printStackTrace();
-                    JOptionPane.showMessageDialog(panel, "Error deleting task: " + ex.getMessage());
+                    JOptionPane.showMessageDialog(
+                        SwingUtilities.getWindowAncestor(deleteBtn), // parent component
+                        "Error deleting task: " + ex.getMessage(),
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE
+                    );
                 }
             }
         });
-    
+
         // Add buttons to button panel
         buttonPanel.add(editBtn);
         buttonPanel.add(deleteBtn);
@@ -259,14 +328,12 @@ public class task {
         contentPanel.add(buttonPanel, BorderLayout.EAST);
         
         panel.add(contentPanel, BorderLayout.CENTER);
-        panel.setBorder(BorderFactory.createLineBorder(new Color(0x749AAD), 1));
-        panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
-    
+        panel.setBorder(BorderFactory.createLineBorder(LIST_ITEM_HOVER_BORDER, 1));
+        panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 70));
+
         // Hover effect configuration
-        Color defaultColor = new Color(0xE0E3E2);
-        Color hoverColor = new Color(0xE8EAED); 
-        new HoverPanelEffect(panel, defaultColor, hoverColor);
-    
+        new HoverPanelEffect(panel, LIST_ITEM_COLOR, LIST_ITEM_HOVER_BG);
+
         return panel;
     }
 }

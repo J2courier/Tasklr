@@ -5,12 +5,16 @@ import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 public class LoginPanel {
     private static final int FIELD_WIDTH = 500;
     private static final int FIELD_HEIGHT = 40;
     private static final int BUTTON_HEIGHT = 40;
-    private static final Color BUTTON_COLOR = new Color(0x2E5AEA);
+    private static final Color BUTTON_BASE_COLOR = new Color(0x3B82F6);    // New base color
+    private static final Color BUTTON_HOVER_COLOR = new Color(0x60A5FA);   // Hover color
+    private static final Color BUTTON_PRESSED_COLOR = new Color(0x2563EB); // Pressed color
     private static final Color TEXT_COLOR = Color.WHITE;
     private static final String LOGO_PATH = "C://Users//ADMIN//Desktop//Tasklr//resource//icons//logo1.png";
     private static final Dimension PANEL_SIZE = new Dimension(700, 700);
@@ -20,6 +24,7 @@ public class LoginPanel {
     private final JPasswordField passwordField;
     private final JButton loginButton;
     private final JButton signupButton;
+    private final JCheckBox showPasswordCheckBox; // Add this field
     
     public LoginPanel() {
         loginPanel = createMainPanel();
@@ -27,6 +32,7 @@ public class LoginPanel {
         passwordField = createPasswordField();
         loginButton = createButton("Login");
         signupButton = createButton("Sign Up");
+        showPasswordCheckBox = createShowPasswordCheckBox(); // Initialize checkbox
         
         setupLayout();
         setupKeyListeners();
@@ -56,7 +62,41 @@ public class LoginPanel {
         button.setForeground(TEXT_COLOR);
         button.setFocusable(false);
         button.setPreferredSize(new Dimension(0, BUTTON_HEIGHT));
-        button.setBackground(BUTTON_COLOR);
+        button.setBackground(BUTTON_BASE_COLOR);
+        
+        // Add hover and pressed effects
+        button.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                button.setBackground(BUTTON_HOVER_COLOR);
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                button.setBackground(BUTTON_BASE_COLOR);
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+                button.setBackground(BUTTON_PRESSED_COLOR);
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                if (button.contains(e.getPoint())) {
+                    button.setBackground(BUTTON_HOVER_COLOR);
+                } else {
+                    button.setBackground(BUTTON_BASE_COLOR);
+                }
+            }
+        });
+
+        // Remove button borders and focus painting
+        button.setBorderPainted(false);
+        button.setFocusPainted(false);
+        button.setContentAreaFilled(true);
+        button.setOpaque(true);
+
         return button;
     }
 
@@ -109,13 +149,23 @@ public class LoginPanel {
 
         gbc.gridy = 4;
         loginPanel.add(passwordField, gbc);
+
+        // Add checkbox in the next row
+        gbc.gridy = 5;
+        gbc.fill = GridBagConstraints.NONE; // Don't stretch the checkbox
+        gbc.anchor = GridBagConstraints.WEST; // Align to the left
+        loginPanel.add(showPasswordCheckBox, gbc);
+        
+        // Reset constraints for subsequent components
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.CENTER;
     }
 
     private void addButtons(GridBagConstraints gbc) {
-        gbc.gridy = 5;
+        gbc.gridy = 6; // Increment gridy by 1 for login button
         loginPanel.add(loginButton, gbc);
 
-        gbc.gridy = 6;
+        gbc.gridy = 7; // Increment gridy by 1 for signup button
         loginPanel.add(signupButton, gbc);
     }
 
@@ -161,5 +211,21 @@ public class LoginPanel {
 
     public void addSignupListener(ActionListener listener) {
         signupButton.addActionListener(listener);
+    }
+
+    // Add this method to create the checkbox
+    private JCheckBox createShowPasswordCheckBox() {
+        JCheckBox checkBox = new JCheckBox("Show Password");
+        checkBox.setFocusable(false);
+        checkBox.setBackground(null);
+        checkBox.setForeground(Color.BLACK);
+        checkBox.addActionListener(e -> {
+            if (checkBox.isSelected()) {
+                passwordField.setEchoChar((char) 0); // Show password
+            } else {
+                passwordField.setEchoChar('•'); // Hide password
+            }
+        });
+        return checkBox;
     }
 }
