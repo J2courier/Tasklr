@@ -3,3 +3,10 @@
 - button hover border color for Login, Signup, Add Task, Add Flashcard, Add Quizzer0xABABAB gray
 - button pressed state color for Login, Signup, Add Task, Add Flashcard, Add Quizzer : 0x2563EB dark blue
 
+private static final Color LIST_CONTAINER_COLOR = new Color(0xFFFFFF);
+private static final Color LIST_ITEM_COLOR = new Color(0xFBFBFC);
+private static final Color LIST_ITEM_HOVER_BG = new Color(0xE8EAED);
+private static final Color LIST_ITEM_HOVER_BORDER = new Color(0x0082FC);
+private static final Color PRIMARY_BUTTON_COLOR = new Color(0x275CE2);
+private static final Color PRIMARY_BUTTON_HOVER = new Color(0x3B6FF0);
+private static final Color PRIMARY_BUTTON_TEXT = Color.WHITE;

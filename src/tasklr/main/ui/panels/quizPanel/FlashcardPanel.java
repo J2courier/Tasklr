@@ -1,21 +1,31 @@
 package tasklr.main.ui.panels.quizPanel;
 
+
 import javax.swing.*;
 import javax.swing.border.Border;
 import tasklr.utilities.*;
 import tasklr.authentication.UserSession;
 import java.awt.*;
+import java.awt.event.*;
 import java.sql.*;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.HashMap;
+import javax.swing.ImageIcon;
+import java.awt.Image;
+import javax.swing.JPopupMenu;
+import javax.swing.JMenuItem;
 
 public class FlashcardPanel {
     private static JPanel quizContainer;
     private static JScrollPane scrollPane;
     private static CardLayout cardLayout;
     private static JPanel mainCardPanel;
-    private static JPanel inputPanel;
+    // private static JPanel inputPanel;
     private static final Color TEXT_COLOR = new Color(0x242424);
     private static final Color BACKGROUND_COLOR = new Color(0xFFFFFF);
-    private static final Color TEXTFIELD_COLOR = new Color(0xFFFFFF);
+    // private static final Color TEXTFIELD_COLOR = new Color(0xFFFFFF);
     private static final Color LIST_CONTAINER_COLOR = new Color(0xFFFFFF);
     private static final Color LIST_ITEM_COLOR = new Color(0xFBFBFC);
     private static final Color LIST_ITEM_HOVER_BG = new Color(0xE8EAED);
@@ -23,58 +33,108 @@ public class FlashcardPanel {
     private static final Color PRIMARY_BUTTON_COLOR = new Color(0x275CE2);
     private static final Color PRIMARY_BUTTON_HOVER = new Color(0x3B6FF0);
     private static final Color PRIMARY_BUTTON_TEXT = Color.WHITE;
+    private static int currentSetId = -1; // Track current set ID
+    
+    // Temporary storage for terms before set creation
+    private static List<Map<String, String>> temporaryTerms = new ArrayList<>();
     
     public static JPanel createFlashcardPanel() {
         JPanel panel = createPanel.panel(BACKGROUND_COLOR, new BorderLayout(), new Dimension(100, 100));
         Border panelBorder = BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0x6D6D6D));
         panel.setBorder(panelBorder);
 
-        // Create content panel to hold input and list
         JPanel contentPanel = createPanel.panel(BACKGROUND_COLOR, new BorderLayout(), null);
         
-        // Create card layout panel
         mainCardPanel = new JPanel();
         cardLayout = new CardLayout();
         mainCardPanel.setLayout(cardLayout);
         
-        // Create input panel and flashcard mode panel
-        inputPanel = createFlashcardInputPanel();
-        JPanel flashcardModePanel = createFlashcardModePanel();
+        // Create three panels: set creation, terms input, and flashcard mode
+        JPanel setCreationPanel = createSetCreationPanel();
+        JPanel termsInputPanel = createTermsInputPanel();
+        JPanel flashcardModePanel = createFlashcardModePanel(-1); // Pass -1 for initial state
         
-        // Add both panels to card layout
-        mainCardPanel.add(inputPanel, "input");
+        mainCardPanel.add(setCreationPanel, "setCreation");
+        mainCardPanel.add(termsInputPanel, "termsInput");
         mainCardPanel.add(flashcardModePanel, "flashcardMode");
         
         JPanel listContainer = createListContainer();
         
         contentPanel.add(mainCardPanel, BorderLayout.CENTER);
         contentPanel.add(listContainer, BorderLayout.WEST);
-
-        // Add both panels to main panel
+        
         panel.add(contentPanel, BorderLayout.CENTER);
-
+        
         return panel;
     }
 
-    private static JPanel createFlashcardInputPanel() {
-        JPanel inputPanel = createPanel.panel(Color.WHITE, new GridBagLayout(), new Dimension(0, 0));
+    private static JPanel createSetCreationPanel() {
+        JPanel panel = createPanel.panel(Color.WHITE, new GridBagLayout(), new Dimension(0, 0));
         
-        // Remove the username greeting and directly start with the paragraph
-        JLabel paragraph = new JLabel("CREATE FLASHCARDS");
-        paragraph.setFont(new Font("Segoe UI Variable", Font.BOLD, 16));
-        paragraph.setForeground(new Color(0x1d1d1d));
+        JLabel titleLabel = new JLabel("CREATE FLASHCARD SET");
+        titleLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 16));
+        titleLabel.setForeground(new Color(0x1d1d1d));
         
-        // Term field
+        JLabel subjectLabel = new JLabel("Subject Title");
+        subjectLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 16));
+        
+        JTextField subjectField = new JTextField(20);
+        subjectField.setPreferredSize(new Dimension(700, 40));
+        
+        JLabel descriptionLabel = new JLabel("Description (Optional)");
+        descriptionLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 16));
+        
+        JTextArea descriptionArea = new JTextArea();
+        descriptionArea.setLineWrap(true);
+        descriptionArea.setWrapStyleWord(true);
+        JScrollPane descriptionScroll = new JScrollPane(descriptionArea);
+        descriptionScroll.setPreferredSize(new Dimension(700, 60));
+        
+        JButton createSetBtn = createButton.button("Create Set", null, Color.WHITE, null, false);
+        createSetBtn.setBackground(new Color(0x0065D9));
+        createSetBtn.setPreferredSize(new Dimension(100, 40));
+        createSetBtn.addActionListener(e -> {
+            String subject = subjectField.getText().trim();
+            String description = descriptionArea.getText().trim();
+            
+            if (subject.isEmpty()) {
+                Toast.error("Please enter a subject title!");
+                return;
+            }           
+            if (createNewSet(subject, description)) {
+                subjectField.setText("");
+                descriptionArea.setText("");
+                cardLayout.show(mainCardPanel, "termsInput");
+                refreshListContainer(); // Refresh to show new set
+            }
+        });
+
+        JPanel spacer = createPanel.panel(BACKGROUND_COLOR, null, new Dimension(0, 200));
+
+        // Add components using ComponentUtil
+        ComponentUtil.addComponent(panel, titleLabel, 0, 0, 2, 1, new Insets(10, 10, 20, 10), 0);
+        ComponentUtil.addComponent(panel, subjectLabel, 0, 1, 1, 1, new Insets(5, 10, 5, 5), 0);
+        ComponentUtil.addComponent(panel, subjectField, 0, 2, 2, 1, new Insets(0, 10, 20, 5), 0);
+        ComponentUtil.addComponent(panel, descriptionLabel, 0, 3, 1, 1, new Insets(5, 10, 5, 5), 0);
+        ComponentUtil.addComponent(panel, descriptionScroll, 0, 4, 2, 1, new Insets(0, 10, 20, 5), 0);
+        ComponentUtil.addComponent(panel, createSetBtn, 0, 5, 2, 1, new Insets(0, 10, 10, 5), 0);
+        ComponentUtil.addComponent(panel, spacer, 0, 6, 2, 1, new Insets(0, 10, 10, 5), 0);
+        
+        return panel;
+    }
+
+    private static JPanel createTermsInputPanel() {
+        JPanel panel = createPanel.panel(Color.WHITE, new GridBagLayout(), new Dimension(0, 0));
+        
+        JLabel titleLabel = new JLabel("ADD TERMS TO SET");
+        titleLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 16));
+        
         JLabel termLabel = new JLabel("Term");
         termLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 16));
         
         JTextField termField = new JTextField(20);
         termField.setPreferredSize(new Dimension(700, 40));
         
-        JPanel termComponent = createPanel.panel(new Color(0xD9D9D9), new BorderLayout(), new Dimension(700, 40));
-        termComponent.add(termField, BorderLayout.CENTER);
-        
-        // Definition textarea
         JLabel definitionLabel = new JLabel("Definition");
         definitionLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 16));
         
@@ -84,39 +144,49 @@ public class FlashcardPanel {
         JScrollPane definitionScroll = new JScrollPane(definitionArea);
         definitionScroll.setPreferredSize(new Dimension(700, 150));
         
-        JButton addFlashcardBtn = createButton.button("Add Flashcard", null, Color.WHITE, null, false);
-        addFlashcardBtn.setBackground(new Color(0x0065D9));
-        addFlashcardBtn.setPreferredSize(new Dimension(120, 40));
-        
-        // Add button panel
         JPanel buttonPanel = createPanel.panel(null, new FlowLayout(FlowLayout.RIGHT), new Dimension(700, 50));
-        buttonPanel.add(addFlashcardBtn);
-
-        // Add action listener
-        addFlashcardBtn.addActionListener(e -> {
+        
+        JButton addTermBtn = createButton.button("Add Term", null, Color.WHITE, null, false);
+        addTermBtn.setBackground(new Color(0x275CE2));
+        addTermBtn.setPreferredSize(new Dimension(120, 40));
+        
+        JButton doneBtn = createButton.button("Done", null, Color.WHITE, null, false);
+        doneBtn.setBackground(new Color(0x0065D9));
+        doneBtn.setPreferredSize(new Dimension(100, 40));
+        
+        addTermBtn.addActionListener(e -> {
             String term = termField.getText().trim();
             String definition = definitionArea.getText().trim();
             
             if (term.isEmpty() || definition.isEmpty()) {
-                JOptionPane.showMessageDialog(null, "Please enter both term and definition!");
+                Toast.error("Please enter both term and definition!");
                 return;
             }
             
-            if (insertQuiz(term, definition)) {
+            if (addTermToSet(term, definition)) {
                 termField.setText("");
                 definitionArea.setText("");
-                refreshQuizContainer();
+                Toast.success("Term added successfully!");
             }
         });
-
-        // Add components using ComponentUtil
-        ComponentUtil.addComponent(inputPanel, paragraph, 0, 0, 2, 1, new Insets(10, 10, 20, 10), 0);
-        ComponentUtil.addComponent(inputPanel, termLabel, 0, 1, 1, 1, new Insets(5, 10, 5, 5), 0);
-        ComponentUtil.addComponent(inputPanel, termComponent, 0, 2, 2, 1, new Insets(0, 10, 20, 5), 0);
-        ComponentUtil.addComponent(inputPanel, definitionLabel, 0, 3, 1, 1, new Insets(5, 10, 5, 5), 0);
-        ComponentUtil.addComponent(inputPanel, definitionScroll, 0, 4, 2, 1, new Insets(0, 10, 10, 5), 0);
-        ComponentUtil.addComponent(inputPanel, buttonPanel, 0, 5, 2, 1, new Insets(0, 10, 10, 5), 0);
-        return inputPanel;
+        
+        doneBtn.addActionListener(e -> {
+            cardLayout.show(mainCardPanel, "setCreation");
+            currentSetId = -1; // Reset current set
+        });
+        
+        buttonPanel.add(addTermBtn);
+        buttonPanel.add(doneBtn);
+        
+        // Add components
+        ComponentUtil.addComponent(panel, titleLabel, 0, 0, 2, 1, new Insets(10, 10, 20, 10), 0);
+        ComponentUtil.addComponent(panel, termLabel, 0, 1, 1, 1, new Insets(5, 10, 5, 5), 0);
+        ComponentUtil.addComponent(panel, termField, 0, 2, 2, 1, new Insets(0, 10, 20, 5), 0);
+        ComponentUtil.addComponent(panel, definitionLabel, 0, 3, 1, 1, new Insets(5, 10, 5, 5), 0);
+        ComponentUtil.addComponent(panel, definitionScroll, 0, 4, 2, 1, new Insets(0, 10, 20, 5), 0);
+        ComponentUtil.addComponent(panel, buttonPanel, 0, 5, 2, 1, new Insets(0, 10, 10, 5), 0);
+        
+        return panel;
     }
 
     private static boolean insertQuiz(String term, String definition) {
@@ -180,53 +250,217 @@ public class FlashcardPanel {
     }
 
     public static JPanel createListContainer() {
-        // Main panel with fixed width - increased from 400 to 600
         JPanel mainPanel = createPanel.panel(LIST_CONTAINER_COLOR, new BorderLayout(), new Dimension(600, 0));
-
-        // Configure quiz container with BoxLayout (Y_AXIS)
+        
         quizContainer = createPanel.panel(LIST_CONTAINER_COLOR, null, null);
         quizContainer.setLayout(new BoxLayout(quizContainer, BoxLayout.Y_AXIS));
         quizContainer.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-
-        // Create header panel
-        JPanel headerPanel = createPanel.panel(LIST_CONTAINER_COLOR, new BorderLayout(), null);
-        headerPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         
-        JLabel titleLabel = new JLabel("My Flashcards");
-        titleLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 18));
-        titleLabel.setForeground(TEXT_COLOR);
+        refreshListContainer();
         
-        JButton viewButton = createButton.button("View All", PRIMARY_BUTTON_COLOR, PRIMARY_BUTTON_TEXT, null, false);
-        viewButton.setPreferredSize(new Dimension(80, 35));
-        new HoverButtonEffect(viewButton, PRIMARY_BUTTON_COLOR, PRIMARY_BUTTON_HOVER, PRIMARY_BUTTON_TEXT, PRIMARY_BUTTON_TEXT);
-        viewButton.addActionListener(e -> cardLayout.show(mainCardPanel, "flashcardMode"));
-        
-        headerPanel.add(titleLabel, BorderLayout.WEST);
-        headerPanel.add(viewButton, BorderLayout.EAST);
-
-        // Add initial flashcards
-        refreshQuizContainer();
-
-        // Create a wrapper panel to properly contain the quiz container
-        JPanel wrapperPanel = createPanel.panel(LIST_CONTAINER_COLOR, new BorderLayout(), null);
-        wrapperPanel.add(quizContainer, BorderLayout.NORTH);
-        
-        // Add filler panel to push content to top
-        JPanel fillerPanel = createPanel.panel(LIST_CONTAINER_COLOR, null, null);
-        wrapperPanel.add(fillerPanel, BorderLayout.CENTER);
-
-        // Configure ScrollPane
-        scrollPane = new JScrollPane(wrapperPanel);
-        scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        JScrollPane scrollPane = new JScrollPane(quizContainer);
         scrollPane.setBorder(null);
-        scrollPane.getViewport().setBackground(LIST_CONTAINER_COLOR);
-
-        mainPanel.add(headerPanel, BorderLayout.NORTH);
+        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        
         mainPanel.add(scrollPane, BorderLayout.CENTER);
-
+        
         return mainPanel;
+    }
+
+    private static void refreshListContainer() {
+        if (quizContainer == null) return;
+        quizContainer.removeAll();
+        
+        try {
+            String query = "SELECT set_id, subject, description FROM flashcard_sets WHERE user_id = ?";
+            try (Connection conn = DatabaseManager.getConnection();
+                 PreparedStatement stmt = conn.prepareStatement(query)) {
+                stmt.setInt(1, UserSession.getUserId());
+                ResultSet rs = stmt.executeQuery();
+                
+                while (rs.next()) {
+                    int setId = rs.getInt("set_id");
+                    String subject = rs.getString("subject");
+                    String description = rs.getString("description");
+                    
+                    JPanel setPanel = createSetItemPanel(setId, subject, description);
+                    quizContainer.add(setPanel);
+                    quizContainer.add(Box.createVerticalStrut(10));
+                }
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            Toast.error("Error loading sets: " + ex.getMessage());
+        }
+        
+        quizContainer.revalidate();
+        quizContainer.repaint();
+    }
+
+    private static JPanel createSetItemPanel(int setId, String subject, String description) {
+        JPanel panel = createPanel.panel(LIST_ITEM_COLOR, new BorderLayout(), new Dimension(0, 80));
+        panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 80));
+        
+        JPanel contentPanel = createPanel.panel(LIST_ITEM_COLOR, new BorderLayout(), null);
+        contentPanel.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
+        
+        JPanel textPanel = createPanel.panel(LIST_ITEM_COLOR, new GridLayout(2, 1, 2, 2), null);
+        
+        JLabel subjectLabel = new JLabel(subject);
+        subjectLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 14));
+        subjectLabel.setForeground(TEXT_COLOR);
+        
+        JLabel descLabel = new JLabel(description != null ? description : "No description");
+        descLabel.setFont(new Font("Segoe UI Variable", Font.PLAIN, 12));
+        descLabel.setForeground(new Color(0x666666));
+        
+        textPanel.add(subjectLabel);
+        textPanel.add(descLabel);
+
+        // Button panel for more button
+        JPanel buttonPanel = createPanel.panel(null, new FlowLayout(FlowLayout.RIGHT, 5, 0), null);
+        
+        // More button with icon
+        JButton moreBtn = new JButton();
+        try {
+            ImageIcon moreIcon = new ImageIcon("C:\\Users\\ADMIN\\Desktop\\Tasklr\\resource\\icons\\moreIconBlack.png");
+            Image scaledImage = moreIcon.getImage().getScaledInstance(24, 24, Image.SCALE_SMOOTH);
+            moreBtn.setIcon(new ImageIcon(scaledImage));
+        } catch (Exception e) {
+            System.err.println("Failed to load more icon: " + e.getMessage());
+        }
+        moreBtn.setBorderPainted(false);
+        moreBtn.setContentAreaFilled(false);
+        moreBtn.setFocusPainted(false);
+        moreBtn.setPreferredSize(new Dimension(40, 40));
+
+        // Create popup menu
+        JPopupMenu popupMenu = new JPopupMenu();
+        
+        // Edit menu item with icon
+        JMenuItem editItem = new JMenuItem();
+        try {
+            ImageIcon editIcon = new ImageIcon("C:\\Users\\ADMIN\\Desktop\\Tasklr\\resource\\icons\\editIcon.png");
+            Image scaledEditImage = editIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
+            editItem.setIcon(new ImageIcon(scaledEditImage));
+        } catch (Exception e) {
+            System.err.println("Failed to load edit icon: " + e.getMessage());
+        }
+        editItem.setText("Edit");
+        
+        // Delete menu item with icon
+        JMenuItem deleteItem = new JMenuItem();
+        try {
+            ImageIcon deleteIcon = new ImageIcon("C:\\Users\\ADMIN\\Desktop\\Tasklr\\resource\\icons\\deleteIcon.png");
+            Image scaledDeleteImage = deleteIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
+            deleteItem.setIcon(new ImageIcon(scaledDeleteImage));
+        } catch (Exception e) {
+            System.err.println("Failed to load delete icon: " + e.getMessage());
+        }
+        deleteItem.setText("Delete");
+
+        // Add items to popup menu
+        popupMenu.add(editItem);
+        popupMenu.add(deleteItem);
+
+        // Add action listeners
+        moreBtn.addActionListener(e -> {
+            popupMenu.show(moreBtn, 0, moreBtn.getHeight());
+        });
+
+        editItem.addActionListener(e -> {
+            String newTitle = JOptionPane.showInputDialog(
+                SwingUtilities.getWindowAncestor(moreBtn),
+                "Edit set:",
+                subject
+            );
+            if (newTitle != null && !newTitle.trim().isEmpty()) {
+                try {
+                    String query = "UPDATE flashcard_sets SET subject = ? WHERE subject = ? AND user_id = ?";
+                    DatabaseManager.executeUpdate(query, 
+                        newTitle.trim(), 
+                        subject, 
+                        UserSession.getUserId()
+                    );
+                    JOptionPane.showMessageDialog(
+                        SwingUtilities.getWindowAncestor(moreBtn),
+                        "Set updated successfully!",
+                        "Success",
+                        JOptionPane.INFORMATION_MESSAGE
+                    );
+                    refreshListContainer();
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                    JOptionPane.showMessageDialog(
+                        SwingUtilities.getWindowAncestor(moreBtn),
+                        "Error updating set: " + ex.getMessage(),
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE
+                    );
+                }
+            }
+        });
+
+        deleteItem.addActionListener(e -> {
+            int confirm = JOptionPane.showConfirmDialog(
+                SwingUtilities.getWindowAncestor(moreBtn),
+                "Are you sure you want to delete this set?",
+                "Confirm Delete",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.QUESTION_MESSAGE
+            );
+            
+            if (confirm == JOptionPane.YES_OPTION) {
+                try {
+                    String query = "DELETE FROM flashcard_sets WHERE subject = ? AND user_id = ?";
+                    DatabaseManager.executeUpdate(query, 
+                        subject, 
+                        UserSession.getUserId()
+                    );
+                    JOptionPane.showMessageDialog(
+                        SwingUtilities.getWindowAncestor(moreBtn),
+                        "Set deleted successfully!",
+                        "Success",
+                        JOptionPane.INFORMATION_MESSAGE
+                    );
+                    refreshListContainer();
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                    JOptionPane.showMessageDialog(
+                        SwingUtilities.getWindowAncestor(moreBtn),
+                        "Error deleting set: " + ex.getMessage(),
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE
+                    );
+                }
+            }
+        });
+
+        buttonPanel.add(moreBtn);
+        
+        contentPanel.add(textPanel, BorderLayout.CENTER);
+        contentPanel.add(buttonPanel, BorderLayout.EAST);
+        
+        panel.add(contentPanel, BorderLayout.CENTER);
+        
+        new HoverPanelEffect(panel, LIST_ITEM_COLOR, LIST_ITEM_HOVER_BG);
+        
+        // Add click listener
+        panel.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                showFlashcardMode(setId);
+            }
+        });
+        
+        return panel;
+    }
+
+    private static void showFlashcardMode(int setId) {
+        // Update flashcard mode panel with the selected set's cards
+        JPanel flashcardModePanel = createFlashcardModePanel(setId);
+        mainCardPanel.add(flashcardModePanel, "flashcardMode");
+        cardLayout.show(mainCardPanel, "flashcardMode");
     }
 
     private static JPanel createQuizItemPanel(String term, String definition) {
@@ -332,7 +566,7 @@ public class FlashcardPanel {
         return panel;
     }
    
-    private static JPanel createFlashcardModePanel() {
+    private static JPanel createFlashcardModePanel(int setId) {
         JPanel mainContainer = createPanel.panel(Color.WHITE, new BorderLayout(), null);
         mainContainer.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         
@@ -341,10 +575,10 @@ public class FlashcardPanel {
         headerPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 20, 0));
         
         // Back button
-        JButton backButton = createButton.button("Back to Input", null, Color.WHITE, null, false);
+        JButton backButton = createButton.button("Back to Sets", null, Color.WHITE, null, false);
         backButton.setBackground(new Color(0x0065D9));
         backButton.setPreferredSize(new Dimension(120, 40));
-        backButton.addActionListener(e -> cardLayout.show(mainCardPanel, "input"));
+        backButton.addActionListener(e -> cardLayout.show(mainCardPanel, "setCreation"));
         
         // Title
         JLabel titleLabel = new JLabel("Study Mode", SwingConstants.CENTER);
@@ -357,12 +591,10 @@ public class FlashcardPanel {
         JPanel cardsContainer = createPanel.panel(Color.WHITE, null, null);
         cardsContainer.setLayout(new BoxLayout(cardsContainer, BoxLayout.Y_AXIS));
         
-        // Fetch and display flashcards
+        // Fetch and display flashcards for this set
         try {
-            ResultSet rs = DatabaseManager.executeQuery(
-                "SELECT term, definition FROM quizzes WHERE user_id = ? ORDER BY id DESC",
-                UserSession.getUserId()
-            );
+            String query = "SELECT term, definition FROM flashcards WHERE set_id = ?";
+            ResultSet rs = DatabaseManager.executeQuery(query, setId);
             
             boolean hasCards = false;
             while (rs.next()) {
@@ -370,14 +602,13 @@ public class FlashcardPanel {
                 String term = rs.getString("term");
                 String definition = rs.getString("definition");
                 
-                // Create flashcard panel
                 JPanel flashcard = createFlashcardItem(term, definition);
                 cardsContainer.add(flashcard);
                 cardsContainer.add(Box.createRigidArea(new Dimension(0, 10)));
             }
             
             if (!hasCards) {
-                JLabel noCardsLabel = new JLabel("No flashcards available. Create some first!", SwingConstants.CENTER);
+                JLabel noCardsLabel = new JLabel("No flashcards in this set yet!", SwingConstants.CENTER);
                 noCardsLabel.setFont(new Font("Segoe UI Variable", Font.PLAIN, 16));
                 noCardsLabel.setForeground(new Color(0x707070));
                 noCardsLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -385,7 +616,7 @@ public class FlashcardPanel {
             }
         } catch (SQLException ex) {
             ex.printStackTrace();
-            JOptionPane.showMessageDialog(null, "Error loading flashcards: " + ex.getMessage());
+            Toast.error("Error loading flashcards: " + ex.getMessage());
         }
         
         // Scroll pane for cards
@@ -441,7 +672,7 @@ public class FlashcardPanel {
     public static void refreshFlashcardMode() {
         if (mainCardPanel != null) {
             mainCardPanel.remove(mainCardPanel.getComponent(1)); // Remove old flashcard mode panel
-            mainCardPanel.add(createFlashcardModePanel(), "flashcardMode"); // Add new one
+            mainCardPanel.add(createFlashcardModePanel(currentSetId), "flashcardMode"); // Pass currentSetId
             mainCardPanel.revalidate();
             mainCardPanel.repaint();
         }
@@ -453,12 +684,12 @@ public class FlashcardPanel {
                 "UPDATE quizzes SET term = ?, definition = ? WHERE term = ? AND user_id = ?",
                 newTerm, newDefinition, oldTerm, UserSession.getUserId()
             );
-            showCenteredOptionPane(null, "Flashcard updated successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+            Toast.success("Flashcard updated successfully!");
             refreshQuizContainer();
             refreshFlashcardMode();
         } catch (SQLException ex) {
             ex.printStackTrace();
-            showCenteredOptionPane(null, "Error updating flashcard: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            Toast.error("Error updating flashcard: " + ex.getMessage());
         }
     }
 
@@ -468,12 +699,12 @@ public class FlashcardPanel {
                 "DELETE FROM quizzes WHERE term = ? AND user_id = ?",
                 term, UserSession.getUserId()
             );
-            showCenteredOptionPane(null, "Flashcard deleted successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+            Toast.success("Flashcard deleted successfully!");
             refreshQuizContainer();
             refreshFlashcardMode();
         } catch (SQLException ex) {
             ex.printStackTrace();
-            showCenteredOptionPane(null, "Error deleting flashcard: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            Toast.error("Error deleting flashcard: " + ex.getMessage());
         }
     }
 
@@ -482,5 +713,85 @@ public class FlashcardPanel {
         JDialog dialog = pane.createDialog(parentComponent, title);
         dialog.setLocationRelativeTo(null);
         dialog.setVisible(true);
+    }
+
+    private static void addToTemporaryList(String subject, String term, String definition) {
+        Map<String, String> termMap = new HashMap<>();
+        termMap.put("term", term);
+        termMap.put("definition", definition);
+        temporaryTerms.add(termMap);
+    }
+    
+    private static void clearTemporaryList() {
+        temporaryTerms.clear();
+    }
+    
+    private static boolean createNewSet(String subject, String description) {
+        try {
+            // First create the set
+            String setQuery = "INSERT INTO flashcard_sets (user_id, subject, description) VALUES (?, ?, ?)";
+            int setId;
+            
+            try (Connection conn = DatabaseManager.getConnection();
+                 PreparedStatement stmt = conn.prepareStatement(setQuery, Statement.RETURN_GENERATED_KEYS)) {
+                stmt.setInt(1, UserSession.getUserId());
+                stmt.setString(2, subject);
+                stmt.setString(3, description);
+                stmt.executeUpdate();
+                
+                try (ResultSet rs = stmt.getGeneratedKeys()) {
+                    if (rs.next()) {
+                        setId = rs.getInt(1);
+                    } else {
+                        throw new SQLException("Failed to get generated set ID");
+                    }
+                }
+            }
+            
+            // Then add all terms from temporary storage
+            String cardQuery = "INSERT INTO flashcards (set_id, term, definition) VALUES (?, ?, ?)";
+            try (Connection conn = DatabaseManager.getConnection();
+                 PreparedStatement stmt = conn.prepareStatement(cardQuery)) {
+                for (Map<String, String> term : temporaryTerms) {
+                    stmt.setInt(1, setId);
+                    stmt.setString(2, term.get("term"));
+                    stmt.setString(3, term.get("definition"));
+                    stmt.executeUpdate();
+                }
+            }
+            
+            // Clear temporary storage after successful creation
+            temporaryTerms.clear();
+            currentSetId = setId;  // Set the current set ID
+            
+            Toast.success("Flashcard set created successfully!");
+            return true;
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            Toast.error("Error creating flashcard set: " + ex.getMessage());
+            return false;
+        }
+    }
+
+    private static boolean addTermToSet(String term, String definition) {
+        if (currentSetId == -1) {
+            // If no set is selected, add to temporary storage
+            Map<String, String> termMap = new HashMap<>();
+            termMap.put("term", term);
+            termMap.put("definition", definition);
+            temporaryTerms.add(termMap);
+            return true;
+        } else {
+            // If a set is selected, add directly to database
+            try {
+                String query = "INSERT INTO flashcards (set_id, term, definition) VALUES (?, ?, ?)";
+                DatabaseManager.executeUpdate(query, currentSetId, term, definition);
+                return true;
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                Toast.error("Error adding term: " + ex.getMessage());
+                return false;
+            }
+        }
     }
 }

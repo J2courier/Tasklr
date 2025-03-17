@@ -14,7 +14,7 @@ public class overview {
     // Color constants
     private static final Color PRIMARY_COLOR = new Color(0x275CE2);    // Primary blue
     private static final Color SECONDARY_COLOR = new Color(0xE0E3E2);  // Light gray
-    private static final Color BACKGROUND_COLOR = new Color(0xF1F3F6); // Light background
+    private static final Color BACKGROUND_COLOR = Color.WHITE; // Light background
     private static final Color CARD_COLOR = new Color(0xFFFFFF);       // White
     private static final Color TEXT_DARK = new Color(0x1D1D1D);        // Dark text
     private static final Color BORDER_COLOR = new Color(0xE0E0E0);     // Border gray
@@ -45,6 +45,7 @@ public class overview {
         mainPanel.add(createQuickActionsSection(), gbc);
 
         gbc.gridy = 4;
+        gbc.weighty = 1.0;
         mainPanel.add(spacer, gbc);
 
         return mainPanel;
@@ -69,9 +70,25 @@ public class overview {
         welcomePanel.add(dateLabel);
         welcomePanel.add(welcomeLabel);
 
-        // Right side - Quick summary
-        JPanel summaryPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        // Right side - Quick summary with notification icon
+        JPanel summaryPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 0));
         summaryPanel.setOpaque(false);
+
+        // Add notification icon
+        try {
+            ImageIcon notifIcon = new ImageIcon("C://Users//ADMIN//Desktop//Tasklr//resource//icons//NotificationIcon.png");
+            Image scaledImage = notifIcon.getImage().getScaledInstance(24, 24, Image.SCALE_SMOOTH);
+            JLabel notificationLabel = new JLabel(new ImageIcon(scaledImage));
+            notificationLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            notificationLabel.addMouseListener(new java.awt.event.MouseAdapter() {
+                public void mouseEntered(java.awt.event.MouseEvent evt) {
+                    notificationLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
+                }
+            });
+            summaryPanel.add(notificationLabel);
+        } catch (Exception e) {
+            System.err.println("Failed to load notification icon: " + e.getMessage());
+        }
 
         headerPanel.add(welcomePanel, BorderLayout.WEST);
         headerPanel.add(summaryPanel, BorderLayout.EAST);

@@ -14,6 +14,7 @@ import tasklr.authentication.Login;
 public class Tasklr extends JFrame {
     private String username;
     private JPanel centerContainer; 
+    private static final Color NAV_BACKGROUND_COLOR = new Color(0x275CE2); // New color constant
 
     public Tasklr(String username) {
         pack();
@@ -29,12 +30,14 @@ public class Tasklr extends JFrame {
         setIconImage(appIcon.getImage());
         
         JPanel body = createPanel.panel(new Color(0xFFFFFF), new CardLayout(), new Dimension(0, 0));
-        JPanel navbar = createPanel.panel(new Color(0x191919), new FlowLayout(FlowLayout.CENTER, 10, 40), new Dimension(70, 0));
-        // Border border = BorderFactory.createLineBorder(new Color(0xFFFFFF), 1);
-        // navbar.setBorder(border);
+        // Change FlowLayout alignment to LEFT and modify the vgap
+        JPanel navbar = createPanel.panel(NAV_BACKGROUND_COLOR, new FlowLayout(FlowLayout.CENTER, 10, 20), new Dimension(70, 0));
+        
+        // Add empty border to create padding at the top
+        navbar.setBorder(BorderFactory.createEmptyBorder(100, 0, 0, 0));
+        
         add(body, BorderLayout.CENTER);
         add(navbar, BorderLayout.WEST);
-        
 
         ImageIcon homeBtn = new ImageIcon(new ImageIcon("C:/Users/ADMIN/Desktop/Tasklr/resource/icons/HomeLogo.png").getImage().getScaledInstance(40, 40, Image.SCALE_SMOOTH));
         ImageIcon taskBtn = new ImageIcon(new ImageIcon("C:/Users/ADMIN/Desktop/Tasklr/resource/icons/TaskLogo.png").getImage().getScaledInstance(40, 40, Image.SCALE_SMOOTH));

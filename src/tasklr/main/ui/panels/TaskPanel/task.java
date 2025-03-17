@@ -4,13 +4,14 @@ package tasklr.main.ui.panels.TaskPanel;
 import com.toedter.calendar.JDateChooser;
 import javax.swing.*;
 import javax.swing.border.Border;
-
+import tasklr.utilities.Toast;
 import tasklr.authentication.UserSession;
 import tasklr.utilities.ComponentUtil;
 import tasklr.utilities.HoverPanelEffect;
 import tasklr.utilities.createButton;
 import tasklr.utilities.createPanel;
 import tasklr.utilities.HoverButtonEffect;
+import tasklr.utilities.DatabaseManager;
 
 import java.awt.*;
 import java.util.List;
@@ -28,7 +29,7 @@ public class task {
     private static final Color PRIMARY_BUTTON_COLOR = new Color(0x275CE2);
     private static final Color PRIMARY_BUTTON_HOVER = new Color(0x3B6FF0);
     private static final Color PRIMARY_BUTTON_TEXT = Color.WHITE;
-
+    private static final Color PRIMARY_COLOR = new Color(0x275CE2);    // Primary blue
     private static final String url = "jdbc:mysql://localhost:3306/tasklrdb";
     private static final String dbUser = "JFCompany";
     private static final String dbPass = "";
@@ -43,11 +44,11 @@ public class task {
         panel.setBorder(panelBorder);
 
         // Create header panel
-        JPanel headerPanel = createPanel.panel(new Color(0xF1F3F6), new BorderLayout(), new Dimension(0, 70));
+        JPanel headerPanel = createPanel.panel(PRIMARY_COLOR, new BorderLayout(), new Dimension(0, 70));
         headerPanel.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 0));
         
         JLabel headerLabel = new JLabel("TASK LIST");
-        headerLabel.setForeground(Color.BLACK);
+        headerLabel.setForeground(Color.WHITE);
         headerLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 24));
         headerPanel.add(headerLabel, BorderLayout.CENTER);
 
@@ -147,10 +148,6 @@ public class task {
     }
 
     private static boolean insertTask(String title, java.util.Date dueDate) {
-        String url = "jdbc:mysql://localhost:3306/tasklrdb";
-        String dbUser = "JFCompany";
-        String dbPass = "";
-        
         try (Connection conn = DriverManager.getConnection(url, dbUser, dbPass)) {
             String query = "INSERT INTO tasks (user_id, title, due_date, status) VALUES (?, ?, ?, 'pending')";
             try (PreparedStatement stmt = conn.prepareStatement(query)) {
@@ -160,13 +157,13 @@ public class task {
                 
                 int result = stmt.executeUpdate();
                 if (result > 0) {
-                    JOptionPane.showMessageDialog(null, "Task added successfully!");
+                    Toast.success("Task added successfully!");
                     return true;
                 }
             }
         } catch (SQLException ex) {
             ex.printStackTrace();
-            JOptionPane.showMessageDialog(null, "Error adding task: " + ex.getMessage());
+            Toast.error("Error adding task: " + ex.getMessage());
         }
         return false;
     }
@@ -250,59 +247,82 @@ public class task {
         titleLabel.setFont(new Font("Segoe UI Variable", Font.PLAIN, 14));
         titleLabel.setForeground(TEXT_COLOR);
         
-        // Button panel for edit and delete
+        // Button panel for more button
         JPanel buttonPanel = createPanel.panel(null, new FlowLayout(FlowLayout.RIGHT, 5, 0), null);
         
-        // Edit button
-        JButton editBtn = createButton.button("Edit", new Color(0xE9E9E9), new Color(0x242424), null, false);
-        editBtn.setPreferredSize(new Dimension(70, 40));
-        new HoverButtonEffect(editBtn, 
-            new Color(0xE9E9E9), // default background
-            new Color(0xBFBFBF), // hover background
-            new Color(0x242424), // default text
-            Color.WHITE         // hover text
-        );
+        // More button with icon
+        JButton moreBtn = new JButton();
+        try {
+            ImageIcon moreIcon = new ImageIcon("C:\\Users\\ADMIN\\Desktop\\Tasklr\\resource\\icons\\moreIconBlack.png");
+            Image scaledImage = moreIcon.getImage().getScaledInstance(24, 24, Image.SCALE_SMOOTH);
+            moreBtn.setIcon(new ImageIcon(scaledImage));
+        } catch (Exception e) {
+            System.err.println("Failed to load more icon: " + e.getMessage());
+        }
+        moreBtn.setBorderPainted(false);
+        moreBtn.setContentAreaFilled(false);
+        moreBtn.setFocusPainted(false);
+        moreBtn.setPreferredSize(new Dimension(40, 40));
 
-        // Delete button
-        JButton deleteBtn = createButton.button("Delete", new Color(0xFB2C36), Color.WHITE, null, false);
-        deleteBtn.setPreferredSize(new Dimension(70, 40));
-        new HoverButtonEffect(deleteBtn, 
-            new Color(0xFB2C36),  // default background
-            new Color(0xFF6467),  // hover background
-            Color.WHITE,          // default text
-            Color.WHITE          // hover text
-        );
+        // Create popup menu
+        JPopupMenu popupMenu = new JPopupMenu();
+        
+        // Edit menu item with icon
+        JMenuItem editItem = new JMenuItem();
+        try {
+            ImageIcon editIcon = new ImageIcon("C:\\Users\\ADMIN\\Desktop\\Tasklr\\resource\\icons\\editIcon.png");
+            Image scaledEditImage = editIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
+            editItem.setIcon(new ImageIcon(scaledEditImage));
+        } catch (Exception e) {
+            System.err.println("Failed to load edit icon: " + e.getMessage());
+        }
+        editItem.setText("Edit");
+        
+        // Delete menu item with icon
+        JMenuItem deleteItem = new JMenuItem();
+        try {
+            ImageIcon deleteIcon = new ImageIcon("C:\\Users\\ADMIN\\Desktop\\Tasklr\\resource\\icons\\deleteIcon.png");
+            Image scaledDeleteImage = deleteIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
+            deleteItem.setIcon(new ImageIcon(scaledDeleteImage));
+        } catch (Exception e) {
+            System.err.println("Failed to load delete icon: " + e.getMessage());
+        }
+        deleteItem.setText("Delete");
 
-        // Keep existing action listeners
-        editBtn.addActionListener(e -> {
+        // Add items to popup menu
+        popupMenu.add(editItem);
+        popupMenu.add(deleteItem);
+
+        // Add action listeners
+        moreBtn.addActionListener(e -> {
+            popupMenu.show(moreBtn, 0, moreBtn.getHeight());
+        });
+
+        editItem.addActionListener(e -> {
             String newTitle = JOptionPane.showInputDialog(
-                SwingUtilities.getWindowAncestor(editBtn), // parent component
+                SwingUtilities.getWindowAncestor(moreBtn),
                 "Edit task:",
                 title
             );
             if (newTitle != null && !newTitle.trim().isEmpty()) {
-                try (Connection conn = DriverManager.getConnection(url, dbUser, dbPass)) {
+                try {
                     String query = "UPDATE tasks SET title = ? WHERE title = ? AND user_id = ?";
-                    try (PreparedStatement stmt = conn.prepareStatement(query)) {
-                        stmt.setString(1, newTitle.trim());
-                        stmt.setString(2, title);
-                        stmt.setInt(3, UserSession.getUserId());
-                        
-                        int result = stmt.executeUpdate();
-                        if (result > 0) {
-                            JOptionPane.showMessageDialog(
-                                SwingUtilities.getWindowAncestor(editBtn), // parent component
-                                "Task updated successfully!",
-                                "Success",
-                                JOptionPane.INFORMATION_MESSAGE
-                            );
-                            refreshTaskContainer();
-                        }
-                    }
+                    DatabaseManager.executeUpdate(query, 
+                        newTitle.trim(), 
+                        title, 
+                        UserSession.getUserId()
+                    );
+                    JOptionPane.showMessageDialog(
+                        SwingUtilities.getWindowAncestor(moreBtn),
+                        "Task updated successfully!",
+                        "Success",
+                        JOptionPane.INFORMATION_MESSAGE
+                    );
+                    refreshTaskContainer();
                 } catch (SQLException ex) {
                     ex.printStackTrace();
                     JOptionPane.showMessageDialog(
-                        SwingUtilities.getWindowAncestor(editBtn), // parent component
+                        SwingUtilities.getWindowAncestor(moreBtn),
                         "Error updating task: " + ex.getMessage(),
                         "Error",
                         JOptionPane.ERROR_MESSAGE
@@ -311,9 +331,9 @@ public class task {
             }
         });
 
-        deleteBtn.addActionListener(e -> {
+        deleteItem.addActionListener(e -> {
             int confirm = JOptionPane.showConfirmDialog(
-                SwingUtilities.getWindowAncestor(deleteBtn), // parent component
+                SwingUtilities.getWindowAncestor(moreBtn),
                 "Are you sure you want to delete this task?",
                 "Confirm Delete",
                 JOptionPane.YES_NO_OPTION,
@@ -321,27 +341,23 @@ public class task {
             );
             
             if (confirm == JOptionPane.YES_OPTION) {
-                try (Connection conn = DriverManager.getConnection(url, dbUser, dbPass)) {
+                try {
                     String query = "DELETE FROM tasks WHERE title = ? AND user_id = ?";
-                    try (PreparedStatement stmt = conn.prepareStatement(query)) {
-                        stmt.setString(1, title);
-                        stmt.setInt(2, UserSession.getUserId());
-                        
-                        int result = stmt.executeUpdate();
-                        if (result > 0) {
-                            JOptionPane.showMessageDialog(
-                                SwingUtilities.getWindowAncestor(deleteBtn), // parent component
-                                "Task deleted successfully!",
-                                "Success",
-                                JOptionPane.INFORMATION_MESSAGE
-                            );
-                            refreshTaskContainer();
-                        }
-                    }
+                    DatabaseManager.executeUpdate(query, 
+                        title, 
+                        UserSession.getUserId()
+                    );
+                    JOptionPane.showMessageDialog(
+                        SwingUtilities.getWindowAncestor(moreBtn),
+                        "Task deleted successfully!",
+                        "Success",
+                        JOptionPane.INFORMATION_MESSAGE
+                    );
+                    refreshTaskContainer();
                 } catch (SQLException ex) {
                     ex.printStackTrace();
                     JOptionPane.showMessageDialog(
-                        SwingUtilities.getWindowAncestor(deleteBtn), // parent component
+                        SwingUtilities.getWindowAncestor(moreBtn),
                         "Error deleting task: " + ex.getMessage(),
                         "Error",
                         JOptionPane.ERROR_MESSAGE
@@ -350,11 +366,8 @@ public class task {
             }
         });
 
-        // Add buttons to button panel
-        buttonPanel.add(editBtn);
-        buttonPanel.add(deleteBtn);
+        buttonPanel.add(moreBtn);
         
-        // Add components to content panel
         contentPanel.add(titleLabel, BorderLayout.CENTER);
         contentPanel.add(buttonPanel, BorderLayout.EAST);
         
