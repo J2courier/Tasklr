@@ -126,8 +126,21 @@ public class FlashcardPanel {
     private static JPanel createTermsInputPanel() {
         JPanel panel = createPanel.panel(Color.WHITE, new GridBagLayout(), new Dimension(0, 0));
         
+        // Create header panel
+        JPanel headerPanel = createPanel.panel(Color.WHITE, new BorderLayout(), new Dimension(0, 60));
+        headerPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        
         JLabel titleLabel = new JLabel("ADD TERMS TO SET");
         titleLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 16));
+        
+        // Create Save button in header
+        JButton saveBtn = createButton.button("Save", null, Color.WHITE, null, false);
+        saveBtn.setBackground(new Color(0x0065D9));
+        saveBtn.setPreferredSize(new Dimension(100, 40));
+        
+        // Add components to header
+        headerPanel.add(titleLabel, BorderLayout.WEST);
+        headerPanel.add(saveBtn, BorderLayout.EAST);
         
         JLabel termLabel = new JLabel("Term");
         termLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 16));
@@ -150,10 +163,6 @@ public class FlashcardPanel {
         addTermBtn.setBackground(new Color(0x275CE2));
         addTermBtn.setPreferredSize(new Dimension(120, 40));
         
-        JButton doneBtn = createButton.button("Done", null, Color.WHITE, null, false);
-        doneBtn.setBackground(new Color(0x0065D9));
-        doneBtn.setPreferredSize(new Dimension(100, 40));
-        
         addTermBtn.addActionListener(e -> {
             String term = termField.getText().trim();
             String definition = definitionArea.getText().trim();
@@ -170,16 +179,16 @@ public class FlashcardPanel {
             }
         });
         
-        doneBtn.addActionListener(e -> {
+        // Maintain the same functionality as the original "Done" button
+        saveBtn.addActionListener(e -> {
             cardLayout.show(mainCardPanel, "setCreation");
             currentSetId = -1; // Reset current set
         });
         
         buttonPanel.add(addTermBtn);
-        buttonPanel.add(doneBtn);
         
-        // Add components
-        ComponentUtil.addComponent(panel, titleLabel, 0, 0, 2, 1, new Insets(10, 10, 20, 10), 0);
+        // Add components using ComponentUtil
+        ComponentUtil.addComponent(panel, headerPanel, 0, 0, 2, 1, new Insets(0, 0, 20, 0), 0);
         ComponentUtil.addComponent(panel, termLabel, 0, 1, 1, 1, new Insets(5, 10, 5, 5), 0);
         ComponentUtil.addComponent(panel, termField, 0, 2, 2, 1, new Insets(0, 10, 20, 5), 0);
         ComponentUtil.addComponent(panel, definitionLabel, 0, 3, 1, 1, new Insets(5, 10, 5, 5), 0);
@@ -261,6 +270,10 @@ public class FlashcardPanel {
         JScrollPane scrollPane = new JScrollPane(quizContainer);
         scrollPane.setBorder(null);
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        // Make vertical scrollbar always visible
+        scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+        // Keep horizontal scrollbar as never visible
+        scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         
         mainPanel.add(scrollPane, BorderLayout.CENTER);
         
@@ -574,17 +587,32 @@ public class FlashcardPanel {
         JPanel headerPanel = createPanel.panel(null, new BorderLayout(), null);
         headerPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 20, 0));
         
+        // Left side panel for buttons
+        JPanel leftButtonsPanel = createPanel.panel(null, new FlowLayout(FlowLayout.LEFT, 10, 0), null);
+        
         // Back button
         JButton backButton = createButton.button("Back to Sets", null, Color.WHITE, null, false);
         backButton.setBackground(new Color(0x0065D9));
         backButton.setPreferredSize(new Dimension(120, 40));
         backButton.addActionListener(e -> cardLayout.show(mainCardPanel, "setCreation"));
         
+        // Add More Terms button
+        JButton addMoreTermsBtn = createButton.button("Add More Terms", null, Color.WHITE, null, false);
+        addMoreTermsBtn.setBackground(new Color(0x275CE2));
+        addMoreTermsBtn.setPreferredSize(new Dimension(120, 40));
+        addMoreTermsBtn.addActionListener(e -> {
+            currentSetId = setId; // Set the current set ID
+            cardLayout.show(mainCardPanel, "termsInput");
+        });
+        
+        leftButtonsPanel.add(backButton);
+        leftButtonsPanel.add(addMoreTermsBtn);
+        
         // Title
         JLabel titleLabel = new JLabel("Study Mode", SwingConstants.CENTER);
         titleLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 24));
         
-        headerPanel.add(backButton, BorderLayout.WEST);
+        headerPanel.add(leftButtonsPanel, BorderLayout.WEST);
         headerPanel.add(titleLabel, BorderLayout.CENTER);
         
         // Cards container

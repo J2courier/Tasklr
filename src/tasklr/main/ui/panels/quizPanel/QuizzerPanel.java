@@ -1,10 +1,7 @@
 package tasklr.main.ui.panels.quizPanel;
 
 import javax.swing.*;
-import tasklr.utilities.HoverPanelEffect;
-import tasklr.utilities.ComponentUtil;
-import tasklr.utilities.createButton;
-import tasklr.utilities.createPanel;
+import tasklr.utilities.*;
 import tasklr.authentication.UserSession;
 import java.awt.*;
 import java.sql.*;
@@ -23,7 +20,6 @@ public class QuizzerPanel {
     private static ScheduledFuture<?> refreshTask;
     private static final Color TEXT_COLOR = new Color(0x242424);
     private static final Color BACKGROUND_COLOR = new Color(0xFFFFFF);
-    private static final Color TEXTFIELD_COLOR = new Color(0xFFFFFF);
     private static final Color LIST_CONTAINER_COLOR = new Color(0xFFFFFF);
     private static final Color LIST_ITEM_COLOR = new Color(0xFBFBFC);
     private static final Color LIST_ITEM_HOVER_BG = new Color(0xE8EAED);
@@ -46,34 +42,40 @@ public class QuizzerPanel {
     }
 
     private static JPanel createListContainer() {
+        // Main container with fixed width
         JPanel mainPanel = createPanel.panel(LIST_CONTAINER_COLOR, new BorderLayout(), new Dimension(600, 0));
         mainPanel.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 1, LIST_ITEM_HOVER_BORDER));
 
+        // Title Panel
         JPanel titlePanel = createPanel.panel(LIST_CONTAINER_COLOR, new BorderLayout(), null);
         titlePanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         
-        JLabel titleLabel = new JLabel("Available Flashcards");
+        JLabel titleLabel = new JLabel("Available Flashcard Sets");
         titleLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 18));
         titleLabel.setForeground(TEXT_COLOR);
         titlePanel.add(titleLabel, BorderLayout.CENTER);
 
-        quizContainer = createPanel.panel(BACKGROUND_COLOR, null, null);
-        quizContainer.setLayout(new BoxLayout(quizContainer, BoxLayout.Y_AXIS));
-        quizContainer.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        // Container for quiz sets
+        JPanel cardsContainer = createPanel.panel(BACKGROUND_COLOR, null, null);
+        cardsContainer.setLayout(new BoxLayout(cardsContainer, BoxLayout.Y_AXIS));
+        cardsContainer.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        scrollPane = new JScrollPane(quizContainer);
-        scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+        // Scroll pane configuration
+        scrollPane = new JScrollPane(cardsContainer);
         scrollPane.setBorder(null);
+        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
         scrollPane.getViewport().setBackground(BACKGROUND_COLOR);
-        
-        // Improve scroll speed - multiply by panel height plus spacing
-        scrollPane.getVerticalScrollBar().setUnitIncrement((80 + 5) * 3);
 
+        // Set the quiz container reference for future updates
+        quizContainer = cardsContainer;
+
+        // Add components to main panel
         mainPanel.add(titlePanel, BorderLayout.NORTH);
         mainPanel.add(scrollPane, BorderLayout.CENTER);
 
-        // Initial load of flashcards
+        // Initial load of flashcard sets
         refreshQuizContainer();
 
         return mainPanel;
@@ -113,7 +115,7 @@ public class QuizzerPanel {
         quizContainer.removeAll();
         
         try (Connection conn = DriverManager.getConnection(url, dbUser, dbPass)) {
-            String query = "SELECT term, definition FROM quizzes WHERE user_id = ?";
+            String query = "SELECT set_id, subject, description FROM flashcard_sets WHERE user_id = ?";
             try (PreparedStatement stmt = conn.prepareStatement(query)) {
                 stmt.setInt(1, UserSession.getUserId());
                 try (ResultSet rs = stmt.executeQuery()) {
@@ -121,16 +123,17 @@ public class QuizzerPanel {
                     
                     while (rs.next()) {
                         hasItems = true;
-                        String term = rs.getString("term");
-                        String definition = rs.getString("definition");
+                        int setId = rs.getInt("set_id");
+                        String subject = rs.getString("subject");
+                        String description = rs.getString("description");
                         
-                        JPanel quizPanel = createQuizItemPanel(term, definition);
-                        quizContainer.add(quizPanel);
+                        JPanel setPanel = createQuizSetItemPanel(setId, subject, description);
+                        quizContainer.add(setPanel);
                         quizContainer.add(Box.createRigidArea(new Dimension(0, 5)));
                     }
                     
                     if (!hasItems) {
-                        JLabel noItemsLabel = new JLabel("No flashcards available for quiz!");
+                        JLabel noItemsLabel = new JLabel("No flashcard sets available for quiz!");
                         noItemsLabel.setFont(new Font("Segoe UI Variable", Font.PLAIN, 14));
                         noItemsLabel.setForeground(TEXT_COLOR);
                         noItemsLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -140,10 +143,9 @@ public class QuizzerPanel {
             }
         } catch (SQLException ex) {
             ex.printStackTrace();
-            showCenteredOptionPane(null, "Error fetching flashcards: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            showCenteredOptionPane(null, "Error fetching flashcard sets: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
 
-        // Ensure UI updates happen on EDT
         SwingUtilities.invokeLater(() -> {
             quizContainer.revalidate();
             quizContainer.repaint();
@@ -155,37 +157,81 @@ public class QuizzerPanel {
         });
     }
 
-    private static JPanel createQuizItemPanel(String term, String definition) {
-        JPanel panel = createPanel.panel(LIST_ITEM_COLOR, new BorderLayout(), new Dimension(0, 80));
-        panel.setBorder(BorderFactory.createLineBorder(LIST_ITEM_HOVER_BORDER, 1));
+    private static JPanel createQuizSetItemPanel(int setId, String subject, String description) {
+        // Main panel with fixed height and full width
+        JPanel panel = createPanel.panel(LIST_ITEM_COLOR, new BorderLayout(), null);
+        panel.setPreferredSize(new Dimension(550, 80));
         panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 80));
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        // Content panel
+        JPanel contentPanel = createPanel.panel(LIST_ITEM_COLOR, new BorderLayout(10, 0), null);
+
+        // Text Panel (Left side)
+        JPanel textPanel = createPanel.panel(LIST_ITEM_COLOR, new GridLayout(2, 1, 0, 5), null);
         
-        JPanel contentPanel = createPanel.panel(null, new BorderLayout(), null);
-        contentPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
-        contentPanel.setOpaque(false);
+        JLabel subjectLabel = new JLabel(subject);
+        subjectLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 14));
+        subjectLabel.setForeground(TEXT_COLOR);
         
-        JPanel textPanel = createPanel.panel(null, new GridLayout(2, 1, 0, 2), null);
-        textPanel.setOpaque(false);
+        String shortDescription = description != null && description.length() > 50 
+            ? description.substring(0, 47) + "..." 
+            : (description != null ? description : "No description");
+        JLabel descriptionLabel = new JLabel(shortDescription);
+        descriptionLabel.setFont(new Font("Segoe UI Variable", Font.PLAIN, 12));
+        descriptionLabel.setForeground(TEXT_COLOR);
         
-        JLabel termLabel = new JLabel(term);
-        termLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 14));
-        termLabel.setForeground(TEXT_COLOR);
-        
-        String shortDefinition = definition.length() > 50 ? definition.substring(0, 47) + "..." : definition;
-        JLabel definitionLabel = new JLabel(shortDefinition);
-        definitionLabel.setFont(new Font("Segoe UI Variable", Font.PLAIN, 12));
-        definitionLabel.setForeground(TEXT_COLOR);
-        
-        textPanel.add(termLabel);
-        textPanel.add(definitionLabel);
-        
+        textPanel.add(subjectLabel);
+        textPanel.add(descriptionLabel);
+
+        // Button Panel (Right side)
+        JButton startQuizBtn = createButton.button("Start Quiz", null, Color.WHITE, null, false);
+        startQuizBtn.setBackground(new Color(0x275CE2));
+        startQuizBtn.setPreferredSize(new Dimension(100, 30));
+        startQuizBtn.addActionListener(e -> showQuizTypeDialog(setId, subject));
+
         contentPanel.add(textPanel, BorderLayout.CENTER);
+        contentPanel.add(startQuizBtn, BorderLayout.EAST);
         panel.add(contentPanel, BorderLayout.CENTER);
 
         // Add hover effect
         new HoverPanelEffect(panel, LIST_ITEM_COLOR, LIST_ITEM_HOVER_BG);
         
         return panel;
+    }
+
+    private static void showQuizTypeDialog(int setId, String subject) {
+        String[] options = {"Identification", "Multiple Choice"};
+        JPanel dialogPanel = new JPanel(new GridLayout(3, 1, 0, 10));
+        dialogPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        
+        JLabel titleLabel = new JLabel("Select Quiz Type for: " + subject);
+        titleLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 14));
+        
+        JComboBox<String> quizTypeCombo = new JComboBox<>(options);
+        quizTypeCombo.setPreferredSize(new Dimension(200, 30));
+        
+        dialogPanel.add(titleLabel);
+        dialogPanel.add(new JLabel("Quiz Type:"));
+        dialogPanel.add(quizTypeCombo);
+
+        int result = JOptionPane.showConfirmDialog(
+            null,
+            dialogPanel,
+            "Select Quiz Type",
+            JOptionPane.OK_CANCEL_OPTION,
+            JOptionPane.PLAIN_MESSAGE
+        );
+
+        if (result == JOptionPane.OK_OPTION) {
+            String selectedType = (String) quizTypeCombo.getSelectedItem();
+            // TODO: Implement quiz type specific functionality
+            if ("Identification".equals(selectedType)) {
+                Toast.info("Starting Identification Quiz... (To be implemented)");
+            } else {
+                Toast.info("Starting Multiple Choice Quiz... (To be implemented)");
+            }
+        }
     }
 }
         
