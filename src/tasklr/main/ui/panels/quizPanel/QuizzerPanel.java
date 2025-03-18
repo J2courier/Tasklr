@@ -9,6 +9,11 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.Enumeration;
 
 public class QuizzerPanel {
     private static final String url = "jdbc:mysql://localhost:3306/tasklrdb";
@@ -225,13 +230,361 @@ public class QuizzerPanel {
 
         if (result == JOptionPane.OK_OPTION) {
             String selectedType = (String) quizTypeCombo.getSelectedItem();
-            // TODO: Implement quiz type specific functionality
             if ("Identification".equals(selectedType)) {
-                Toast.info("Starting Identification Quiz... (To be implemented)");
+                startIdentificationQuiz(setId, subject);
             } else {
-                Toast.info("Starting Multiple Choice Quiz... (To be implemented)");
+                startMultipleChoiceQuiz(setId, subject);
             }
         }
+    }
+
+    private static void startIdentificationQuiz(int setId, String subject) {
+        // Fetch all flashcards for this set
+        List<FlashCard> flashcards = fetchFlashcardsForSet(setId);
+        
+        if (flashcards.isEmpty()) {
+            Toast.error("No flashcards found in this set!");
+            return;
+        }
+
+        // Create quiz panel
+        JPanel quizPanel = createIdentificationQuizPanel(flashcards, subject);
+        
+        // Show quiz in a new dialog
+        JDialog quizDialog = new JDialog();
+        quizDialog.setTitle("Identification Quiz - " + subject);
+        quizDialog.setModal(true);
+        quizDialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+        quizDialog.setSize(800, 600);
+        quizDialog.setLocationRelativeTo(null);
+        quizDialog.add(quizPanel);
+        quizDialog.setVisible(true);
+    }
+
+    private static class FlashCard {
+        String term;
+        String definition;
+        
+        FlashCard(String term, String definition) {
+            this.term = term;
+            this.definition = definition;
+        }
+    }
+
+    private static List<FlashCard> fetchFlashcardsForSet(int setId) {
+        List<FlashCard> flashcards = new ArrayList<>();
+        
+        try (Connection conn = DriverManager.getConnection(url, dbUser, dbPass)) {
+            String query = "SELECT term, definition FROM flashcards WHERE set_id = ?";
+            try (PreparedStatement stmt = conn.prepareStatement(query)) {
+                stmt.setInt(1, setId);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        flashcards.add(new FlashCard(
+                            rs.getString("term"),
+                            rs.getString("definition")
+                        ));
+                    }
+                }
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            Toast.error("Error fetching flashcards: " + ex.getMessage());
+        }
+        
+        return flashcards;
+    }
+
+    private static JPanel createIdentificationQuizPanel(List<FlashCard> flashcards, String subject) {
+        // Randomize flashcards
+        Collections.shuffle(flashcards);
+        
+        JPanel mainPanel = new JPanel();
+        mainPanel.setLayout(new BorderLayout());
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        mainPanel.setBackground(BACKGROUND_COLOR);
+
+        // Header
+        JPanel headerPanel = new JPanel(new BorderLayout());
+        headerPanel.setBackground(BACKGROUND_COLOR);
+        JLabel titleLabel = new JLabel(subject + " - Identification Quiz");
+        titleLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 24));
+        headerPanel.add(titleLabel, BorderLayout.NORTH);
+
+        // Questions container
+        JPanel questionsPanel = new JPanel();
+        questionsPanel.setLayout(new BoxLayout(questionsPanel, BoxLayout.Y_AXIS));
+        questionsPanel.setBackground(BACKGROUND_COLOR);
+
+        // Create scrollable container
+        JScrollPane scrollPane = new JScrollPane(questionsPanel);
+        scrollPane.setBorder(null);
+        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+
+        // Score tracking
+        AtomicInteger score = new AtomicInteger(0);
+        List<JTextField> answerFields = new ArrayList<>();
+        List<FlashCard> questionOrder = new ArrayList<>(flashcards);
+
+        // Create question panels
+        for (int i = 0; i < flashcards.size(); i++) {
+            FlashCard card = flashcards.get(i);
+            
+            JPanel questionPanel = new JPanel();
+            questionPanel.setLayout(new BoxLayout(questionPanel, BoxLayout.Y_AXIS));
+            questionPanel.setBackground(BACKGROUND_COLOR);
+            questionPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 20, 0));
+            
+            JLabel questionLabel = new JLabel((i + 1) + ". " + card.definition);
+            questionLabel.setFont(new Font("Segoe UI Variable", Font.PLAIN, 14));
+            questionLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+            
+            JTextField answerField = new JTextField();
+            answerField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 35));
+            answerField.setFont(new Font("Segoe UI Variable", Font.PLAIN, 14));
+            answerFields.add(answerField);
+            
+            questionPanel.add(questionLabel);
+            questionPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+            questionPanel.add(answerField);
+            
+            questionsPanel.add(questionPanel);
+        }
+
+        // Submit button
+        JButton submitButton = new JButton("Submit Quiz");
+        submitButton.setFont(new Font("Segoe UI Variable", Font.BOLD, 14));
+        submitButton.setBackground(PRIMARY_BUTTON_COLOR);
+        submitButton.setForeground(Color.WHITE);
+        submitButton.setFocusPainted(false);
+        submitButton.addActionListener(e -> {
+            // Check answers and calculate score
+            for (int i = 0; i < answerFields.size(); i++) {
+                String userAnswer = answerFields.get(i).getText().trim().toLowerCase();
+                String correctAnswer = questionOrder.get(i).term.toLowerCase();
+                
+                if (userAnswer.equals(correctAnswer)) {
+                    score.incrementAndGet();
+                }
+            }
+            
+            // Show results
+            showQuizResults(score.get(), flashcards.size(), (JDialog) SwingUtilities.getWindowAncestor(mainPanel));
+        });
+
+        // Close button
+        JButton closeButton = new JButton("Close Quiz");
+        closeButton.setFont(new Font("Segoe UI Variable", Font.BOLD, 14));
+        closeButton.setBackground(Color.RED);
+        closeButton.setForeground(Color.WHITE);
+        closeButton.setFocusPainted(false);
+        closeButton.addActionListener(e -> {
+            Window window = SwingUtilities.getWindowAncestor(mainPanel);
+            if (window instanceof JDialog) {
+                ((JDialog) window).dispose();
+            }
+        });
+
+        // Button panel
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        buttonPanel.setBackground(BACKGROUND_COLOR);
+        buttonPanel.add(submitButton);
+        buttonPanel.add(closeButton);
+
+        // Add all components to main panel
+        mainPanel.add(headerPanel, BorderLayout.NORTH);
+        mainPanel.add(scrollPane, BorderLayout.CENTER);
+        mainPanel.add(buttonPanel, BorderLayout.SOUTH);
+
+        return mainPanel;
+    }
+
+    private static void showQuizResults(int score, int total, JDialog quizDialog) {
+        double percentage = (score * 100.0) / total;
+        String message = String.format(
+            "Quiz Complete!\n\nScore: %d/%d (%.1f%%)",
+            score, total, percentage
+        );
+        
+        JOptionPane.showMessageDialog(
+            quizDialog,
+            message,
+            "Quiz Results",
+            JOptionPane.INFORMATION_MESSAGE
+        );
+        
+        quizDialog.dispose();
+    }
+
+    private static void startMultipleChoiceQuiz(int setId, String subject) {
+        List<FlashCard> flashcards = fetchFlashcardsForSet(setId);
+        
+        if (flashcards.isEmpty()) {
+            Toast.error("No flashcards found in this set!");
+            return;
+        }
+
+        if (flashcards.size() < 2) {
+            Toast.error("Multiple choice quiz requires at least 2 flashcards!");
+            return;
+        }
+
+        JPanel quizPanel = createMultipleChoiceQuizPanel(flashcards, subject);
+        
+        JDialog quizDialog = new JDialog();
+        quizDialog.setTitle("Multiple Choice Quiz - " + subject);
+        quizDialog.setModal(true);
+        quizDialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+        quizDialog.setSize(800, 600);
+        quizDialog.setLocationRelativeTo(null);
+        quizDialog.add(quizPanel);
+        quizDialog.setVisible(true);
+    }
+
+    private static JPanel createMultipleChoiceQuizPanel(List<FlashCard> flashcards, String subject) {
+        // Randomize flashcards
+        Collections.shuffle(flashcards);
+        
+        JPanel mainPanel = new JPanel();
+        mainPanel.setLayout(new BorderLayout());
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        mainPanel.setBackground(BACKGROUND_COLOR);
+
+        // Header
+        JPanel headerPanel = new JPanel(new BorderLayout());
+        headerPanel.setBackground(BACKGROUND_COLOR);
+        JLabel titleLabel = new JLabel(subject + " - Multiple Choice Quiz");
+        titleLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 24));
+        headerPanel.add(titleLabel, BorderLayout.NORTH);
+
+        // Questions container
+        JPanel questionsPanel = new JPanel();
+        questionsPanel.setLayout(new BoxLayout(questionsPanel, BoxLayout.Y_AXIS));
+        questionsPanel.setBackground(BACKGROUND_COLOR);
+
+        JScrollPane scrollPane = new JScrollPane(questionsPanel);
+        scrollPane.setBorder(null);
+        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+
+        // Score tracking
+        AtomicInteger score = new AtomicInteger(0);
+        List<ButtonGroup> answerGroups = new ArrayList<>();
+        List<FlashCard> questionOrder = new ArrayList<>(flashcards);
+
+        // Create question panels
+        for (int i = 0; i < flashcards.size(); i++) {
+            FlashCard currentCard = flashcards.get(i);
+            
+            JPanel questionPanel = new JPanel();
+            questionPanel.setLayout(new BoxLayout(questionPanel, BoxLayout.Y_AXIS));
+            questionPanel.setBackground(BACKGROUND_COLOR);
+            questionPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 20, 0));
+            
+            // Question label
+            JLabel questionLabel = new JLabel((i + 1) + ". " + currentCard.definition);
+            questionLabel.setFont(new Font("Segoe UI Variable", Font.PLAIN, 14));
+            questionLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+            
+            // Create choices
+            ButtonGroup choiceGroup = new ButtonGroup();
+            JPanel choicesPanel = new JPanel();
+            choicesPanel.setLayout(new BoxLayout(choicesPanel, BoxLayout.Y_AXIS));
+            choicesPanel.setBackground(BACKGROUND_COLOR);
+            choicesPanel.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+            
+            // Generate choices
+            List<String> choices = generateChoices(flashcards, currentCard, 
+                Math.min(4, flashcards.size())); // Maximum 4 choices
+            
+            for (String choice : choices) {
+                JRadioButton radioBtn = new JRadioButton(choice);
+                radioBtn.setFont(new Font("Segoe UI Variable", Font.PLAIN, 14));
+                radioBtn.setBackground(BACKGROUND_COLOR);
+                choiceGroup.add(radioBtn);
+                
+                // Create a panel for each choice for better alignment
+                JPanel choiceItemPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+                choiceItemPanel.setBackground(BACKGROUND_COLOR);
+                choiceItemPanel.add(radioBtn);
+                choicesPanel.add(choiceItemPanel);
+            }
+            
+            answerGroups.add(choiceGroup);
+            
+            questionPanel.add(questionLabel);
+            questionPanel.add(choicesPanel);
+            questionsPanel.add(questionPanel);
+        }
+
+        // Submit button
+        JButton submitButton = new JButton("Submit Quiz");
+        submitButton.setFont(new Font("Segoe UI Variable", Font.BOLD, 14));
+        submitButton.setBackground(PRIMARY_BUTTON_COLOR);
+        submitButton.setForeground(Color.WHITE);
+        submitButton.setFocusPainted(false);
+        submitButton.addActionListener(e -> {
+            // Check answers
+            for (int i = 0; i < answerGroups.size(); i++) {
+                ButtonGroup group = answerGroups.get(i);
+                String correctAnswer = questionOrder.get(i).term;
+                
+                for (Enumeration<AbstractButton> buttons = group.getElements(); buttons.hasMoreElements();) {
+                    AbstractButton button = buttons.nextElement();
+                    if (button.isSelected() && button.getText().equals(correctAnswer)) {
+                        score.incrementAndGet();
+                        break;
+                    }
+                }
+            }
+            
+            // Show results
+            showQuizResults(score.get(), flashcards.size(), 
+                (JDialog) SwingUtilities.getWindowAncestor(mainPanel));
+        });
+
+        // Close button
+        JButton closeButton = new JButton("Close Quiz");
+        closeButton.setFont(new Font("Segoe UI Variable", Font.BOLD, 14));
+        closeButton.setBackground(Color.RED);
+        closeButton.setForeground(Color.WHITE);
+        closeButton.setFocusPainted(false);
+        closeButton.addActionListener(e -> {
+            Window window = SwingUtilities.getWindowAncestor(mainPanel);
+            if (window instanceof JDialog) {
+                ((JDialog) window).dispose();
+            }
+        });
+
+        // Button panel
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        buttonPanel.setBackground(BACKGROUND_COLOR);
+        buttonPanel.add(submitButton);
+        buttonPanel.add(closeButton);
+
+        mainPanel.add(headerPanel, BorderLayout.NORTH);
+        mainPanel.add(scrollPane, BorderLayout.CENTER);
+        mainPanel.add(buttonPanel, BorderLayout.SOUTH);
+
+        return mainPanel;
+    }
+
+    private static List<String> generateChoices(List<FlashCard> allCards, FlashCard correctCard, int numChoices) {
+        List<String> choices = new ArrayList<>();
+        choices.add(correctCard.term); // Add correct answer
+        
+        // Create a list of other cards to choose from
+        List<FlashCard> otherCards = new ArrayList<>(allCards);
+        otherCards.remove(correctCard);
+        Collections.shuffle(otherCards);
+        
+        // Add random incorrect choices
+        for (int i = 0; i < numChoices - 1 && i < otherCards.size(); i++) {
+            choices.add(otherCards.get(i).term);
+        }
+        
+        // Shuffle the choices
+        Collections.shuffle(choices);
+        return choices;
     }
 }
         

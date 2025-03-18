@@ -101,7 +101,7 @@ public class overview {
         statsPanel.setOpaque(false);
 
         TaskCounterPanel pendingTasksPanel = new TaskCounterPanel(0, "Pending Tasks");
-        TaskCounterPanel completedTasksPanel = new TaskCounterPanel(0, "Completed Today");
+        TaskCounterPanel completedTasksPanel = new TaskCounterPanel(0, "Completed");
         TaskCounterPanel totalTasksPanel = new TaskCounterPanel(0, "Total Tasks");
 
         // Style and add counter panels
