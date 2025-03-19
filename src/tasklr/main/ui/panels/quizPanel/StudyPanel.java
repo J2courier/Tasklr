@@ -7,10 +7,10 @@ import tasklr.utilities.createPanel;
 import java.awt.*;
 
 public class StudyPanel {
-    private static CardLayout cardLayout;
     private static JPanel cardPanel;
+    private static CardLayout cardLayout;
     private static final Color BACKGROUND_COLOR = new Color(0xFFFFFF);
-    private static JLabel navLabel; // Add this field to store the label reference
+    private static JLabel navLabel;
 
     public static JPanel createStudyPanel() {
         JPanel mainPanel = createPanel.panel(new Color(0xFFFFFF), new BorderLayout(), new Dimension(100, 100));
@@ -66,5 +66,24 @@ public class StudyPanel {
         navPanel.add(quizzerBtn);
 
         return navPanel;
+    }
+
+    // Add these new static methods for external control
+    public static void showFlashcardCreation() {
+        if (cardPanel != null && cardLayout != null) {
+            cardLayout.show(cardPanel, "flashcard");
+            if (navLabel != null) {
+                navLabel.setText("Flashcards");
+            }
+        }
+    }
+
+    public static void showQuizzer() {
+        if (cardPanel != null && cardLayout != null) {
+            cardLayout.show(cardPanel, "quizzer");
+            if (navLabel != null) {
+                navLabel.setText("Quizzer");
+            }
+        }
     }
 }

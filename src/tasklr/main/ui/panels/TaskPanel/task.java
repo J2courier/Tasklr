@@ -39,36 +39,73 @@ public class task {
     private static JScrollPane scrollPane;
 
     public static JPanel createTaskPanel(String username) {
-        JPanel panel = createPanel.panel(BACKGROUND_COLOR, new BorderLayout(), new Dimension(100, 100));
-        Border panelBorder = BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0x6D6D6D));
-        panel.setBorder(panelBorder);
+        // Create main panel with GridBagLayout
+        JPanel panel = createPanel.panel(BACKGROUND_COLOR, new GridBagLayout(), new Dimension(100, 100));
+        panel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0x6D6D6D)),
+            BorderFactory.createEmptyBorder(20, 20, 20, 20)  // Add 20px margin
+        ));
 
-        // Create header panel
+        // Create GridBagConstraints for layout control
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridwidth = GridBagConstraints.REMAINDER; // Components take up entire row
+        gbc.fill = GridBagConstraints.BOTH; // Components fill their display area
+        gbc.weightx = 1.0; // Expand horizontally
+        gbc.insets = new Insets(0, 0, 0, 0); // Default spacing
+
+        // Create and add header panel
         JPanel headerPanel = createPanel.panel(PRIMARY_COLOR, new BorderLayout(), new Dimension(0, 70));
-        headerPanel.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 0));
+        headerPanel.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 20));
         
         JLabel headerLabel = new JLabel("TASK LIST");
         headerLabel.setForeground(Color.WHITE);
         headerLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 24));
         headerPanel.add(headerLabel, BorderLayout.CENTER);
 
-        // Create content panel to hold input and list
-        JPanel contentPanel = createPanel.panel(BACKGROUND_COLOR, new BorderLayout(), null);
-        JPanel inputPanel = createInputPanel(username);
-        JPanel listContainer = createListContainer();
-        contentPanel.add(inputPanel, BorderLayout.CENTER); 
-        contentPanel.add(listContainer, BorderLayout.WEST); 
+        // Add header panel
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weighty = 0.0; // Don't expand vertically
+        panel.add(headerPanel, gbc);
 
-        // Add both panels to main panel
-        panel.add(headerPanel, BorderLayout.NORTH);
-        panel.add(contentPanel, BorderLayout.CENTER);
+        // Create content panel to hold input and list
+        JPanel contentPanel = createPanel.panel(BACKGROUND_COLOR, new GridBagLayout(), null);
+        GridBagConstraints contentGbc = new GridBagConstraints();
+        contentGbc.fill = GridBagConstraints.BOTH;
+        contentGbc.insets = new Insets(20, 0, 0, 0); // Add top spacing
+
+        // Add list container (left side)
+        contentGbc.gridx = 0;
+        contentGbc.gridy = 0;
+        contentGbc.weightx = 0.6; // 60% of horizontal space
+        contentGbc.weighty = 1.0;
+        contentGbc.insets = new Insets(0, 0, 0, 20); // Add right margin
+        JPanel listContainer = createListContainer();
+        // Set preferred size for list container
+        listContainer.setPreferredSize(new Dimension(600, 0));
+        contentPanel.add(listContainer, contentGbc);
+
+        // Add input panel (right side)
+        contentGbc.gridx = 1;
+        contentGbc.weightx = 0.4; // 40% of horizontal space
+        contentGbc.insets = new Insets(0, 0, 0, 0); // Reset insets
+        JPanel inputPanel = createInputPanel(username);
+        // Set minimum size for input panel to prevent collapse
+        inputPanel.setMinimumSize(new Dimension(400, 0));
+        contentPanel.add(inputPanel, contentGbc);
+
+        // Add content panel to main panel
+        gbc.gridy = 1;
+        gbc.weighty = 1.0; // Expand to fill remaining vertical space
+        gbc.insets = new Insets(20, 0, 0, 0); // Add top spacing between header and content
+        panel.add(contentPanel, gbc);
 
         return panel;
     }
     
 
     private static JPanel createInputPanel(String username) {
-        JPanel inputPanel = createPanel.panel(BACKGROUND_COLOR, new GridBagLayout(), new Dimension(0, 0));
+        JPanel inputPanel = createPanel.panel(BACKGROUND_COLOR, new GridBagLayout(), new Dimension(700, 0));
         
         JLabel AddTaskLbl = new JLabel("Add Task");
         AddTaskLbl.setFont(new Font("Segoe UI Variable", Font.BOLD, 16));
@@ -193,11 +230,9 @@ public class task {
     }
 
     private static JPanel createListContainer() {
-        // Main panel with fixed width - increased width
+        // Main panel with fixed width
         JPanel mainPanel = createPanel.panel(LIST_CONTAINER_COLOR, new BorderLayout(), new Dimension(600, 0));
-        // Border border = BorderFactory.createMatteBorder(1, 0, 0, 1, LIST_ITEM_HOVER_BORDER);
-        // mainPanel.setBorder(border);
-
+        
         // Configure task container with BoxLayout (Y_AXIS)
         taskContainer = createPanel.panel(LIST_CONTAINER_COLOR, null, null);
         taskContainer.setLayout(new BoxLayout(taskContainer, BoxLayout.Y_AXIS));
@@ -210,25 +245,19 @@ public class task {
         JPanel wrapperPanel = createPanel.panel(LIST_CONTAINER_COLOR, new BorderLayout(), null);
         wrapperPanel.add(taskContainer, BorderLayout.NORTH);
         
-        // Add filler panel to push content to top and allow proper scrolling
+        // Add filler panel to push content to top
         JPanel fillerPanel = createPanel.panel(LIST_CONTAINER_COLOR, null, null);
         wrapperPanel.add(fillerPanel, BorderLayout.CENTER);
 
-        // Configure ScrollPane with the wrapper panel
+        // Configure ScrollPane
         scrollPane = new JScrollPane(wrapperPanel);
         scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS); // Changed to ALWAYS
+        scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
         scrollPane.setBorder(null);
-        
-        // Remove border from scroll pane
-        
-        // Set viewport background to match container
         scrollPane.getViewport().setBackground(LIST_CONTAINER_COLOR);
 
-        // Add ScrollPane to main panel
         mainPanel.add(scrollPane, BorderLayout.CENTER);
-
         return mainPanel;
     }
     

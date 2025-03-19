@@ -8,13 +8,15 @@ import tasklr.main.ui.panels.TaskPanel.TaskFetcher;
 import tasklr.main.ui.panels.TaskPanel.task;
 import tasklr.main.ui.panels.overveiw.overview;
 import tasklr.main.ui.panels.quizPanel.StudyPanel;
+import tasklr.main.ui.panels.Home.HomePanel;
 import tasklr.utilities.createPanel;
 import tasklr.authentication.Login;
 
 public class Tasklr extends JFrame {
     private String username;
-    private JPanel centerContainer; 
-    private static final Color NAV_BACKGROUND_COLOR = new Color(0x275CE2); // New color constant
+    private static final Color NAV_BACKGROUND_COLOR = new Color(0x275CE2);
+    private JPanel body;
+    private CardLayout cardLayout;
 
     public Tasklr(String username) {
         pack();
@@ -29,37 +31,52 @@ public class Tasklr extends JFrame {
         ImageIcon appIcon = new ImageIcon("C:/Users/ADMIN/Desktop/Tasklr/resource/icons/AppLogo.png");
         setIconImage(appIcon.getImage());
         
-        JPanel body = createPanel.panel(new Color(0xFFFFFF), new CardLayout(), new Dimension(0, 0));
-        // Change FlowLayout alignment to LEFT and modify the vgap
-        JPanel navbar = createPanel.panel(NAV_BACKGROUND_COLOR, new FlowLayout(FlowLayout.CENTER, 10, 20), new Dimension(70, 0));
+        // Initialize body panel with CardLayout
+        body = createPanel.panel(new Color(0xFFFFFF), new CardLayout(), new Dimension(0, 0));
+        cardLayout = (CardLayout) body.getLayout();
         
-        // Add empty border to create padding at the top
+        // Create navbar
+        JPanel navbar = createPanel.panel(NAV_BACKGROUND_COLOR, new FlowLayout(FlowLayout.CENTER, 10, 20), new Dimension(70, 0));
         navbar.setBorder(BorderFactory.createEmptyBorder(100, 0, 0, 0));
         
         add(body, BorderLayout.CENTER);
         add(navbar, BorderLayout.WEST);
 
-        ImageIcon homeBtn = new ImageIcon(new ImageIcon("C:/Users/ADMIN/Desktop/Tasklr/resource/icons/HomeLogo.png").getImage().getScaledInstance(40, 40, Image.SCALE_SMOOTH));
-        ImageIcon taskBtn = new ImageIcon(new ImageIcon("C:/Users/ADMIN/Desktop/Tasklr/resource/icons/TaskLogo.png").getImage().getScaledInstance(40, 40, Image.SCALE_SMOOTH));
-        ImageIcon quizBtn = new ImageIcon(new ImageIcon("C:/Users/ADMIN/Desktop/Tasklr/resource/icons/AddQuizWhite.png").getImage().getScaledInstance(40, 40, Image.SCALE_SMOOTH));
+        // Create navigation icons
+        ImageIcon homeBtn = new ImageIcon(new ImageIcon("C:/Users/ADMIN/Desktop/Tasklr/resource/icons/HomeLogo.png")
+            .getImage().getScaledInstance(40, 40, Image.SCALE_SMOOTH));
+        ImageIcon taskBtn = new ImageIcon(new ImageIcon("C:/Users/ADMIN/Desktop/Tasklr/resource/icons/TaskLogo.png")
+            .getImage().getScaledInstance(40, 40, Image.SCALE_SMOOTH));
+        ImageIcon quizBtn = new ImageIcon(new ImageIcon("C:/Users/ADMIN/Desktop/Tasklr/resource/icons/AddQuizWhite.png")
+            .getImage().getScaledInstance(40, 40, Image.SCALE_SMOOTH));
 
         JLabel homeBtnIcon = new JLabel(homeBtn);
         JLabel taskBtnIcon = new JLabel(taskBtn);
         JLabel quizBtnIcon = new JLabel(quizBtn);
         
+        // Add icons to navbar
         navbar.add(homeBtnIcon);
         navbar.add(taskBtnIcon);
         navbar.add(quizBtnIcon);
   
+        // Add panels to body with specific constraints
         body.add(homePanel(username), "homePanel");
         body.add(task.createTaskPanel(username), "taskPanel");
         body.add(StudyPanel.createStudyPanel(), "quizPanel");
         
-        CardLayout cardLayout = (CardLayout) body.getLayout();
+        // Show initial panel
+        cardLayout.show(body, "homePanel");
         
+        // Add mouse listeners with cursor changes
         homeBtnIcon.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 cardLayout.show(body, "homePanel");
+            }
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                setCursor(new Cursor(Cursor.HAND_CURSOR));
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
             }
         });
         
@@ -67,14 +84,28 @@ public class Tasklr extends JFrame {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 cardLayout.show(body, "taskPanel");
             }
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                setCursor(new Cursor(Cursor.HAND_CURSOR));
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+            }
         });
         
         quizBtnIcon.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 cardLayout.show(body, "quizPanel");
+                StudyPanel.showFlashcardCreation(); // Ensure the flashcard view is shown by default
+                revalidate();
+                repaint();
+            }
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                setCursor(new Cursor(Cursor.HAND_CURSOR));
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
             }
         });
-    
     }
         
     public static JPanel homePanel(String username) {
@@ -86,7 +117,7 @@ public class Tasklr extends JFrame {
         
         gbc.gridx = 0;
         gbc.gridy = 0;       
-        homePanel.add(overview.createOverview(username), gbc);//just call the sub class tasklist and access the method
+        homePanel.add(HomePanel.createHomePanel(username), gbc);//just call the sub class tasklist and access the method
         
         return homePanel;
     }

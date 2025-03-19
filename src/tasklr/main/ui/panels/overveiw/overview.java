@@ -19,6 +19,10 @@ public class overview {
     private static final Color TEXT_DARK = new Color(0x1D1D1D);        // Dark text
     private static final Color BORDER_COLOR = new Color(0xE0E0E0);     // Border gray
 
+    private static TaskCounterPanel pendingTasksPanel;
+    private static TaskCounterPanel completedTasksPanel;
+    private static TaskCounterPanel totalTasksPanel;
+
     public static JPanel createOverview(String username) {            
         JPanel mainPanel = createPanel.panel(BACKGROUND_COLOR, new GridBagLayout(), new Dimension(400, 0));
 
@@ -49,6 +53,13 @@ public class overview {
         mainPanel.add(spacer, gbc);
 
         return mainPanel;
+    }
+
+    public static void refreshTaskCounters() {
+        if (pendingTasksPanel != null && completedTasksPanel != null && totalTasksPanel != null) {
+            RefreshUI refreshUI = new RefreshUI(totalTasksPanel, pendingTasksPanel, completedTasksPanel);
+            refreshUI.execute();
+        }
     }
 
     private static JPanel createHeaderSection(String username) {
@@ -100,9 +111,9 @@ public class overview {
         JPanel statsPanel = createPanel.panel(null, new GridLayout(1, 3, 15, 0), null);
         statsPanel.setOpaque(false);
 
-        TaskCounterPanel pendingTasksPanel = new TaskCounterPanel(0, "Pending Tasks");
-        TaskCounterPanel completedTasksPanel = new TaskCounterPanel(0, "Completed");
-        TaskCounterPanel totalTasksPanel = new TaskCounterPanel(0, "Total Tasks");
+        pendingTasksPanel = new TaskCounterPanel(0, "Pending Tasks");
+        completedTasksPanel = new TaskCounterPanel(0, "Completed");
+        totalTasksPanel = new TaskCounterPanel(0, "Total Tasks");
 
         // Style and add counter panels
         for (TaskCounterPanel panel : new TaskCounterPanel[]{pendingTasksPanel, completedTasksPanel, totalTasksPanel}) {

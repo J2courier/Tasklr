@@ -28,8 +28,8 @@ public class UserSession {
         return (instance != null) ? instance.userId : -1;
     }
     
-    public String getUsername() {
-        return username;
+    public static String getUsername() {
+        return (instance != null) ? instance.username : "";
     }
 
     public String getSessionToken() {
