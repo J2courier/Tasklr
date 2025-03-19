@@ -23,6 +23,11 @@ public class overview {
     private static TaskCounterPanel pendingTasksPanel;
     private static TaskCounterPanel completedTasksPanel;
     private static TaskCounterPanel totalTasksPanel;
+    
+    // Add new panel variables for flashcard statistics
+    private static TaskCounterPanel totalFlashcardSetsPanel;
+    private static TaskCounterPanel pendingQuizProgressPanel;
+    private static TaskCounterPanel completedQuizProgressPanel;
 
     public static JPanel createOverview(String username) {            
         JPanel mainPanel = createPanel.panel(BACKGROUND_COLOR, new GridBagLayout(), new Dimension(400, 0));
@@ -41,20 +46,54 @@ public class overview {
         gbc.gridy = 1;
         mainPanel.add(createStatisticsSection(), gbc);
 
-        // Recent Tasks Section
+        // Flashcard Statistics Section
         gbc.gridy = 2;
-        mainPanel.add(createRecentTasksSection(), gbc);
+        mainPanel.add(createFlashcardStatisticsSection(), gbc);
 
+        // Recent Quiz Progress Section
         gbc.gridy = 3;
+        mainPanel.add(createRecentQuizProgressSection(), gbc);
+
+        gbc.gridy = 4;
         gbc.weighty = 1.0;
         mainPanel.add(spacer, gbc);
 
         return mainPanel;
     }
 
+    // Add new method for flashcard statistics section
+    private static JPanel createFlashcardStatisticsSection() {
+        JPanel statsPanel = createPanel.panel(null, new GridLayout(1, 3, 15, 0), null);
+        statsPanel.setOpaque(false);
+
+        totalFlashcardSetsPanel = new TaskCounterPanel(0, "Total Sets");
+        pendingQuizProgressPanel = new TaskCounterPanel(0, "Pending Quiz");
+        completedQuizProgressPanel = new TaskCounterPanel(0, "Completed Quiz");
+
+        // Style and add counter panels
+        for (TaskCounterPanel panel : new TaskCounterPanel[]{
+            totalFlashcardSetsPanel, 
+            pendingQuizProgressPanel, 
+            completedQuizProgressPanel
+        }) {
+            JPanel card = panel.createPanel();
+            styleCard(card);
+            statsPanel.add(card);
+        }
+
+        return statsPanel;
+    }
+
     public static void refreshTaskCounters() {
-        if (pendingTasksPanel != null && completedTasksPanel != null && totalTasksPanel != null) {
-            RefreshUI refreshUI = new RefreshUI(totalTasksPanel, pendingTasksPanel, completedTasksPanel);
+        if (pendingTasksPanel != null && completedTasksPanel != null && 
+            totalTasksPanel != null && totalFlashcardSetsPanel != null && 
+            pendingQuizProgressPanel != null && completedQuizProgressPanel != null) {
+            
+            RefreshUI refreshUI = new RefreshUI(
+                totalTasksPanel, 
+                pendingTasksPanel, 
+                completedTasksPanel
+            );
             refreshUI.execute();
         }
     }
@@ -125,16 +164,16 @@ public class overview {
         return statsPanel;
     }
 
-    private static JPanel createRecentTasksSection() {
-        JPanel recentTasksPanel = createPanel.panel(CARD_COLOR, new BorderLayout(), null);
-        styleCard(recentTasksPanel);
+    private static JPanel createRecentQuizProgressSection() {
+        JPanel recentQuizPanel = createPanel.panel(CARD_COLOR, new BorderLayout(), null);
+        styleCard(recentQuizPanel);
 
         // Header
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setOpaque(false);
         headerPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 15, 0));
 
-        JLabel titleLabel = new JLabel("Recent Tasks");
+        JLabel titleLabel = new JLabel("Recent Quiz Progress");
         titleLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 18));
         titleLabel.setForeground(TEXT_DARK);
 
@@ -146,14 +185,16 @@ public class overview {
         headerPanel.add(titleLabel, BorderLayout.WEST);
         headerPanel.add(viewAllButton, BorderLayout.EAST);
 
-        // Tasks list
-        JPanel tasksListPanel = new JPanel();
-        // Add recent tasks here
+        // Quiz progress list
+        JPanel quizProgressListPanel = new JPanel();
+        quizProgressListPanel.setLayout(new BoxLayout(quizProgressListPanel, BoxLayout.Y_AXIS));
+        quizProgressListPanel.setOpaque(false);
+        // Quiz progress items will be added here later
 
-        recentTasksPanel.add(headerPanel, BorderLayout.NORTH);
-        recentTasksPanel.add(tasksListPanel, BorderLayout.CENTER);
+        recentQuizPanel.add(headerPanel, BorderLayout.NORTH);
+        recentQuizPanel.add(quizProgressListPanel, BorderLayout.CENTER);
 
-        return recentTasksPanel;
+        return recentQuizPanel;
     }
 
     

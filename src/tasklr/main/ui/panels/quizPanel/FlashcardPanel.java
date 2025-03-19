@@ -12,10 +12,6 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
-import javax.swing.ImageIcon;
-import java.awt.Image;
-import javax.swing.JPopupMenu;
-import javax.swing.JMenuItem;
 
 public class FlashcardPanel {
     private static JPanel quizContainer;
@@ -311,43 +307,50 @@ public class FlashcardPanel {
     }
 
     private static JPanel createSetItemPanel(int setId, String subject, String description) {
-        JPanel panel = createPanel.panel(LIST_ITEM_COLOR, new BorderLayout(), new Dimension(0, 80));
+        // Main panel with fixed height and full width
+        JPanel panel = createPanel.panel(LIST_ITEM_COLOR, new BorderLayout(), null);
+        panel.setPreferredSize(new Dimension(550, 80));
         panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 80));
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        // Content panel
+        JPanel contentPanel = createPanel.panel(LIST_ITEM_COLOR, new BorderLayout(10, 0), null);
+
+        // Text Panel (Left side)
+        JPanel textPanel = createPanel.panel(null, new BorderLayout(), null);
         
-        JPanel contentPanel = createPanel.panel(LIST_ITEM_COLOR, new BorderLayout(), null);
-        contentPanel.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
-        
-        JPanel textPanel = createPanel.panel(null, new GridLayout(2, 1, 2, 2), null);
-        
+        // Subject label at the top
         JLabel subjectLabel = new JLabel(subject);
         subjectLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 14));
         subjectLabel.setForeground(TEXT_COLOR);
         
-        JLabel descLabel = new JLabel(description != null ? description : "No description");
-        descLabel.setFont(new Font("Segoe UI Variable", Font.PLAIN, 12));
-        descLabel.setForeground(new Color(0x666666));
+        // Description label at the bottom
+        JLabel descriptionLabel = new JLabel(description != null && !description.isEmpty() ? description : "No description");
+        descriptionLabel.setFont(new Font("Segoe UI Variable", Font.PLAIN, 12));
+        descriptionLabel.setForeground(new Color(0x666666));
         
-        textPanel.add(subjectLabel);
-        textPanel.add(descLabel);
+        textPanel.add(subjectLabel, BorderLayout.NORTH);
+        textPanel.add(descriptionLabel, BorderLayout.CENTER);
 
-        // Button panel for more button
+        // Button Panel (Right side)
         JPanel buttonPanel = createPanel.panel(null, new FlowLayout(FlowLayout.RIGHT, 5, 0), null);
-        
-        // More button with icon
+
+        // More button with popup menu
         JButton moreBtn = new JButton();
         try {
             ImageIcon moreIcon = new ImageIcon("C:\\Users\\ADMIN\\Desktop\\Tasklr\\resource\\icons\\moreIconBlack.png");
-            Image scaledImage = moreIcon.getImage().getScaledInstance(24, 24, Image.SCALE_SMOOTH);
+            Image scaledImage = moreIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
             moreBtn.setIcon(new ImageIcon(scaledImage));
         } catch (Exception e) {
-            System.err.println("Failed to load more icon: " + e.getMessage());
+            moreBtn.setText("•••");
         }
         moreBtn.setBorderPainted(false);
         moreBtn.setContentAreaFilled(false);
         moreBtn.setFocusPainted(false);
-        moreBtn.setPreferredSize(new Dimension(40, 40));
+        moreBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        moreBtn.setPreferredSize(new Dimension(30, 30));
 
-        // Create popup menu
+        // Popup menu
         JPopupMenu popupMenu = new JPopupMenu();
         
         // Edit menu item with icon
@@ -376,75 +379,97 @@ public class FlashcardPanel {
         popupMenu.add(editItem);
         popupMenu.add(deleteItem);
 
-        // Add action listeners
+        // Add action listeners (keeping existing functionality)
         moreBtn.addActionListener(e -> {
             popupMenu.show(moreBtn, 0, moreBtn.getHeight());
         });
 
         editItem.addActionListener(e -> {
-            String newTitle = JOptionPane.showInputDialog(
-                SwingUtilities.getWindowAncestor(moreBtn),
-                "Edit set:",
-                subject
-            );
-            if (newTitle != null && !newTitle.trim().isEmpty()) {
+            // Existing edit functionality
+            JTextField subjectField = new JTextField(subject);
+            JTextArea descriptionArea = new JTextArea(description);
+            descriptionArea.setLineWrap(true);
+            descriptionArea.setWrapStyleWord(true);
+            
+            JPanel editPanel = new JPanel(new GridLayout(4, 1, 5, 5));
+            editPanel.add(new JLabel("Subject:"));
+            editPanel.add(subjectField);
+            editPanel.add(new JLabel("Description:"));
+            
+            JScrollPane descScrollPane = new JScrollPane(descriptionArea);
+            descScrollPane.setPreferredSize(new Dimension(300, 100));
+            editPanel.add(descScrollPane);
+
+            int result = JOptionPane.showConfirmDialog(null, editPanel, "Edit Set", 
+                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+                
+            if (result == JOptionPane.OK_OPTION) {
+                String newSubject = subjectField.getText().trim();
+                String newDescription = descriptionArea.getText().trim();
+                
+                if (newSubject.isEmpty()) {
+                    Toast.error("Subject cannot be empty!");
+                    return;
+                }
+                
                 try {
-                    String query = "UPDATE flashcard_sets SET subject = ? WHERE subject = ? AND user_id = ?";
-                    DatabaseManager.executeUpdate(query, 
-                        newTitle.trim(), 
-                        subject, 
-                        UserSession.getUserId()
+                    DatabaseManager.executeUpdate(
+                        "UPDATE flashcard_sets SET subject = ?, description = ? WHERE set_id = ? AND user_id = ?",
+                        newSubject, newDescription, setId, UserSession.getUserId()
                     );
-                    JOptionPane.showMessageDialog(
-                        SwingUtilities.getWindowAncestor(moreBtn),
-                        "Set updated successfully!",
-                        "Success",
-                        JOptionPane.INFORMATION_MESSAGE
-                    );
+                    Toast.success("Set updated successfully!");
                     refreshListContainer();
                 } catch (SQLException ex) {
                     ex.printStackTrace();
-                    JOptionPane.showMessageDialog(
-                        SwingUtilities.getWindowAncestor(moreBtn),
-                        "Error updating set: " + ex.getMessage(),
-                        "Error",
-                        JOptionPane.ERROR_MESSAGE
-                    );
+                    Toast.error("Error updating set: " + ex.getMessage());
                 }
             }
         });
 
         deleteItem.addActionListener(e -> {
             int confirm = JOptionPane.showConfirmDialog(
-                SwingUtilities.getWindowAncestor(moreBtn),
-                "Are you sure you want to delete this set?",
+                null,
+                "Are you sure you want to delete this set and all its flashcards?",
                 "Confirm Delete",
-                JOptionPane.YES_NO_OPTION,
-                JOptionPane.QUESTION_MESSAGE
+                JOptionPane.YES_NO_OPTION
             );
             
             if (confirm == JOptionPane.YES_OPTION) {
                 try {
-                    String query = "DELETE FROM flashcard_sets WHERE subject = ? AND user_id = ?";
-                    DatabaseManager.executeUpdate(query, 
-                        subject, 
-                        UserSession.getUserId()
-                    );
-                    JOptionPane.showMessageDialog(
-                        SwingUtilities.getWindowAncestor(moreBtn),
-                        "Set deleted successfully!",
-                        "Success",
-                        JOptionPane.INFORMATION_MESSAGE
-                    );
-                    refreshListContainer();
+                    // Start a transaction to ensure both deletes happen or neither does
+                    Connection conn = DatabaseManager.getConnection();
+                    conn.setAutoCommit(false);
+                    
+                    try {
+                        // First delete all flashcards associated with this set
+                        DatabaseManager.executeUpdate(
+                            "DELETE FROM flashcards WHERE set_id = ? AND set_id IN " +
+                            "(SELECT set_id FROM flashcard_sets WHERE user_id = ?)",
+                            setId, UserSession.getUserId()
+                        );
+                        
+                        // Then delete the flashcard set
+                        DatabaseManager.executeUpdate(
+                            "DELETE FROM flashcard_sets WHERE set_id = ? AND user_id = ?",
+                            setId, UserSession.getUserId()
+                        );
+                        
+                        // If we got here without exception, commit the transaction
+                        conn.commit();
+                        Toast.success("Set and all associated flashcards deleted successfully!");
+                        refreshListContainer();
+                    } catch (SQLException ex) {
+                        // If there was an error, rollback the transaction
+                        conn.rollback();
+                        throw ex;
+                    } finally {
+                        // Reset auto-commit to true
+                        conn.setAutoCommit(true);
+                        conn.close();
+                    }
                 } catch (SQLException ex) {
                     ex.printStackTrace();
-                    JOptionPane.showMessageDialog(
-                        SwingUtilities.getWindowAncestor(moreBtn),
-                        "Error deleting set: " + ex.getMessage(),
-                        "Error",
-                        JOptionPane.ERROR_MESSAGE
-                    );
+                    Toast.error("Error deleting set: " + ex.getMessage());
                 }
             }
         });
@@ -456,9 +481,10 @@ public class FlashcardPanel {
         
         panel.add(contentPanel, BorderLayout.CENTER);
         
+        // Add hover effect
         new HoverPanelEffect(panel, LIST_ITEM_COLOR, LIST_ITEM_HOVER_BG);
         
-        // Add click listener
+        // Add click listener for showing flashcard mode
         panel.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -482,7 +508,7 @@ public class FlashcardPanel {
         panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 70)); // This ensures proper width scaling
         
         // Inner panel for consistent padding
-        JPanel contentPanel = createPanel.panel(LIST_ITEM_COLOR, new BorderLayout(), null);
+        JPanel contentPanel = createPanel.panel(LIST_ITEM_COLOR, new BorderLayout(), new Dimension(0, 70));
         contentPanel.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
         
         // Text panel for term and definition
@@ -608,12 +634,8 @@ public class FlashcardPanel {
         leftButtonsPanel.add(backButton);
         leftButtonsPanel.add(addMoreTermsBtn);
         
-        // Title
-        JLabel titleLabel = new JLabel("Study Mode", SwingConstants.CENTER);
-        titleLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 24));
-        
         headerPanel.add(leftButtonsPanel, BorderLayout.WEST);
-        headerPanel.add(titleLabel, BorderLayout.CENTER);
+       
         
         // Cards container
         JPanel cardsContainer = createPanel.panel(Color.WHITE, null, null);

@@ -214,7 +214,7 @@ public class task {
         // Fetch and add tasks
         List<String[]> tasks = TaskFetcher.getUserTasks();
         for (String[] task : tasks) {
-            JPanel taskPanel = createTaskItemPanel(task[0]);
+            JPanel taskPanel = createTaskItemPanel(task[0], null);
             taskContainer.add(taskPanel);
             taskContainer.add(Box.createRigidArea(new Dimension(0, 5)));
         }
@@ -231,13 +231,13 @@ public class task {
 
     private static JPanel createListContainer() {
         // Main panel with fixed width
-        JPanel mainPanel = createPanel.panel(LIST_CONTAINER_COLOR, new BorderLayout(), new Dimension(600, 0));
-        mainPanel.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 1, LIST_ITEM_HOVER_BORDER));
+        JPanel mainPanel = createPanel.panel(LIST_CONTAINER_COLOR, new BorderLayout(), new Dimension(400, 0));
+    
         
         // Configure task container with BoxLayout (Y_AXIS)
         taskContainer = createPanel.panel(LIST_CONTAINER_COLOR, null, null);
         taskContainer.setLayout(new BoxLayout(taskContainer, BoxLayout.Y_AXIS));
-        taskContainer.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        taskContainer.setBorder(BorderFactory.createEmptyBorder(0, 10, 20, 20));
 
         // Add initial tasks
         refreshTaskContainer();
@@ -260,35 +260,51 @@ public class task {
     
     
 
-    private static JPanel createTaskItemPanel(String title) {
+    private static JPanel createTaskItemPanel(String title, java.sql.Date dueDate) {
         // Main panel with fixed height and flexible width
-        JPanel panel = createPanel.panel(LIST_ITEM_COLOR, new BorderLayout(), new Dimension(0, 60));
+        JPanel panel = createPanel.panel(LIST_ITEM_COLOR, new BorderLayout(), new Dimension(0, 80));
+        panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 80));
         
         // Inner panel for consistent padding and content positioning
         JPanel contentPanel = createPanel.panel(LIST_ITEM_COLOR, new BorderLayout(), null);
-        contentPanel.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
+        contentPanel.setBorder(BorderFactory.createEmptyBorder(5, 15, 5, 15));
         
-        // Task title label
+        // Text panel using BorderLayout for north-south positioning
+        JPanel textPanel = createPanel.panel(null, new BorderLayout(), null);
+       
+        
+        // Task title label at the top (NORTH)
         JLabel titleLabel = new JLabel(title);
-        titleLabel.setFont(new Font("Segoe UI Variable", Font.PLAIN, 14));
+        titleLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 14));
         titleLabel.setForeground(TEXT_COLOR);
+        
+        // Due date label at the bottom (SOUTH)
+        String dueDateText = dueDate != null ? String.format("Due: %tF", dueDate) : "No due date";
+        JLabel dueDateLabel = new JLabel(dueDateText);
+        dueDateLabel.setFont(new Font("Segoe UI Variable", Font.PLAIN, 12));
+        dueDateLabel.setForeground(new Color(0x666666));
+        
+        // Add labels to text panel
+        textPanel.add(titleLabel, BorderLayout.NORTH);
+        textPanel.add(dueDateLabel, BorderLayout.SOUTH);
         
         // Button panel for more button
         JPanel buttonPanel = createPanel.panel(null, new FlowLayout(FlowLayout.RIGHT, 5, 0), null);
         
-        // More button with icon
+        // More button with popup menu
         JButton moreBtn = new JButton();
         try {
             ImageIcon moreIcon = new ImageIcon("C:\\Users\\ADMIN\\Desktop\\Tasklr\\resource\\icons\\moreIconBlack.png");
-            Image scaledImage = moreIcon.getImage().getScaledInstance(24, 24, Image.SCALE_SMOOTH);
+            Image scaledImage = moreIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
             moreBtn.setIcon(new ImageIcon(scaledImage));
         } catch (Exception e) {
-            System.err.println("Failed to load more icon: " + e.getMessage());
+            moreBtn.setText("•••");
         }
         moreBtn.setBorderPainted(false);
         moreBtn.setContentAreaFilled(false);
         moreBtn.setFocusPainted(false);
-        moreBtn.setPreferredSize(new Dimension(40, 40));
+        moreBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        moreBtn.setPreferredSize(new Dimension(30, 30));
 
         // Create popup menu
         JPopupMenu popupMenu = new JPopupMenu();
@@ -325,34 +341,50 @@ public class task {
         });
 
         editItem.addActionListener(e -> {
-            String newTitle = JOptionPane.showInputDialog(
+            // Create edit panel with title field and date chooser
+            JPanel editPanel = new JPanel(new GridLayout(4, 1, 5, 5));
+            
+            JTextField titleField = new JTextField(title);
+            JDateChooser dateChooser = new JDateChooser();
+            if (dueDate != null) {
+                dateChooser.setDate(dueDate);
+            }
+            
+            editPanel.add(new JLabel("Title:"));
+            editPanel.add(titleField);
+            editPanel.add(new JLabel("Due Date:"));
+            editPanel.add(dateChooser);
+
+            int result = JOptionPane.showConfirmDialog(
                 SwingUtilities.getWindowAncestor(moreBtn),
-                "Edit task:",
-                title
+                editPanel,
+                "Edit Task",
+                JOptionPane.OK_CANCEL_OPTION,
+                JOptionPane.PLAIN_MESSAGE
             );
-            if (newTitle != null && !newTitle.trim().isEmpty()) {
+
+            if (result == JOptionPane.OK_OPTION) {
+                String newTitle = titleField.getText().trim();
+                java.util.Date newDueDate = dateChooser.getDate();
+                
+                if (newTitle.isEmpty()) {
+                    Toast.error("Title cannot be empty!");
+                    return;
+                }
+
                 try {
-                    String query = "UPDATE tasks SET title = ? WHERE title = ? AND user_id = ?";
-                    DatabaseManager.executeUpdate(query, 
-                        newTitle.trim(), 
-                        title, 
+                    String query = "UPDATE tasks SET title = ?, due_date = ? WHERE title = ? AND user_id = ?";
+                    DatabaseManager.executeUpdate(query,
+                        newTitle,
+                        newDueDate != null ? new java.sql.Timestamp(newDueDate.getTime()) : null,
+                        title,
                         UserSession.getUserId()
                     );
-                    JOptionPane.showMessageDialog(
-                        SwingUtilities.getWindowAncestor(moreBtn),
-                        "Task updated successfully!",
-                        "Success",
-                        JOptionPane.INFORMATION_MESSAGE
-                    );
+                    Toast.success("Task updated successfully!");
                     refreshTaskContainer();
                 } catch (SQLException ex) {
                     ex.printStackTrace();
-                    JOptionPane.showMessageDialog(
-                        SwingUtilities.getWindowAncestor(moreBtn),
-                        "Error updating task: " + ex.getMessage(),
-                        "Error",
-                        JOptionPane.ERROR_MESSAGE
-                    );
+                    Toast.error("Error updating task: " + ex.getMessage());
                 }
             }
         });
@@ -362,46 +394,33 @@ public class task {
                 SwingUtilities.getWindowAncestor(moreBtn),
                 "Are you sure you want to delete this task?",
                 "Confirm Delete",
-                JOptionPane.YES_NO_OPTION,
-                JOptionPane.QUESTION_MESSAGE
+                JOptionPane.YES_NO_OPTION
             );
             
             if (confirm == JOptionPane.YES_OPTION) {
                 try {
                     String query = "DELETE FROM tasks WHERE title = ? AND user_id = ?";
                     DatabaseManager.executeUpdate(query, 
-                        title, 
+                        title,
                         UserSession.getUserId()
                     );
-                    JOptionPane.showMessageDialog(
-                        SwingUtilities.getWindowAncestor(moreBtn),
-                        "Task deleted successfully!",
-                        "Success",
-                        JOptionPane.INFORMATION_MESSAGE
-                    );
+                    Toast.success("Task deleted successfully!");
                     refreshTaskContainer();
                 } catch (SQLException ex) {
                     ex.printStackTrace();
-                    JOptionPane.showMessageDialog(
-                        SwingUtilities.getWindowAncestor(moreBtn),
-                        "Error deleting task: " + ex.getMessage(),
-                        "Error",
-                        JOptionPane.ERROR_MESSAGE
-                    );
+                    Toast.error("Error deleting task: " + ex.getMessage());
                 }
             }
         });
 
         buttonPanel.add(moreBtn);
         
-        contentPanel.add(titleLabel, BorderLayout.CENTER);
+        contentPanel.add(textPanel, BorderLayout.CENTER);
         contentPanel.add(buttonPanel, BorderLayout.EAST);
         
         panel.add(contentPanel, BorderLayout.CENTER);
-        // panel.setBorder(BorderFactory.createLineBorder(LIST_ITEM_HOVER_BORDER, 1));
-        panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 70));
-
-        // Hover effect configuration
+        
+        // Add hover effect
         new HoverPanelEffect(panel, LIST_ITEM_COLOR, LIST_ITEM_HOVER_BG);
 
         return panel;

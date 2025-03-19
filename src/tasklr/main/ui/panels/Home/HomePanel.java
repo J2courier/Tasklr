@@ -24,7 +24,7 @@ public class HomePanel {
     private static final Color TASK_PENDING_COLOR = new Color(0xF87171); // Red for pending tasks
     private static final Color DROP_COLOR = new Color(0xFB2C36);
     private static final Color COMPLETED_COLOR = new Color(0x7CCE00);
-    private static final Color CLOSE_COLOR = new Color(0xDFF2FE);
+    private static final Color CLOSE_COLOR = new Color(0x404040);
     private static JPanel tasksContainer;
     private static JPanel mainPanel;
     private static ScheduledExecutorService scheduler;
