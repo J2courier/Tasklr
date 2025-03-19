@@ -7,6 +7,7 @@ import tasklr.main.ui.components.TaskCounterPanel;
 import tasklr.utilities.RefreshUI;
 import tasklr.utilities.createPanel;
 import tasklr.main.ui.panels.TaskPanel.TaskFetcher;
+import tasklr.main.ui.panels.quizPanel.StudyPanel;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
@@ -44,11 +45,7 @@ public class overview {
         gbc.gridy = 2;
         mainPanel.add(createRecentTasksSection(), gbc);
 
-        // Quick Actions Section
         gbc.gridy = 3;
-        mainPanel.add(createQuickActionsSection(), gbc);
-
-        gbc.gridy = 4;
         gbc.weighty = 1.0;
         mainPanel.add(spacer, gbc);
 
@@ -159,90 +156,7 @@ public class overview {
         return recentTasksPanel;
     }
 
-    private static JPanel createQuickActionsSection() {
-        // Use GridLayout to ensure equal spacing and sizing
-        JPanel actionsPanel = createPanel.panel(CARD_COLOR, new GridLayout(1, 3, 15, 0), null);
-        styleCard(actionsPanel);
-        
-        // Add quick action buttons
-        addQuickActionButton(actionsPanel, "Add New Task", "TaskLogo.png");
-        addQuickActionButton(actionsPanel, "Create Flashcard", "AddQuizWhite.png");
-        addQuickActionButton(actionsPanel, "Study Mode", "StudyMode.png");
-        
-        // Wrap in another panel to prevent stretching
-        JPanel wrapperPanel = createPanel.panel(CARD_COLOR, new FlowLayout(FlowLayout.LEFT, 15, 15), null);
-        wrapperPanel.add(actionsPanel);
-        
-        return wrapperPanel;
-    }
-
-    private static void addQuickActionButton(JPanel panel, String text, String iconName) {
-        JButton button = new JButton(text);
-        
-        // Set consistent button size
-        Dimension buttonSize = new Dimension(150, 40); // Fixed width and height for all buttons
-        button.setPreferredSize(buttonSize);
-        button.setMinimumSize(buttonSize);
-        button.setMaximumSize(buttonSize);
-        
-        // Set icon with proper scaling
-        try {
-            ImageIcon icon = new ImageIcon("C:/Users/ADMIN/Desktop/Tasklr/resource/icons/" + iconName);
-            Image scaledImage = icon.getImage().getScaledInstance(24, 24, Image.SCALE_SMOOTH);
-            button.setIcon(new ImageIcon(scaledImage));
-            button.setIconTextGap(10); // Consistent spacing between icon and text
-        } catch (Exception e) {
-            System.err.println("Failed to load icon: " + iconName);
-        }
-        
-        // Style the button
-        button.setBackground(PRIMARY_COLOR);
-        button.setForeground(Color.WHITE);
-        button.setFocusPainted(false);
-        button.setBorderPainted(false);
-        button.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
-        button.setFont(new Font("Segoe UI Variable", Font.PLAIN, 14)); // Consistent font
-        
-        // Center align text and icon
-        button.setHorizontalAlignment(SwingConstants.CENTER);
-        
-        // Add hover effect
-        button.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                button.setBackground(new Color(0x1E45B3)); // Darker shade of PRIMARY_COLOR
-                button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-            }
-            
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                button.setBackground(PRIMARY_COLOR);
-                button.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
-            }
-        });
-        
-        // Add navigation functionality
-        button.addActionListener(e -> {
-            Container topLevelContainer = SwingUtilities.getWindowAncestor(panel);
-            if (topLevelContainer instanceof JFrame) {
-                JFrame frame = (JFrame) topLevelContainer;
-                JPanel body = (JPanel) frame.getContentPane().getComponent(0);
-                CardLayout cardLayout = (CardLayout) body.getLayout();
-                
-                switch (text) {
-                    case "Add New Task":
-                        cardLayout.show(body, "taskPanel");
-                        break;
-                    case "Create Flashcard":
-                        cardLayout.show(body, "quizPanel");
-                        break;
-                    case "Study Mode":
-                        cardLayout.show(body, "quizPanel");
-                        break;
-                }
-            }
-        });
-        
-        panel.add(button);
-    }
+    
 
     private static void styleCard(JPanel panel) {
         panel.setBorder(BorderFactory.createCompoundBorder(

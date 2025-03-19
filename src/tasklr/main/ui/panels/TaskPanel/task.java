@@ -232,29 +232,26 @@ public class task {
     private static JPanel createListContainer() {
         // Main panel with fixed width
         JPanel mainPanel = createPanel.panel(LIST_CONTAINER_COLOR, new BorderLayout(), new Dimension(600, 0));
+        mainPanel.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 1, LIST_ITEM_HOVER_BORDER));
         
         // Configure task container with BoxLayout (Y_AXIS)
         taskContainer = createPanel.panel(LIST_CONTAINER_COLOR, null, null);
         taskContainer.setLayout(new BoxLayout(taskContainer, BoxLayout.Y_AXIS));
-        taskContainer.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        taskContainer.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
         // Add initial tasks
         refreshTaskContainer();
 
-        // Create a wrapper panel to properly contain the task container
+        // Create a wrapper panel with proper background
         JPanel wrapperPanel = createPanel.panel(LIST_CONTAINER_COLOR, new BorderLayout(), null);
         wrapperPanel.add(taskContainer, BorderLayout.NORTH);
-        
-        // Add filler panel to push content to top
-        JPanel fillerPanel = createPanel.panel(LIST_CONTAINER_COLOR, null, null);
-        wrapperPanel.add(fillerPanel, BorderLayout.CENTER);
 
-        // Configure ScrollPane
+        // Create scroll pane with consistent styling
         scrollPane = new JScrollPane(wrapperPanel);
-        scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
         scrollPane.setBorder(null);
+        scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+        scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
         scrollPane.getViewport().setBackground(LIST_CONTAINER_COLOR);
 
         mainPanel.add(scrollPane, BorderLayout.CENTER);

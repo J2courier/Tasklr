@@ -15,7 +15,6 @@ import java.sql.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import javax.swing.Timer;
 
 public class HomePanel {
     // Color constants matching project theme
@@ -23,6 +22,9 @@ public class HomePanel {
     private static final Color BACKGROUND_COLOR = Color.WHITE;         // White background
     private static final Color TASK_DONE_COLOR = new Color(0x34D399);  // Green for completed tasks
     private static final Color TASK_PENDING_COLOR = new Color(0xF87171); // Red for pending tasks
+    private static final Color DROP_COLOR = new Color(0xFB2C36);
+    private static final Color COMPLETED_COLOR = new Color(0x7CCE00);
+    private static final Color CLOSE_COLOR = new Color(0xDFF2FE);
     private static JPanel tasksContainer;
     private static JPanel mainPanel;
     private static ScheduledExecutorService scheduler;
@@ -80,7 +82,8 @@ public class HomePanel {
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         buttonPanel.setOpaque(false);
         
-        JButton SwitchOverview = createButton.button("Overview", PRIMARY_COLOR, BACKGROUND_COLOR, null, false);
+        JButton SwitchOverview = createButton.button("Overview", new Color(0xFFFFFF), BACKGROUND_COLOR, null, false);
+        SwitchOverview.setForeground(Color.BLACK);
         SwitchOverview.setPreferredSize(new Dimension(100, 40));
         buttonPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 20)); // Right margin
         
@@ -334,7 +337,7 @@ public class HomePanel {
         buttonPanel.setBackground(Color.WHITE);
 
         // Drop button
-        JButton dropBtn = createButton.button("Drop Task", new Color(0xDC2626), Color.WHITE, null, false);
+        JButton dropBtn = createButton.button("Drop Task", DROP_COLOR, Color.WHITE, null, false);
         dropBtn.setPreferredSize(new Dimension(100, 35));
         dropBtn.addActionListener(e -> {
             int confirm = JOptionPane.showConfirmDialog(
@@ -365,7 +368,7 @@ public class HomePanel {
         });
 
         // Mark as done button
-        JButton doneBtn = createButton.button("Mark as done", new Color(0x059669), Color.WHITE, null, false);
+        JButton doneBtn = createButton.button("Mark as done", COMPLETED_COLOR, Color.WHITE, null, false);
         doneBtn.setPreferredSize(new Dimension(100, 35));
         doneBtn.setEnabled(!status.equals("COMPLETED"));
         doneBtn.addActionListener(e -> {
@@ -386,8 +389,17 @@ public class HomePanel {
             }
         });
 
+        // Add close button
+        JButton closeBtn = createButton.button("Close", CLOSE_COLOR, Color.WHITE, null, false);
+        closeBtn.setPreferredSize(new Dimension(100, 35));
+        closeBtn.addActionListener(e -> {
+            Window popup = SwingUtilities.getWindowAncestor(popupPanel);
+            popup.dispose();
+        });
+
         buttonPanel.add(dropBtn);
         buttonPanel.add(doneBtn);
+        buttonPanel.add(closeBtn);
         
         gbc.insets = new Insets(15, 5, 5, 5);
         popupPanel.add(buttonPanel, gbc);

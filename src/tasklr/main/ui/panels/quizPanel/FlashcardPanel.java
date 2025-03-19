@@ -317,7 +317,7 @@ public class FlashcardPanel {
         JPanel contentPanel = createPanel.panel(LIST_ITEM_COLOR, new BorderLayout(), null);
         contentPanel.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
         
-        JPanel textPanel = createPanel.panel(LIST_ITEM_COLOR, new GridLayout(2, 1, 2, 2), null);
+        JPanel textPanel = createPanel.panel(null, new GridLayout(2, 1, 2, 2), null);
         
         JLabel subjectLabel = new JLabel(subject);
         subjectLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 14));

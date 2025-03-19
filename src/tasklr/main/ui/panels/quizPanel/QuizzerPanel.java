@@ -34,11 +34,17 @@ public class QuizzerPanel {
     private static final Color PRIMARY_BUTTON_TEXT = Color.WHITE;
     
     public static JPanel createQuizzerPanel() {
-        JPanel panel = createPanel.panel(BACKGROUND_COLOR, new BorderLayout(), new Dimension(100, 100));
+        // Use full size for the main panel
+        JPanel panel = createPanel.panel(BACKGROUND_COLOR, new BorderLayout(), null);
         
         // Create and add list container
         JPanel listContainer = createListContainer();
         panel.add(listContainer, BorderLayout.WEST);
+        
+        // Add empty panel for flashcard mode
+        JPanel flashcardModePanel = new JPanel(new BorderLayout());
+        flashcardModePanel.setBackground(BACKGROUND_COLOR);
+        panel.add(flashcardModePanel, BorderLayout.CENTER);
         
         // Start the auto-refresh mechanism
         startAutoRefresh();
@@ -60,29 +66,29 @@ public class QuizzerPanel {
         titleLabel.setForeground(TEXT_COLOR);
         titlePanel.add(titleLabel, BorderLayout.CENTER);
 
-        // Container for quiz sets
-        JPanel cardsContainer = createPanel.panel(BACKGROUND_COLOR, null, null);
-        cardsContainer.setLayout(new BoxLayout(cardsContainer, BoxLayout.Y_AXIS));
-        cardsContainer.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        // Configure quiz container
+        quizContainer = createPanel.panel(LIST_CONTAINER_COLOR, null, null);
+        quizContainer.setLayout(new BoxLayout(quizContainer, BoxLayout.Y_AXIS));
+        quizContainer.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        // Scroll pane configuration
-        scrollPane = new JScrollPane(cardsContainer);
+        // Create wrapper panel for proper scrolling
+        JPanel wrapperPanel = createPanel.panel(LIST_CONTAINER_COLOR, new BorderLayout(), null);
+        wrapperPanel.add(quizContainer, BorderLayout.NORTH);
+
+        // Configure scroll pane
+        scrollPane = new JScrollPane(wrapperPanel);
         scrollPane.setBorder(null);
-        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
-        scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-        scrollPane.getViewport().setBackground(BACKGROUND_COLOR);
+        scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        scrollPane.getViewport().setBackground(LIST_CONTAINER_COLOR);
 
-        // Set the quiz container reference for future updates
-        quizContainer = cardsContainer;
-
-        // Add components to main panel
         mainPanel.add(titlePanel, BorderLayout.NORTH);
         mainPanel.add(scrollPane, BorderLayout.CENTER);
 
-        // Initial load of flashcard sets
+        // Initial refresh
         refreshQuizContainer();
-
+        
         return mainPanel;
     }
 
@@ -117,41 +123,41 @@ public class QuizzerPanel {
     public static synchronized void refreshQuizContainer() {
         if (quizContainer == null) return;
         
-        quizContainer.removeAll();
-        
-        try (Connection conn = DriverManager.getConnection(url, dbUser, dbPass)) {
-            String query = "SELECT set_id, subject, description FROM flashcard_sets WHERE user_id = ?";
-            try (PreparedStatement stmt = conn.prepareStatement(query)) {
-                stmt.setInt(1, UserSession.getUserId());
-                try (ResultSet rs = stmt.executeQuery()) {
-                    boolean hasItems = false;
-                    
-                    while (rs.next()) {
-                        hasItems = true;
-                        int setId = rs.getInt("set_id");
-                        String subject = rs.getString("subject");
-                        String description = rs.getString("description");
+        SwingUtilities.invokeLater(() -> {
+            quizContainer.removeAll();
+            
+            try (Connection conn = DatabaseManager.getConnection()) {
+                String query = "SELECT set_id, subject, description FROM flashcard_sets WHERE user_id = ?";
+                try (PreparedStatement stmt = conn.prepareStatement(query)) {
+                    stmt.setInt(1, UserSession.getUserId());
+                    try (ResultSet rs = stmt.executeQuery()) {
+                        boolean hasItems = false;
                         
-                        JPanel setPanel = createQuizSetItemPanel(setId, subject, description);
-                        quizContainer.add(setPanel);
-                        quizContainer.add(Box.createRigidArea(new Dimension(0, 5)));
-                    }
-                    
-                    if (!hasItems) {
-                        JLabel noItemsLabel = new JLabel("No flashcard sets available for quiz!");
-                        noItemsLabel.setFont(new Font("Segoe UI Variable", Font.PLAIN, 14));
-                        noItemsLabel.setForeground(TEXT_COLOR);
-                        noItemsLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-                        quizContainer.add(noItemsLabel);
+                        while (rs.next()) {
+                            hasItems = true;
+                            int setId = rs.getInt("set_id");
+                            String subject = rs.getString("subject");
+                            String description = rs.getString("description");
+                            
+                            JPanel setPanel = createQuizSetItemPanel(setId, subject, description);
+                            quizContainer.add(setPanel);
+                            quizContainer.add(Box.createRigidArea(new Dimension(0, 5)));
+                        }
+                        
+                        if (!hasItems) {
+                            JLabel noItemsLabel = new JLabel("No flashcard sets available for quiz!");
+                            noItemsLabel.setFont(new Font("Segoe UI Variable", Font.PLAIN, 14));
+                            noItemsLabel.setForeground(TEXT_COLOR);
+                            noItemsLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+                            quizContainer.add(noItemsLabel);
+                        }
                     }
                 }
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                Toast.error("Error fetching flashcard sets: " + ex.getMessage());
             }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-            showCenteredOptionPane(null, "Error fetching flashcard sets: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-        }
 
-        SwingUtilities.invokeLater(() -> {
             quizContainer.revalidate();
             quizContainer.repaint();
             
@@ -173,7 +179,7 @@ public class QuizzerPanel {
         JPanel contentPanel = createPanel.panel(LIST_ITEM_COLOR, new BorderLayout(10, 0), null);
 
         // Text Panel (Left side)
-        JPanel textPanel = createPanel.panel(LIST_ITEM_COLOR, new GridLayout(2, 1, 0, 5), null);
+        JPanel textPanel = createPanel.panel(null, new GridLayout(2, 1, 0, 5), null);
         
         JLabel subjectLabel = new JLabel(subject);
         subjectLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 14));
