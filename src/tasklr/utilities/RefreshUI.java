@@ -37,7 +37,7 @@ public class RefreshUI extends SwingWorker<Void, Void> {
                     });
                 }
 
-                Thread.sleep(1000); // ✅ Refresh every 3 seconds
+                Thread.sleep(2000); // Changed from 1000 to 2000 to match HomePanel refresh rate
             } catch (InterruptedException e) {
                 running = false; // ✅ Stop the loop if interrupted
                 break;

@@ -6,9 +6,11 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import tasklr.utilities.createPanel;
+import tasklr.main.ui.components.TaskCounterPanel;
 import tasklr.main.ui.panels.TaskPanel.TaskFetcher;
 import tasklr.main.ui.panels.overveiw.overview;
 import tasklr.utilities.DatabaseManager;
+import tasklr.utilities.RefreshUI;
 import tasklr.authentication.UserSession;
 import tasklr.utilities.createButton;
 import java.sql.*;
@@ -17,130 +19,212 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 public class HomePanel {
-    // Color constants matching project theme
     private static final Color PRIMARY_COLOR = new Color(0x275CE2);    // Primary blue
-    private static final Color BACKGROUND_COLOR = Color.WHITE;         // White background
+    private static final Color SECONDARY_COLOR = new Color(0xE0E3E2);  // Light gray
+    private static final Color BACKGROUND_COLOR = Color.WHITE; // Light background
+    private static final Color CARD_COLOR = new Color(0xFFFFFF);       // White
+    private static final Color TEXT_DARK = new Color(0x1D1D1D);        // Dark text
+    private static final Color BORDER_COLOR = new Color(0xE0E0E0);     // Border gray
+    private static final Color CLOSE_COLOR = new Color(0x404040);      // White background
     private static final Color TASK_DONE_COLOR = new Color(0x34D399);  // Green for completed tasks
     private static final Color TASK_PENDING_COLOR = new Color(0xF87171); // Red for pending tasks
     private static final Color DROP_COLOR = new Color(0xFB2C36);
     private static final Color COMPLETED_COLOR = new Color(0x7CCE00);
-    private static final Color CLOSE_COLOR = new Color(0x404040);
     private static JPanel tasksContainer;
     private static JPanel mainPanel;
     private static ScheduledExecutorService scheduler;
     private static JPanel tasksWrapper;
     private static JScrollPane taskListContainer;
-    private static final int REFRESH_INTERVAL = 5000; // 5 seconds
+    private static final int REFRESH_INTERVAL = 2000; // Changed from 5000 to 2000 milliseconds (2 seconds)
+    
 
-    public static JPanel createHomePanel(String username) {
-        // Create main panel with GridBagLayout
-        JPanel HomePanel = createPanel.panel(BACKGROUND_COLOR, new GridBagLayout(), null);
-        
-        // Add 20px margin around the entire panel
-        HomePanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        
-        // Create GridBagConstraints for layout control
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.gridwidth = GridBagConstraints.REMAINDER; // Components take up entire row
-        gbc.fill = GridBagConstraints.BOTH; // Components fill their display area
-        gbc.insets = new Insets(0, 0, 0, 0); // Default spacing
-        
-        // Add header panel
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.weighty = 0.0; // Don't expand vertically
-        gbc.weightx = 1.0; // Expand horizontally
-        JPanel headerPanel = HeaderPanel(username);
-        HomePanel.add(headerPanel, gbc);
-        
-        // Add body panel
-        gbc.gridy = 1;
-        gbc.weighty = 1.0; // Expand to fill remaining vertical space
-        gbc.insets = new Insets(20, 0, 0, 0); // Add top spacing between header and body
-        JPanel bodyPanel = BodyPanel();
-        HomePanel.add(bodyPanel, gbc);
-        
-        return HomePanel;
-    }
+    private static TaskCounterPanel pendingTasksPanel;
+    private static TaskCounterPanel completedTasksPanel;
+    private static TaskCounterPanel totalTasksPanel;
+    
+    // Add new panel variables for flashcard statistics
+    private static TaskCounterPanel totalFlashcardSetsPanel;
+    private static TaskCounterPanel pendingQuizProgressPanel;
+    private static TaskCounterPanel completedQuizProgressPanel;
 
-    public static JPanel HeaderPanel(String username){
-        // Use GridBagLayout for better control over component positioning
-        JPanel HeaderPanel = createPanel.panel(PRIMARY_COLOR, new GridBagLayout(), new Dimension(100, 100));
-        
-        // Create a panel for the greeting label
-        JPanel greetingPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        greetingPanel.setOpaque(false);
-        
-        JLabel Greetings = new JLabel("WELCOME, " + username.toUpperCase());
-        Greetings.setForeground(Color.WHITE);
-        Greetings.setFont(new Font("Segoe UI Variable", Font.BOLD, 24));
-        // Add left margin to greeting
-        Greetings.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 0));
-        greetingPanel.add(Greetings);
-        
-        // Create a panel for the button
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        buttonPanel.setOpaque(false);
-        
-        JButton SwitchOverview = createButton.button("Overview", new Color(0xFFFFFF), BACKGROUND_COLOR, null, false);
-        SwitchOverview.setForeground(Color.BLACK);
-        SwitchOverview.setPreferredSize(new Dimension(100, 40));
-        buttonPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 20)); // Right margin
-        
-        SwitchOverview.addActionListener(e -> {
-            Container topLevelContainer = SwingUtilities.getWindowAncestor(HeaderPanel);
-            if (topLevelContainer instanceof JFrame) {
-                JFrame frame = (JFrame) topLevelContainer;
-                JPanel body = (JPanel) frame.getContentPane().getComponent(0);
-                CardLayout cardLayout = (CardLayout) body.getLayout();
-                
-                try {
-                    body.remove(body.getComponent(body.getComponentCount() - 1));
-                } catch (ArrayIndexOutOfBoundsException ex) {
-                    ex.printStackTrace();
-                }
-                
-                JPanel overviewPanel = overview.createOverview(username);
-                body.add(overviewPanel, "overview");
-                cardLayout.show(body, "overview");
-                overview.refreshTaskCounters();
-                
-                body.revalidate();
-                body.repaint();
-            }
-        });
-        
-        buttonPanel.add(SwitchOverview);
-        
-        // Setup GridBagConstraints for positioning
+    public static JPanel createOverview(String username) {            
+        JPanel mainPanel = createPanel.panel(BACKGROUND_COLOR, new GridBagLayout(), new Dimension(400, 0));
+
+        JPanel spacer = createPanel.panel(BACKGROUND_COLOR, null, new Dimension(0, 300));
         GridBagConstraints gbc = new GridBagConstraints();
-        
-        // Position greeting panel to the left
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.weightx = 1.0;
-        gbc.weighty = 1.0;
         gbc.fill = GridBagConstraints.BOTH;
-        gbc.anchor = GridBagConstraints.WEST;
-        HeaderPanel.add(greetingPanel, gbc);
-        
-        // Position button panel to the right
-        gbc.gridx = 1;
-        gbc.weightx = 0.0;
-        gbc.anchor = GridBagConstraints.EAST;
-        HeaderPanel.add(buttonPanel, gbc);
-        
-        // Add overall padding to the header panel
-        HeaderPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
-        
-        return HeaderPanel;
+        gbc.weightx = 1;
+        gbc.insets = new Insets(20, 20, 20, 20);
+
+        // Header Section
+        gbc.gridy = 0;
+        mainPanel.add(createHeaderSection(username), gbc);
+
+        // Task Statistics Section
+        gbc.gridy = 1;
+        mainPanel.add(createStatisticsSection(), gbc);
+
+        // Flashcard Statistics Section
+        gbc.gridy = 2;
+        mainPanel.add(createFlashcardStatisticsSection(), gbc);
+
+        // Recent Quiz Progress Section
+        gbc.gridy = 3;
+        mainPanel.add(createRecentQuizProgressSection(), gbc);
+
+        gbc.gridy = 4;
+        gbc.weighty = 1.0;
+        mainPanel.add(TaskContainer(), gbc);
+
+        return mainPanel;
     }
 
-    public static JPanel BodyPanel() {
-        JPanel BodyPanel = createPanel.panel(BACKGROUND_COLOR, new BorderLayout(), null);
-        BodyPanel.add(TaskContainer(), BorderLayout.CENTER);
-        return BodyPanel;
+    // Add new method for flashcard statistics section
+    private static JPanel createFlashcardStatisticsSection() {
+        JPanel statsPanel = createPanel.panel(null, new GridLayout(1, 3, 15, 0), null);
+        statsPanel.setOpaque(false);
+
+        totalFlashcardSetsPanel = new TaskCounterPanel(0, "Total Sets");
+        pendingQuizProgressPanel = new TaskCounterPanel(0, "Pending Quiz");
+        completedQuizProgressPanel = new TaskCounterPanel(0, "Completed Quiz");
+
+        // Style and add counter panels
+        for (TaskCounterPanel panel : new TaskCounterPanel[]{
+            totalFlashcardSetsPanel, 
+            pendingQuizProgressPanel, 
+            completedQuizProgressPanel
+        }) {
+            JPanel card = panel.createPanel();
+            styleCard(card);
+            statsPanel.add(card);
+        }
+
+        return statsPanel;
     }
+
+    public static void refreshTaskCounters() {
+        if (pendingTasksPanel != null && completedTasksPanel != null && 
+            totalTasksPanel != null && totalFlashcardSetsPanel != null && 
+            pendingQuizProgressPanel != null && completedQuizProgressPanel != null) {
+            
+            RefreshUI refreshUI = new RefreshUI(
+                totalTasksPanel, 
+                pendingTasksPanel, 
+                completedTasksPanel
+            );
+            refreshUI.execute();
+        }
+    }
+
+    private static JPanel createHeaderSection(String username) {
+        JPanel headerPanel = createPanel.panel(PRIMARY_COLOR, new BorderLayout(20, 0), null);
+        headerPanel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
+
+        // Left side - Welcome message
+        JPanel welcomePanel = new JPanel(new GridLayout(2, 1, 0, 5));
+        welcomePanel.setOpaque(false);
+
+        JLabel dateLabel = new JLabel(LocalDate.now().format(DateTimeFormatter.ofPattern("EEEE, MMMM d")));
+        dateLabel.setForeground(new Color(0xFFFFFF, true));
+        dateLabel.setFont(new Font("Segoe UI Variable", Font.PLAIN, 14));
+
+        JLabel welcomeLabel = new JLabel("WELCOME, " + username);
+        welcomeLabel.setForeground(Color.WHITE);
+        welcomeLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 28));
+
+        welcomePanel.add(dateLabel);
+        welcomePanel.add(welcomeLabel);
+
+        // Right side - Quick summary with notification icon
+        JPanel summaryPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 0));
+        summaryPanel.setOpaque(false);
+
+        // Add notification icon
+        try {
+            ImageIcon notifIcon = new ImageIcon("C://Users//ADMIN//Desktop//Tasklr//resource//icons//NotificationIcon.png");
+            Image scaledImage = notifIcon.getImage().getScaledInstance(24, 24, Image.SCALE_SMOOTH);
+            JLabel notificationLabel = new JLabel(new ImageIcon(scaledImage));
+            notificationLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            notificationLabel.addMouseListener(new java.awt.event.MouseAdapter() {
+                public void mouseEntered(java.awt.event.MouseEvent evt) {
+                    notificationLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
+                }
+            });
+            summaryPanel.add(notificationLabel);
+        } catch (Exception e) {
+            System.err.println("Failed to load notification icon: " + e.getMessage());
+        }
+
+        headerPanel.add(welcomePanel, BorderLayout.WEST);
+        headerPanel.add(summaryPanel, BorderLayout.EAST);
+
+        return headerPanel;
+    }
+
+    private static JPanel createStatisticsSection() {
+        JPanel statsPanel = createPanel.panel(null, new GridLayout(1, 3, 15, 0), null);
+        statsPanel.setOpaque(false);
+
+        pendingTasksPanel = new TaskCounterPanel(0, "Pending Tasks");
+        completedTasksPanel = new TaskCounterPanel(0, "Completed");
+        totalTasksPanel = new TaskCounterPanel(0, "Total Tasks");
+
+        // Style and add counter panels
+        for (TaskCounterPanel panel : new TaskCounterPanel[]{pendingTasksPanel, completedTasksPanel, totalTasksPanel}) {
+            JPanel card = panel.createPanel();
+            styleCard(card);
+            statsPanel.add(card);
+        }
+
+        // Start the refresh worker
+        RefreshUI refreshUI = new RefreshUI(totalTasksPanel, pendingTasksPanel, completedTasksPanel);
+        refreshUI.execute();
+        return statsPanel;
+    }
+
+    private static JPanel createRecentQuizProgressSection() {
+        JPanel recentQuizPanel = createPanel.panel(CARD_COLOR, new BorderLayout(), null);
+        styleCard(recentQuizPanel);
+
+        // Header
+        JPanel headerPanel = new JPanel(new BorderLayout());
+        headerPanel.setOpaque(false);
+        headerPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 15, 0));
+
+        JLabel titleLabel = new JLabel("Recent Quiz Progress");
+        titleLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 18));
+        titleLabel.setForeground(TEXT_DARK);
+
+        JButton viewAllButton = new JButton("View All");
+        viewAllButton.setForeground(PRIMARY_COLOR);
+        viewAllButton.setBorderPainted(false);
+        viewAllButton.setContentAreaFilled(false);
+
+        headerPanel.add(titleLabel, BorderLayout.WEST);
+        headerPanel.add(viewAllButton, BorderLayout.EAST);
+
+        // Quiz progress list
+        JPanel quizProgressListPanel = new JPanel();
+        quizProgressListPanel.setLayout(new BoxLayout(quizProgressListPanel, BoxLayout.Y_AXIS));
+        quizProgressListPanel.setOpaque(false);
+        // Quiz progress items will be added here later
+
+        recentQuizPanel.add(headerPanel, BorderLayout.NORTH);
+        recentQuizPanel.add(quizProgressListPanel, BorderLayout.CENTER);
+
+        return recentQuizPanel;
+    }
+
+    
+
+    private static void styleCard(JPanel panel) {
+        panel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(BORDER_COLOR, 1),
+            BorderFactory.createEmptyBorder(20, 20, 20, 20)
+        ));
+        panel.setBackground(CARD_COLOR);
+    }
+        
 
     public static JPanel TaskContainer() {
         JPanel TaskContainer = createPanel.panel(BACKGROUND_COLOR, new BorderLayout(), new Dimension(500, 0));
@@ -433,7 +517,7 @@ public class HomePanel {
                 ex.printStackTrace();
             }
             
-            JPanel homePanel = createHomePanel(UserSession.getUsername());
+            JPanel homePanel = createOverview(UserSession.getUsername());
             body.add(homePanel, "homePanel");
             cardLayout.show(body, "homePanel");
             

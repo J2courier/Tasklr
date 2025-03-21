@@ -49,20 +49,25 @@ public class Tasklr extends JFrame {
             .getImage().getScaledInstance(40, 40, Image.SCALE_SMOOTH));
         ImageIcon quizBtn = new ImageIcon(new ImageIcon("C:/Users/ADMIN/Desktop/Tasklr/resource/icons/AddQuizWhite.png")
             .getImage().getScaledInstance(40, 40, Image.SCALE_SMOOTH));
+        ImageIcon overviewBtn = new ImageIcon(new ImageIcon("C:/Users/ADMIN/Desktop/Tasklr/resource/icons/overviewIcon.png")
+            .getImage().getScaledInstance(40, 40, Image.SCALE_SMOOTH));
 
         JLabel homeBtnIcon = new JLabel(homeBtn);
         JLabel taskBtnIcon = new JLabel(taskBtn);
         JLabel quizBtnIcon = new JLabel(quizBtn);
+        JLabel overviewBtnIcon = new JLabel(overviewBtn);
         
         // Add icons to navbar
         navbar.add(homeBtnIcon);
         navbar.add(taskBtnIcon);
         navbar.add(quizBtnIcon);
+        navbar.add(overviewBtnIcon);
   
         // Add panels to body with specific constraints
         body.add(homePanel(username), "homePanel");
         body.add(task.createTaskPanel(username), "taskPanel");
         body.add(StudyPanel.createStudyPanel(), "quizPanel");
+        body.add(overview.createOverview(username), "overviewPanel");  // Add overview panel
         
         // Show initial panel
         cardLayout.show(body, "homePanel");
@@ -106,6 +111,19 @@ public class Tasklr extends JFrame {
                 setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
             }
         });
+
+        // Add mouse listener for overview button
+        overviewBtnIcon.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                cardLayout.show(body, "overviewPanel");
+            }
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                setCursor(new Cursor(Cursor.HAND_CURSOR));
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+            }
+        });
     }
         
     public static JPanel homePanel(String username) {
@@ -117,7 +135,7 @@ public class Tasklr extends JFrame {
         
         gbc.gridx = 0;
         gbc.gridy = 0;       
-        homePanel.add(HomePanel.createHomePanel(username), gbc);//just call the sub class tasklist and access the method
+        homePanel.add(HomePanel.createOverview(username), gbc);//just call the sub class tasklist and access the method
         
         return homePanel;
     }

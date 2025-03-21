@@ -211,12 +211,21 @@ public class task {
         // Clear existing tasks
         taskContainer.removeAll();
         
-        // Fetch and add tasks
-        List<String[]> tasks = TaskFetcher.getUserTasks();
-        for (String[] task : tasks) {
-            JPanel taskPanel = createTaskItemPanel(task[0], null);
-            taskContainer.add(taskPanel);
-            taskContainer.add(Box.createRigidArea(new Dimension(0, 5)));
+        try {
+            String query = "SELECT title, due_date FROM tasks WHERE user_id = ? ORDER BY due_date ASC";
+            ResultSet rs = DatabaseManager.executeQuery(query, UserSession.getUserId());
+            
+            while (rs.next()) {
+                String title = rs.getString("title");
+                java.sql.Date dueDate = rs.getDate("due_date");
+                
+                JPanel taskPanel = createTaskItemPanel(title, dueDate);
+                taskContainer.add(taskPanel);
+                taskContainer.add(Box.createRigidArea(new Dimension(0, 5)));
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            Toast.error("Error fetching tasks: " + ex.getMessage());
         }
 
         // Ensure the UI updates
@@ -374,9 +383,7 @@ public class task {
 
                 try {
                     String query = "UPDATE tasks SET title = ?, due_date = ? WHERE title = ? AND user_id = ?";
-                    DatabaseManager.executeUpdate(query,
-                        newTitle,
-                        newDueDate != null ? new java.sql.Timestamp(newDueDate.getTime()) : null,
+                    DatabaseManager.executeUpdate(query, newTitle, newDueDate != null ? new java.sql.Timestamp(newDueDate.getTime()) : null,
                         title,
                         UserSession.getUserId()
                     );

@@ -14,10 +14,41 @@ the database I have in this project is named in "tasklrdb" with tables of:
     - title
     - status
     - due_date
-    - created_at
 - sessions
     - id
     - user_id
     - session_token
     - created_at
+- flashcard_sets
+    - id
+    - user_id
+    - title
+    - created_at
+- flashcards
+    - id
+    - set_id
+    - question
+    - answer
+    - created_at
+- quiz_attempts
+    - id
+    - user_id
+    - set_id
+    - score
+    - total_questions
+    - quiz_type
+    - completion_date
+    - FOREIGN KEY (user_id) REFERENCES users(id)
+    - FOREIGN KEY (set_id) REFERENCES flashcard_sets(id)
+- quiz_statistics
+    - id
+    - user_id
+    - set_id
+    - total_attempts
+    - highest_score
+    - average_score
+    - last_attempt_date
+    - FOREIGN KEY (user_id) REFERENCES users(id)
+    - FOREIGN KEY (set_id) REFERENCES flashcard_sets(id)
+    - UNIQUE KEY unique_user_set (user_id, set_id)
 
