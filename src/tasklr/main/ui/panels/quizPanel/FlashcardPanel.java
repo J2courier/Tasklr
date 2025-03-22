@@ -34,6 +34,10 @@ public class FlashcardPanel {
     // Temporary storage for terms before set creation
     private static List<Map<String, String>> temporaryTerms = new ArrayList<>();
     
+    private static boolean isCardView = false;
+    private static int currentCardIndex = 0;
+    private static List<Map<String, String>> flashcardsList = new ArrayList<>();
+
     public static JPanel createFlashcardPanel() {
         JPanel panel = createPanel.panel(BACKGROUND_COLOR, new BorderLayout(), new Dimension(100, 100));
         Border panelBorder = BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0x6D6D6D));
@@ -620,65 +624,202 @@ public class FlashcardPanel {
         JButton backButton = createButton.button("Back to Sets", null, Color.WHITE, null, false);
         backButton.setBackground(new Color(0x0065D9));
         backButton.setPreferredSize(new Dimension(120, 40));
-        backButton.addActionListener(e -> cardLayout.show(mainCardPanel, "setCreation"));
+        backButton.addActionListener(e -> {
+            isCardView = false;
+            currentCardIndex = 0;
+            cardLayout.show(mainCardPanel, "setCreation");
+        });
         
         // Add More Terms button
         JButton addMoreTermsBtn = createButton.button("Add More Terms", null, Color.WHITE, null, false);
         addMoreTermsBtn.setBackground(new Color(0x275CE2));
         addMoreTermsBtn.setPreferredSize(new Dimension(120, 40));
         addMoreTermsBtn.addActionListener(e -> {
-            currentSetId = setId; // Set the current set ID
+            isCardView = false;
+            currentCardIndex = 0;
+            currentSetId = setId;
             cardLayout.show(mainCardPanel, "termsInput");
+        });
+
+        // View Toggle button
+        JButton viewToggleBtn = createButton.button(isCardView ? "List View" : "Card View", null, Color.WHITE, null, false);
+        viewToggleBtn.setBackground(new Color(0x275CE2));
+        viewToggleBtn.setPreferredSize(new Dimension(120, 40));
+        viewToggleBtn.addActionListener(e -> {
+            isCardView = !isCardView;
+            viewToggleBtn.setText(isCardView ? "List View" : "Card View");
+            refreshFlashcardView(mainContainer, setId);
         });
         
         leftButtonsPanel.add(backButton);
         leftButtonsPanel.add(addMoreTermsBtn);
+        leftButtonsPanel.add(viewToggleBtn);
         
         headerPanel.add(leftButtonsPanel, BorderLayout.WEST);
-       
         
-        // Cards container
-        JPanel cardsContainer = createPanel.panel(Color.WHITE, null, null);
-        cardsContainer.setLayout(new BoxLayout(cardsContainer, BoxLayout.Y_AXIS));
-        
-        // Fetch and display flashcards for this set
+        // Fetch flashcards data
+        flashcardsList.clear();
         try {
             String query = "SELECT term, definition FROM flashcards WHERE set_id = ?";
             ResultSet rs = DatabaseManager.executeQuery(query, setId);
             
-            boolean hasCards = false;
             while (rs.next()) {
-                hasCards = true;
-                String term = rs.getString("term");
-                String definition = rs.getString("definition");
-                
-                JPanel flashcard = createFlashcardItem(term, definition);
-                cardsContainer.add(flashcard);
-                cardsContainer.add(Box.createRigidArea(new Dimension(0, 10)));
-            }
-            
-            if (!hasCards) {
-                JLabel noCardsLabel = new JLabel("No flashcards in this set yet!", SwingConstants.CENTER);
-                noCardsLabel.setFont(new Font("Segoe UI Variable", Font.PLAIN, 16));
-                noCardsLabel.setForeground(new Color(0x707070));
-                noCardsLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-                cardsContainer.add(noCardsLabel);
+                Map<String, String> card = new HashMap<>();
+                card.put("term", rs.getString("term"));
+                card.put("definition", rs.getString("definition"));
+                flashcardsList.add(card);
             }
         } catch (SQLException ex) {
             ex.printStackTrace();
             Toast.error("Error loading flashcards: " + ex.getMessage());
         }
-        
-        // Scroll pane for cards
-        JScrollPane scrollPane = new JScrollPane(cardsContainer);
-        scrollPane.setBorder(null);
-        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
-        
-        // Add components to main container
+
+        // Add content based on view mode
         mainContainer.add(headerPanel, BorderLayout.NORTH);
-        mainContainer.add(scrollPane, BorderLayout.CENTER);
+        refreshFlashcardView(mainContainer, setId);
         
         return mainContainer;
+    }
+
+    private static void refreshFlashcardView(JPanel mainContainer, int setId) {
+        // Remove existing content panel if it exists
+        Component[] components = mainContainer.getComponents();
+        for (Component comp : components) {
+            if (comp != mainContainer.getComponent(0)) { // Keep header panel
+                mainContainer.remove(comp);
+            }
+        }
+
+        if (isCardView) {
+            mainContainer.add(createCardView(), BorderLayout.CENTER);
+        } else {
+            JPanel cardsContainer = createListView(setId);
+            JScrollPane scrollPane = new JScrollPane(cardsContainer);
+            scrollPane.setBorder(null);
+            scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+            mainContainer.add(scrollPane, BorderLayout.CENTER);
+        }
+
+        mainContainer.revalidate();
+        mainContainer.repaint();
+    }
+
+    private static JPanel createCardView() {
+        JPanel cardViewPanel = createPanel.panel(Color.WHITE, new BorderLayout(), null);
+        
+        if (flashcardsList.isEmpty()) {
+            JLabel noCardsLabel = new JLabel("No flashcards in this set yet!", SwingConstants.CENTER);
+            noCardsLabel.setFont(new Font("Segoe UI Variable", Font.PLAIN, 16));
+            noCardsLabel.setForeground(new Color(0x707070));
+            cardViewPanel.add(noCardsLabel, BorderLayout.CENTER);
+            return cardViewPanel;
+        }
+
+        // Create card display panel
+        JPanel cardDisplay = createPanel.panel(new Color(0xF5F5F5), new BorderLayout(), null);
+        cardDisplay.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(0xE0E0E0), 1),
+            BorderFactory.createEmptyBorder(30, 30, 30, 30)
+        ));
+
+        // Add current card content
+        Map<String, String> currentCard = flashcardsList.get(currentCardIndex);
+        
+        JLabel termLabel = new JLabel(currentCard.get("term"), SwingConstants.CENTER);
+        termLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 24));
+        
+        JTextArea definitionArea = new JTextArea(currentCard.get("definition"));
+        definitionArea.setFont(new Font("Segoe UI Variable", Font.PLAIN, 18));
+        definitionArea.setLineWrap(true);
+        definitionArea.setWrapStyleWord(true);
+        definitionArea.setEditable(false);
+        definitionArea.setBackground(cardDisplay.getBackground());
+        definitionArea.setAlignmentX(Component.CENTER_ALIGNMENT);
+        
+        // Center the content
+        JPanel contentPanel = createPanel.panel(cardDisplay.getBackground(), new BorderLayout(0, 20), null);
+        contentPanel.add(termLabel, BorderLayout.NORTH);
+        contentPanel.add(definitionArea, BorderLayout.CENTER);
+        
+        cardDisplay.add(contentPanel, BorderLayout.CENTER);
+
+        // Navigation buttons
+        JPanel navigationPanel = createPanel.panel(Color.WHITE, new FlowLayout(FlowLayout.CENTER, 20, 10), null);
+        
+        JButton prevButton = createButton.button("Previous", null, Color.WHITE, null, false);
+        prevButton.setBackground(new Color(0x275CE2));
+        prevButton.setPreferredSize(new Dimension(100, 40));
+        prevButton.addActionListener(e -> navigateCards(-1));
+        prevButton.setEnabled(currentCardIndex > 0);
+
+        JLabel cardCounter = new JLabel(String.format("%d/%d", currentCardIndex + 1, flashcardsList.size()));
+        cardCounter.setFont(new Font("Segoe UI Variable", Font.BOLD, 16));
+        
+        JButton nextButton = createButton.button("Next", null, Color.WHITE, null, false);
+        nextButton.setBackground(new Color(0x275CE2));
+        nextButton.setPreferredSize(new Dimension(100, 40));
+        nextButton.addActionListener(e -> navigateCards(1));
+        nextButton.setEnabled(currentCardIndex < flashcardsList.size() - 1);
+
+        navigationPanel.add(prevButton);
+        navigationPanel.add(cardCounter);
+        navigationPanel.add(nextButton);
+
+        cardViewPanel.add(cardDisplay, BorderLayout.CENTER);
+        cardViewPanel.add(navigationPanel, BorderLayout.SOUTH);
+
+        // Add key listener for navigation
+        cardViewPanel.setFocusable(true);
+        cardViewPanel.requestFocusInWindow();
+        cardViewPanel.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_LEFT && currentCardIndex > 0) {
+                    navigateCards(-1);
+                } else if (e.getKeyCode() == KeyEvent.VK_RIGHT && currentCardIndex < flashcardsList.size() - 1) {
+                    navigateCards(1);
+                }
+            }
+        });
+
+        return cardViewPanel;
+    }
+
+    private static void navigateCards(int direction) {
+        currentCardIndex += direction;
+        if (currentCardIndex < 0) currentCardIndex = 0;
+        if (currentCardIndex >= flashcardsList.size()) currentCardIndex = flashcardsList.size() - 1;
+        
+        // Find the main container and refresh the view
+        Component[] components = mainCardPanel.getComponents();
+        for (Component comp : components) {
+            if (comp instanceof JPanel && comp.isVisible()) {
+                refreshFlashcardView((JPanel)comp, currentSetId);
+                break;
+            }
+        }
+    }
+
+    private static JPanel createListView(int setId) {
+        JPanel cardsContainer = createPanel.panel(Color.WHITE, null, null);
+        cardsContainer.setLayout(new BoxLayout(cardsContainer, BoxLayout.Y_AXIS));
+        
+        if (flashcardsList.isEmpty()) {
+            JLabel noCardsLabel = new JLabel("No flashcards in this set yet!", SwingConstants.CENTER);
+            noCardsLabel.setFont(new Font("Segoe UI Variable", Font.PLAIN, 16));
+            noCardsLabel.setForeground(new Color(0x707070));
+            noCardsLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+            cardsContainer.add(noCardsLabel);
+            return cardsContainer;
+        }
+
+        for (Map<String, String> card : flashcardsList) {
+            JPanel flashcard = createFlashcardItem(card.get("term"), card.get("definition"));
+            cardsContainer.add(flashcard);
+            cardsContainer.add(Box.createRigidArea(new Dimension(0, 10)));
+        }
+
+        return cardsContainer;
     }
 
     // Helper method to create individual flashcard items

@@ -25,7 +25,7 @@ the database I have in this project is named in "tasklrdb" with tables of:
     - title
     - created_at
 - flashcards
-    - id
+    - card_id
     - set_id
     - question
     - answer

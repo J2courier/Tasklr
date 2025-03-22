@@ -16,6 +16,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
+import tasklr.utilities.UIRefreshManager;
 
 public class overview {
     // Color constants
@@ -31,6 +32,12 @@ public class overview {
     private static final Color COMPLETED_COLOR = new Color(0x7CCE00);  // Green for completed
     private static final Color TOTAL_COLOR = new Color(0x275CE2);      // Blue for total
 
+    // New colors for quiz statistics
+    private static final Color TOTAL_ITEMS_COLOR = new Color(0x3498DB);    // Blue
+    private static final Color AVG_SCORE_COLOR = new Color(0xF1C40F);      // Yellow
+    private static final Color CORRECT_COLOR = new Color(0x2ECC71);        // Green
+    private static final Color INCORRECT_COLOR = new Color(0xE74C3C);      // Red
+
     private static TaskCounterPanel pendingTasksPanel;
     private static TaskCounterPanel completedTasksPanel;
     private static TaskCounterPanel totalTasksPanel;
@@ -39,8 +46,14 @@ public class overview {
     private static TaskCounterPanel totalFlashcardSetsPanel;
     private static TaskCounterPanel pendingQuizProgressPanel;
     private static TaskCounterPanel completedQuizProgressPanel;
+    
 
-    private static CustomBarGraph barGraph;
+    private static CustomBarGraph taskBarGraph;
+    private static CustomBarGraph quizStatsBarGraph;
+    
+    // Add UIRefreshManager instance
+    private static UIRefreshManager refreshManager;
+    private static final int REFRESH_INTERVAL = 2000;
 
     // Custom Bar Graph Component
     static class CustomBarGraph extends JPanel {
@@ -118,25 +131,50 @@ public class overview {
             Graphics2D g2 = (Graphics2D) g;
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-            int x = (getWidth() - (BAR_WIDTH * 3 + BAR_SPACING * 2)) / 2;
+            int x = (getWidth() - (BAR_WIDTH * 4 + BAR_SPACING * 3)) / 2;
             int baseY = getHeight() - 40;
 
-            // Draw bars
-            drawBar(g2, x, baseY, "Pending", PENDING_COLOR);
-            drawBar(g2, x + BAR_WIDTH + BAR_SPACING, baseY, "Completed", COMPLETED_COLOR);
-            drawBar(g2, x + (BAR_WIDTH + BAR_SPACING) * 2, baseY, "Total", TOTAL_COLOR);
+            // Calculate maximum value for scaling
+            int maxValue = 0;
+            for (int value : data.values()) {
+                maxValue = Math.max(maxValue, value);
+            }
 
-            // Draw Y-axis
+            // Set scale factor
+            double scaleFactor = maxValue > 0 ? (baseY - 60) / (double) maxValue : 1;
+
+            // Determine graph type based on panel name
+            boolean isQuizGraph = "quiz_stats".equals(getName());
+
+            // Draw bars based on graph type
+            if (!isQuizGraph) {
+                // Task statistics bars
+                drawBar(g2, x, baseY, "Pending", PENDING_COLOR, scaleFactor);
+                drawBar(g2, x + BAR_WIDTH + BAR_SPACING, baseY, "Completed", COMPLETED_COLOR, scaleFactor);
+                drawBar(g2, x + (BAR_WIDTH + BAR_SPACING) * 2, baseY, "Total", TOTAL_COLOR, scaleFactor);
+            } else {
+                // Quiz statistics bars
+                drawBar(g2, x, baseY, "Total Items", TOTAL_ITEMS_COLOR, scaleFactor);
+                drawBar(g2, x + BAR_WIDTH + BAR_SPACING, baseY, "Avg First Score", AVG_SCORE_COLOR, scaleFactor);
+                drawBar(g2, x + (BAR_WIDTH + BAR_SPACING) * 2, baseY, "Correct", CORRECT_COLOR, scaleFactor);
+                drawBar(g2, x + (BAR_WIDTH + BAR_SPACING) * 3, baseY, "Incorrect", INCORRECT_COLOR, scaleFactor);
+            }
+
+            // Draw axes
             g2.setColor(TEXT_DARK);
             g2.drawLine(30, 20, 30, baseY);
-            
-            // Draw X-axis
             g2.drawLine(30, baseY, getWidth() - 30, baseY);
         }
 
-        private void drawBar(Graphics2D g2, int x, int baseY, String label, Color color) {
-            int height = currentHeights.getOrDefault(label.toLowerCase(), 0);
-            int value = data.getOrDefault(label.toLowerCase(), 0);
+        private void drawBar(Graphics2D g2, int x, int baseY, String label, Color color, double scaleFactor) {
+            String key = label.toLowerCase().replace(" ", "_");
+            int value = data.getOrDefault(key, 0);
+            int height = (int) (value * scaleFactor);
+
+            // Ensure minimum visible height if value is not 0
+            if (value > 0 && height < 5) {
+                height = 5;
+            }
 
             // Draw bar
             g2.setColor(color);
@@ -176,11 +214,11 @@ public class overview {
         headerPanel.add(titleLabel, BorderLayout.WEST);
 
         // Bar Graph
-        barGraph = new CustomBarGraph();
+        taskBarGraph = new CustomBarGraph();
 
         // Add components
         container.add(headerPanel, BorderLayout.NORTH);
-        container.add(barGraph, BorderLayout.CENTER);
+        container.add(taskBarGraph, BorderLayout.CENTER);
 
         // Start auto-refresh
         startGraphRefresh();
@@ -190,10 +228,10 @@ public class overview {
 
     private static void startGraphRefresh() {
         Timer timer = new Timer(2000, e -> {
-            if (barGraph != null) {
+            if (taskBarGraph != null) {
                 try {
                     Map<String, Integer> taskCounts = getTaskCounts();
-                    barGraph.updateData(taskCounts);
+                    taskBarGraph.updateData(taskCounts);
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
@@ -203,6 +241,7 @@ public class overview {
     }
 
     private static Map<String, Integer> getTaskCounts() {
+        System.out.println("[Overview Panel] Fetching task counts at");
         Map<String, Integer> counts = new HashMap<>();
         try {
             String query = "SELECT " +
@@ -217,6 +256,7 @@ public class overview {
                 counts.put("pending", rs.getInt("pending"));
                 counts.put("completed", rs.getInt("completed"));
                 counts.put("total", rs.getInt("total"));
+                System.out.println("[Overview Panel] Task counts fetched: " + counts);
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -228,6 +268,9 @@ public class overview {
     }
 
     public static JPanel createOverview(String username) {
+        // Initialize the refresh manager
+        refreshManager = UIRefreshManager.getInstance();
+        
         JPanel mainPanel = createPanel.panel(BACKGROUND_COLOR, new GridBagLayout(), null);
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.fill = GridBagConstraints.BOTH;
@@ -238,9 +281,16 @@ public class overview {
         gbc.gridy = 0;
         mainPanel.add(createStatisticsHeader(), gbc);
 
-        // Add the bar graph
+        // Add the task bar graph
         gbc.gridy = 1;
         mainPanel.add(createTaskBarGraph(), gbc);
+
+        // Add the quiz statistics bar graph
+        gbc.gridy = 2;
+        mainPanel.add(createQuizStatsBarGraph(), gbc);
+
+        // Start the refresh mechanisms
+        initializeRefresh();
 
         return mainPanel;
     }
@@ -258,5 +308,192 @@ public class overview {
         headerPanel.add(headerLabel, BorderLayout.CENTER);
 
         return headerPanel;
+    }
+
+    public static JPanel createQuizStatsBarGraph() {
+        JPanel container = createPanel.panel(CARD_COLOR, new BorderLayout(), new Dimension(0, 300));
+        container.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(BORDER_COLOR, 1),
+            BorderFactory.createEmptyBorder(10, 10, 10, 10)
+        ));
+
+        // Header
+        JPanel headerPanel = new JPanel(new BorderLayout());
+        headerPanel.setBackground(CARD_COLOR);
+        JLabel titleLabel = new JLabel("Quiz Statistics");
+        titleLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 18));
+        titleLabel.setForeground(TEXT_DARK);
+        headerPanel.add(titleLabel, BorderLayout.WEST);
+
+        // Bar Graph
+        quizStatsBarGraph = new CustomBarGraph();
+        // Add a marker to identify this as a quiz graph
+        quizStatsBarGraph.setName("quiz_stats");
+
+        // Add components
+        container.add(headerPanel, BorderLayout.NORTH);
+        container.add(quizStatsBarGraph, BorderLayout.CENTER);
+
+        // Start auto-refresh
+        startQuizStatsRefresh();
+
+        return container;
+    }
+
+    private static void startQuizStatsRefresh() {
+        Timer timer = new Timer(2000, e -> {
+            if (quizStatsBarGraph != null) {
+                try {
+                    Map<String, Integer> quizStats = getQuizStatistics();
+                    quizStatsBarGraph.updateData(quizStats);
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
+        timer.start();
+    }
+
+    private static int getTotalFlashcardItems() {
+        int count = 0;
+        try {
+            String query = 
+                "SELECT COUNT(*) AS total_items " +
+                "FROM flashcards f " +
+                "JOIN flashcard_sets fs ON f.set_id = fs.id " +
+                "WHERE fs.user_id = ?";
+            ResultSet rs = DatabaseManager.executeQuery(query, UserSession.getUserId());
+            if (rs.next()) {
+                count = rs.getInt("total_items");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return count;
+    }
+
+    private static int getAverageFirstAttemptScore() {
+        int avgScore = 0;
+        try {
+            String query = 
+                "SELECT COALESCE(ROUND(AVG(qa.score * 100.0 / qa.total_questions)), 0) AS avg_score " +
+                "FROM quiz_attempts qa " +
+                "INNER JOIN ( " +
+                "    SELECT user_id, set_id, MIN(completion_date) AS first_attempt_date " +
+                "    FROM quiz_attempts " +
+                "    GROUP BY user_id, set_id " +
+                ") first_attempt " +
+                "ON qa.user_id = first_attempt.user_id " +
+                "AND qa.set_id = first_attempt.set_id " +
+                "AND qa.completion_date = first_attempt.first_attempt_date " +
+                "WHERE qa.user_id = ?";
+            ResultSet rs = DatabaseManager.executeQuery(query, UserSession.getUserId());
+            if (rs.next()) {
+                avgScore = rs.getInt("avg_score");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return avgScore;
+    }
+
+    private static int getTotalCorrectItemsFirstAttempt() {
+        int count = 0;
+        try {
+            String query = 
+                "SELECT COALESCE(SUM(qa.score), 0) AS correct_items " +
+                "FROM quiz_attempts qa " +
+                "INNER JOIN ( " +
+                "    SELECT user_id, set_id, MIN(completion_date) AS first_attempt_date " +
+                "    FROM quiz_attempts " +
+                "    GROUP BY user_id, set_id " +
+                ") first_attempt " +
+                "ON qa.user_id = first_attempt.user_id " +
+                "AND qa.set_id = first_attempt.set_id " +
+                "AND qa.completion_date = first_attempt.first_attempt_date " +
+                "WHERE qa.user_id = ?";
+            ResultSet rs = DatabaseManager.executeQuery(query, UserSession.getUserId());
+            if (rs.next()) {
+                count = rs.getInt("correct_items");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return count;
+    }
+
+    private static int getTotalIncorrectItemsFirstAttempt() {
+        int count = 0;
+        try {
+            String query = 
+                "SELECT COALESCE(SUM(qa.total_questions - qa.score), 0) AS incorrect_items " +
+                "FROM quiz_attempts qa " +
+                "INNER JOIN ( " +
+                "    SELECT user_id, set_id, MIN(completion_date) AS first_attempt_date " +
+                "    FROM quiz_attempts " +
+                "    GROUP BY user_id, set_id " +
+                ") first_attempt " +
+                "ON qa.user_id = first_attempt.user_id " +
+                "AND qa.set_id = first_attempt.set_id " +
+                "AND qa.completion_date = first_attempt.first_attempt_date " +
+                "WHERE qa.user_id = ?";
+            ResultSet rs = DatabaseManager.executeQuery(query, UserSession.getUserId());
+            if (rs.next()) {
+                count = rs.getInt("incorrect_items");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return count;
+    }
+
+    private static Map<String, Integer> getQuizStatistics() {
+        System.out.println("[Overview Panel] Fetching quiz statistics at: ");
+        Map<String, Integer> stats = new HashMap<>();
+        
+        // Get statistics
+        stats.put("total_items", getTotalFlashcardItems());
+        stats.put("avg_first_score", getAverageFirstAttemptScore());
+        stats.put("correct_items", getTotalCorrectItemsFirstAttempt());
+        stats.put("incorrect_items", getTotalIncorrectItemsFirstAttempt());
+        
+        System.out.println("[Overview Panel] Quiz statistics fetched: " + stats);
+        
+        return stats;
+    }
+
+    private static void initializeRefresh() {
+        // Start task graph refresh
+        refreshManager.startRefresh(UIRefreshManager.TASK_GRAPH, () -> {
+            try {
+                Map<String, Integer> taskCounts = getTaskCounts();
+                if (taskBarGraph != null) {
+                    taskBarGraph.updateData(taskCounts);
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        }, REFRESH_INTERVAL);
+
+        // Start quiz stats refresh
+        refreshManager.startRefresh(UIRefreshManager.QUIZ_STATS, () -> {
+            try {
+                Map<String, Integer> quizStats = getQuizStatistics();
+                if (quizStatsBarGraph != null) {
+                    quizStatsBarGraph.updateData(quizStats);
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        }, REFRESH_INTERVAL);
+    }
+
+    public static void cleanup() {
+        if (refreshManager != null) {
+            refreshManager.stopRefresh(UIRefreshManager.TASK_GRAPH);
+            refreshManager.stopRefresh(UIRefreshManager.QUIZ_STATS);
+            // Consider adding any other refresh tasks that need to be stopped
+            refreshManager.stopRefresh(UIRefreshManager.TASK_COUNTER);
+        }
     }
 }

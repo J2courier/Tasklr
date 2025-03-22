@@ -32,23 +32,47 @@ public class QuizzerPanel {
     private static final Color PRIMARY_BUTTON_COLOR = new Color(0x275CE2);
     private static final Color PRIMARY_BUTTON_HOVER = new Color(0x3B6FF0);
     private static final Color PRIMARY_BUTTON_TEXT = Color.WHITE;
+    private static JPanel mainPanel;
+    private static CardLayout cardLayout;
+    private static JPanel quizViewPanel;
     
     public static JPanel createQuizzerPanel() {
         // Use full size for the main panel
-        JPanel panel = createPanel.panel(BACKGROUND_COLOR, new BorderLayout(), null);
+        mainPanel = createPanel.panel(BACKGROUND_COLOR, new BorderLayout(), null);
         
         // Create and add list container
         JPanel listContainer = createListContainer();
-        panel.add(listContainer, BorderLayout.WEST);
+        mainPanel.add(listContainer, BorderLayout.WEST);
         
-        // Add empty panel for flashcard mode
-        JPanel flashcardModePanel = new JPanel(new BorderLayout());
-        flashcardModePanel.setBackground(BACKGROUND_COLOR);
-        panel.add(flashcardModePanel, BorderLayout.CENTER);
+        // Create quiz view panel with CardLayout
+        cardLayout = new CardLayout();
+        quizViewPanel = new JPanel(cardLayout);
+        quizViewPanel.setBackground(BACKGROUND_COLOR);
+        
+        // Add empty state panel
+        JPanel emptyStatePanel = createEmptyStatePanel();
+        quizViewPanel.add(emptyStatePanel, "EMPTY_STATE");
+        
+        mainPanel.add(quizViewPanel, BorderLayout.CENTER);
         
         // Start the auto-refresh mechanism
         startAutoRefresh();
         
+        // Show empty state initially
+        cardLayout.show(quizViewPanel, "EMPTY_STATE");
+        
+        return mainPanel;
+    }
+
+    private static JPanel createEmptyStatePanel() {
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.setBackground(BACKGROUND_COLOR);
+        
+        JLabel messageLabel = new JLabel("Select a flashcard set to start a quiz");
+        messageLabel.setFont(new Font("Segoe UI Variable", Font.PLAIN, 16));
+        messageLabel.setForeground(TEXT_COLOR);
+        
+        panel.add(messageLabel);
         return panel;
     }
 
@@ -100,7 +124,7 @@ public class QuizzerPanel {
             return t;
         });
 
-        // Schedule the refresh task to run every 2 seconds
+        // Schedule the refresh task to run every 5 seconds
         refreshTask = scheduler.scheduleAtFixedRate(() -> {
             // Ensure UI updates happen on EDT
             SwingUtilities.invokeLater(() -> {
@@ -110,7 +134,7 @@ public class QuizzerPanel {
                     e.printStackTrace();
                 }
             });
-        }, 0, 2, TimeUnit.SECONDS);
+        }, 0, 5, TimeUnit.SECONDS);
     }
 
     private static void showCenteredOptionPane(Component parentComponent, String message, String title, int messageType) {
@@ -227,7 +251,7 @@ public class QuizzerPanel {
         dialogPanel.add(quizTypeCombo);
 
         int result = JOptionPane.showConfirmDialog(
-            null,
+            mainPanel,
             dialogPanel,
             "Select Quiz Type",
             JOptionPane.OK_CANCEL_OPTION,
@@ -245,7 +269,6 @@ public class QuizzerPanel {
     }
 
     private static void startIdentificationQuiz(int setId, String subject) {
-        // Fetch all flashcards for this set
         List<FlashCard> flashcards = fetchFlashcardsForSet(setId);
         
         if (flashcards.isEmpty()) {
@@ -253,18 +276,9 @@ public class QuizzerPanel {
             return;
         }
 
-        // Create quiz panel
-        JPanel quizPanel = createIdentificationQuizPanel(flashcards, subject);
-        
-        // Show quiz in a new dialog
-        JDialog quizDialog = new JDialog();
-        quizDialog.setTitle("Identification Quiz - " + subject);
-        quizDialog.setModal(true);
-        quizDialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-        quizDialog.setSize(800, 600);
-        quizDialog.setLocationRelativeTo(null);
-        quizDialog.add(quizPanel);
-        quizDialog.setVisible(true);
+        JPanel quizPanel = createIdentificationQuizPanel(flashcards, subject, setId);
+        quizViewPanel.add(quizPanel, "QUIZ_" + setId);
+        cardLayout.show(quizViewPanel, "QUIZ_" + setId);
     }
 
     private static class FlashCard {
@@ -278,6 +292,7 @@ public class QuizzerPanel {
     }
 
     private static List<FlashCard> fetchFlashcardsForSet(int setId) {
+        System.out.println("[Quizzer Panel] Fetching flashcards for set " + setId + " at: ");
         List<FlashCard> flashcards = new ArrayList<>();
         
         try (Connection conn = DriverManager.getConnection(url, dbUser, dbPass)) {
@@ -293,6 +308,7 @@ public class QuizzerPanel {
                     }
                 }
             }
+            System.out.println("[Quizzer Panel] Fetched " + flashcards.size() + " flashcards");
         } catch (SQLException ex) {
             ex.printStackTrace();
             Toast.error("Error fetching flashcards: " + ex.getMessage());
@@ -301,7 +317,7 @@ public class QuizzerPanel {
         return flashcards;
     }
 
-    private static JPanel createIdentificationQuizPanel(List<FlashCard> flashcards, String subject) {
+    private static JPanel createIdentificationQuizPanel(List<FlashCard> flashcards, String subject, int setId) {
         // Randomize flashcards
         Collections.shuffle(flashcards);
         
@@ -375,7 +391,12 @@ public class QuizzerPanel {
             }
             
             // Show results
-            showQuizResults(score.get(), flashcards.size(), (JDialog) SwingUtilities.getWindowAncestor(mainPanel));
+            List<String> userAnswers = new ArrayList<>();
+            for (JTextField field : answerFields) {
+                userAnswers.add(field.getText());
+            }
+            showQuizResults(score.get(), flashcards.size(), mainPanel, 
+                flashcards, subject, "Identification", setId, userAnswers);
         });
 
         // Close button
@@ -385,10 +406,9 @@ public class QuizzerPanel {
         closeButton.setForeground(Color.WHITE);
         closeButton.setFocusPainted(false);
         closeButton.addActionListener(e -> {
-            Window window = SwingUtilities.getWindowAncestor(mainPanel);
-            if (window instanceof JDialog) {
-                ((JDialog) window).dispose();
-            }
+            // Show empty state and remove the quiz panel
+            cardLayout.show(quizViewPanel, "EMPTY_STATE");
+            quizViewPanel.remove(mainPanel);
         });
 
         // Button panel
@@ -405,21 +425,89 @@ public class QuizzerPanel {
         return mainPanel;
     }
 
-    private static void showQuizResults(int score, int total, JDialog quizDialog) {
-        double percentage = (score * 100.0) / total;
-        String message = String.format(
-            "Quiz Complete!\n\nScore: %d/%d (%.1f%%)",
-            score, total, percentage
-        );
+    private static void showQuizResults(int score, int total, JPanel quizPanel, 
+            List<FlashCard> flashcards, String subject, String quizType, int setId, 
+            List<String> userAnswers) {
+        // Store the quiz attempt
+        storeQuizAttempt(setId, score, total, quizType);
         
-        JOptionPane.showMessageDialog(
-            quizDialog,
-            message,
-            "Quiz Results",
-            JOptionPane.INFORMATION_MESSAGE
-        );
+        // Update statistics
+        updateQuizStatistics(setId, score);
         
-        quizDialog.dispose();
+        // Remove the current quiz panel
+        quizViewPanel.remove(quizPanel);
+        
+        // Show the overview
+        showQuizOverview(flashcards, subject, score, total, quizType, setId, userAnswers);
+    }
+
+    private static void storeQuizAttempt(int setId, int score, int totalQuestions, String quizType) {
+        try {
+            String query = "INSERT INTO quiz_attempts (user_id, set_id, score, total_questions, quiz_type, completion_date) " +
+                          "VALUES (?, ?, ?, ?, ?, NOW())";
+            
+            DatabaseManager.executeUpdate(
+                query,
+                UserSession.getUserId(),
+                setId,
+                score,
+                totalQuestions,
+                quizType
+            );
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            Toast.error("Error storing quiz attempt: " + ex.getMessage());
+        }
+    }
+
+    private static void updateQuizStatistics(int setId, int newScore) {
+        try {
+            // First, check if statistics exist for this user-set combination
+            String checkQuery = "SELECT * FROM quiz_statistics WHERE user_id = ? AND set_id = ?";
+            ResultSet rs = DatabaseManager.executeQuery(checkQuery, UserSession.getUserId(), setId);
+            
+            if (rs.next()) {
+                // Update existing statistics
+                int currentAttempts = rs.getInt("total_attempts");
+                double currentAverage = rs.getDouble("average_score");
+                int highestScore = rs.getInt("highest_score");
+                
+                // Calculate new average
+                double newAverage = ((currentAverage * currentAttempts) + newScore) / (currentAttempts + 1);
+                
+                // Update statistics
+                String updateQuery = "UPDATE quiz_statistics SET " +
+                                   "total_attempts = total_attempts + 1, " +
+                                   "highest_score = GREATEST(highest_score, ?), " +
+                                   "average_score = ?, " +
+                                   "last_attempt_date = NOW() " +
+                                   "WHERE user_id = ? AND set_id = ?";
+                
+                DatabaseManager.executeUpdate(
+                    updateQuery,
+                    newScore,
+                    newAverage,
+                    UserSession.getUserId(),
+                    setId
+                );
+            } else {
+                // Insert new statistics record
+                String insertQuery = "INSERT INTO quiz_statistics " +
+                                   "(user_id, set_id, total_attempts, highest_score, average_score, last_attempt_date) " +
+                                   "VALUES (?, ?, 1, ?, ?, NOW())";
+                
+                DatabaseManager.executeUpdate(
+                    insertQuery,
+                    UserSession.getUserId(),
+                    setId,
+                    newScore,
+                    newScore
+                );
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            Toast.error("Error updating quiz statistics: " + ex.getMessage());
+        }
     }
 
     private static void startMultipleChoiceQuiz(int setId, String subject) {
@@ -435,19 +523,12 @@ public class QuizzerPanel {
             return;
         }
 
-        JPanel quizPanel = createMultipleChoiceQuizPanel(flashcards, subject);
-        
-        JDialog quizDialog = new JDialog();
-        quizDialog.setTitle("Multiple Choice Quiz - " + subject);
-        quizDialog.setModal(true);
-        quizDialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-        quizDialog.setSize(800, 600);
-        quizDialog.setLocationRelativeTo(null);
-        quizDialog.add(quizPanel);
-        quizDialog.setVisible(true);
+        JPanel quizPanel = createMultipleChoiceQuizPanel(flashcards, subject, setId);
+        quizViewPanel.add(quizPanel, "QUIZ_" + setId);
+        cardLayout.show(quizViewPanel, "QUIZ_" + setId);
     }
 
-    private static JPanel createMultipleChoiceQuizPanel(List<FlashCard> flashcards, String subject) {
+    private static JPanel createMultipleChoiceQuizPanel(List<FlashCard> flashcards, String subject, int setId) {
         // Randomize flashcards
         Collections.shuffle(flashcards);
         
@@ -544,8 +625,20 @@ public class QuizzerPanel {
             }
             
             // Show results
-            showQuizResults(score.get(), flashcards.size(), 
-                (JDialog) SwingUtilities.getWindowAncestor(mainPanel));
+            List<String> userAnswers = new ArrayList<>();
+            for (ButtonGroup group : answerGroups) {
+                String selectedAnswer = "";
+                for (Enumeration<AbstractButton> buttons = group.getElements(); buttons.hasMoreElements();) {
+                    AbstractButton button = buttons.nextElement();
+                    if (button.isSelected()) {
+                        selectedAnswer = button.getText();
+                        break;
+                    }
+                }
+                userAnswers.add(selectedAnswer);
+            }
+            showQuizResults(score.get(), flashcards.size(), mainPanel, 
+                flashcards, subject, "Multiple Choice", setId, userAnswers);
         });
 
         // Close button
@@ -555,10 +648,9 @@ public class QuizzerPanel {
         closeButton.setForeground(Color.WHITE);
         closeButton.setFocusPainted(false);
         closeButton.addActionListener(e -> {
-            Window window = SwingUtilities.getWindowAncestor(mainPanel);
-            if (window instanceof JDialog) {
-                ((JDialog) window).dispose();
-            }
+            // Show empty state and remove the quiz panel
+            cardLayout.show(quizViewPanel, "EMPTY_STATE");
+            quizViewPanel.remove(mainPanel);
         });
 
         // Button panel
@@ -591,6 +683,138 @@ public class QuizzerPanel {
         // Shuffle the choices
         Collections.shuffle(choices);
         return choices;
+    }
+
+    // Add a helper method to handle quiz closure
+    private static void closeQuiz(JPanel quizPanel) {
+        cardLayout.show(quizViewPanel, "EMPTY_STATE");
+        quizViewPanel.remove(quizPanel);
+        quizViewPanel.revalidate();
+        quizViewPanel.repaint();
+    }
+
+    private static void showQuizOverview(List<FlashCard> flashcards, String subject, int score, 
+            int total, String quizType, int setId, List<String> userAnswers) {  // Add userAnswers parameter
+        JPanel overviewPanel = new JPanel(new BorderLayout());
+        overviewPanel.setBackground(BACKGROUND_COLOR);
+        overviewPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+        // Header Panel
+        JPanel headerPanel = new JPanel(new BorderLayout());
+        headerPanel.setBackground(BACKGROUND_COLOR);
+        headerPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 20, 0));
+
+        // Subject Label (Left)
+        JLabel subjectLabel = new JLabel(subject + " - Quiz Overview");
+        subjectLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 24));
+
+        // Score Label (Right)
+        double percentage = (score * 100.0) / total;
+        JLabel scoreLabel = new JLabel(String.format("%d/%d (%.1f%%)", score, total, percentage));
+        scoreLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 18));
+
+        headerPanel.add(subjectLabel, BorderLayout.WEST);
+        headerPanel.add(scoreLabel, BorderLayout.EAST);
+
+        // Content Panel with ScrollPane
+        JPanel contentPanel = new JPanel();
+        contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
+        contentPanel.setBackground(BACKGROUND_COLOR);
+
+        // Add items for each flashcard
+        for (int i = 0; i < flashcards.size(); i++) {
+            FlashCard card = flashcards.get(i);
+            boolean isCorrect = userAnswers.get(i).trim().toLowerCase()
+                .equals(card.term.trim().toLowerCase());
+            
+            JPanel itemPanel = new JPanel();
+            itemPanel.setLayout(new BoxLayout(itemPanel, BoxLayout.Y_AXIS));
+            itemPanel.setBackground(Color.WHITE);
+            itemPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+
+            // Question number and definition
+            JLabel definitionLabel = new JLabel((i + 1) + ". " + card.definition);
+            definitionLabel.setFont(new Font("Segoe UI Variable", Font.PLAIN, 14));
+            // Set red color for question number if answer was wrong
+            if (!isCorrect) {
+                String numberPart = (i + 1) + ". ";
+                String definitionPart = card.definition;
+                definitionLabel.setText("<html><font color='#FF0000'>" + numberPart + "</font>" + definitionPart + "</html>");
+                definitionLabel.putClientProperty("html.disable", Boolean.FALSE);
+            }
+
+            // User's answer
+            JLabel userAnswerLabel = new JLabel("Your answer: " + userAnswers.get(i));
+            userAnswerLabel.setFont(new Font("Segoe UI Variable", Font.PLAIN, 14));
+            if (!isCorrect) {
+                userAnswerLabel.setForeground(new Color(0xFF0000));
+            }
+
+            // Correct answer
+            JLabel answerLabel = new JLabel("Correct answer: " + card.term);
+            answerLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 14));
+            answerLabel.setForeground(new Color(0x275CE2));
+
+            itemPanel.add(definitionLabel);
+            itemPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+            itemPanel.add(userAnswerLabel);
+            itemPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+            itemPanel.add(answerLabel);
+            
+            // Add spacing between items
+            contentPanel.add(itemPanel);
+            contentPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+
+            // If this is the last item, add the button panel
+            if (i == flashcards.size() - 1) {
+                JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+                buttonPanel.setBackground(BACKGROUND_COLOR);
+                buttonPanel.setBorder(BorderFactory.createEmptyBorder(20, 0, 0, 0));
+
+                // Retake button
+                JButton retakeButton = new JButton("Retake Quiz");
+                retakeButton.setFont(new Font("Segoe UI Variable", Font.BOLD, 14));
+                retakeButton.setBackground(PRIMARY_BUTTON_COLOR);
+                retakeButton.setForeground(Color.WHITE);
+                retakeButton.setFocusPainted(false);
+                retakeButton.addActionListener(e -> {
+                    closeQuiz(overviewPanel);
+                    if ("Identification".equals(quizType)) {
+                        startIdentificationQuiz(setId, subject);
+                    } else {
+                        startMultipleChoiceQuiz(setId, subject);
+                    }
+                });
+
+                // Close button
+                JButton closeButton = new JButton("Close");
+                closeButton.setFont(new Font("Segoe UI Variable", Font.BOLD, 14));
+                closeButton.setBackground(Color.RED);
+                closeButton.setForeground(Color.WHITE);
+                closeButton.setFocusPainted(false);
+                closeButton.addActionListener(e -> closeQuiz(overviewPanel));
+
+                buttonPanel.add(retakeButton);
+                buttonPanel.add(Box.createRigidArea(new Dimension(10, 0)));
+                buttonPanel.add(closeButton);
+                
+                contentPanel.add(buttonPanel);
+            }
+        }
+
+        // Create scroll pane
+        JScrollPane scrollPane = new JScrollPane(contentPanel);
+        scrollPane.setBorder(null);
+        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        scrollPane.setBackground(BACKGROUND_COLOR);
+
+        // Add components to main panel
+        overviewPanel.add(headerPanel, BorderLayout.NORTH);
+        overviewPanel.add(scrollPane, BorderLayout.CENTER);
+
+        // Add to quiz view panel and show
+        quizViewPanel.add(overviewPanel, "OVERVIEW");
+        cardLayout.show(quizViewPanel, "OVERVIEW");
     }
 }
         

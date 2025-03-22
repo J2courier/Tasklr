@@ -5,6 +5,7 @@ import java.awt.*;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
 import tasklr.utilities.createPanel;
 import tasklr.main.ui.components.TaskCounterPanel;
 import tasklr.main.ui.panels.TaskPanel.TaskFetcher;
@@ -17,6 +18,7 @@ import java.sql.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import tasklr.utilities.UIRefreshManager;
 
 public class HomePanel {
     private static final Color PRIMARY_COLOR = new Color(0x275CE2);    // Primary blue
@@ -36,7 +38,7 @@ public class HomePanel {
     private static JPanel tasksWrapper;
     private static JScrollPane taskListContainer;
     private static final int REFRESH_INTERVAL = 2000; // Changed from 5000 to 2000 milliseconds (2 seconds)
-    
+    private static UIRefreshManager refreshManager;
 
     private static TaskCounterPanel pendingTasksPanel;
     private static TaskCounterPanel completedTasksPanel;
@@ -48,6 +50,9 @@ public class HomePanel {
     private static TaskCounterPanel completedQuizProgressPanel;
 
     public static JPanel createOverview(String username) {            
+        // Initialize the refresh manager
+        refreshManager = UIRefreshManager.getInstance();
+        
         JPanel mainPanel = createPanel.panel(BACKGROUND_COLOR, new GridBagLayout(), new Dimension(400, 0));
 
         JPanel spacer = createPanel.panel(BACKGROUND_COLOR, null, new Dimension(0, 300));
@@ -76,7 +81,30 @@ public class HomePanel {
         gbc.weighty = 1.0;
         mainPanel.add(TaskContainer(), gbc);
 
+        // Start the refresh mechanisms
+        initializeRefresh();
+
         return mainPanel;
+    }
+
+    private static void initializeRefresh() {
+        // Start task list refresh
+        refreshManager.startRefresh(UIRefreshManager.TASK_LIST, () -> {
+            refreshTasksList();
+        }, REFRESH_INTERVAL);
+
+        // Start task counters refresh
+        refreshManager.startRefresh(UIRefreshManager.TASK_COUNTER, () -> {
+            refreshTaskCounters();
+        }, REFRESH_INTERVAL);
+    }
+
+    // Add cleanup method
+    public static void cleanup() {
+        if (refreshManager != null) {
+            refreshManager.stopRefresh(UIRefreshManager.TASK_LIST);
+            refreshManager.stopRefresh(UIRefreshManager.TASK_COUNTER);
+        }
     }
 
     // Add new method for flashcard statistics section
@@ -103,16 +131,18 @@ public class HomePanel {
     }
 
     public static void refreshTaskCounters() {
-        if (pendingTasksPanel != null && completedTasksPanel != null && 
-            totalTasksPanel != null && totalFlashcardSetsPanel != null && 
-            pendingQuizProgressPanel != null && completedQuizProgressPanel != null) {
-            
-            RefreshUI refreshUI = new RefreshUI(
-                totalTasksPanel, 
-                pendingTasksPanel, 
-                completedTasksPanel
-            );
-            refreshUI.execute();
+        System.out.println("[Home Panel] Refreshing task counters at: ");
+        if (pendingTasksPanel != null && completedTasksPanel != null && totalTasksPanel != null) {
+            try {
+                Map<String, Integer> taskCounts = new TaskFetcher().getTaskCounts();
+                if (taskCounts != null) {
+                    totalTasksPanel.updateCount(taskCounts.getOrDefault("total", 0));
+                    pendingTasksPanel.updateCount(taskCounts.getOrDefault("pending", 0));
+                    completedTasksPanel.updateCount(taskCounts.getOrDefault("completed", 0));
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -215,7 +245,7 @@ public class HomePanel {
         return recentQuizPanel;
     }
 
-    
+
 
     private static void styleCard(JPanel panel) {
         panel.setBorder(BorderFactory.createCompoundBorder(
@@ -228,6 +258,15 @@ public class HomePanel {
 
     public static JPanel TaskContainer() {
         JPanel TaskContainer = createPanel.panel(BACKGROUND_COLOR, new BorderLayout(), new Dimension(500, 0));
+
+        // Create header panel
+        JPanel headerPanel = createPanel.panel(CARD_COLOR, new BorderLayout(), new Dimension(0, 60));
+        headerPanel.setBorder(BorderFactory.createEmptyBorder(15, 20, 15, 20));
+        
+        JLabel headerLabel = new JLabel("Your Tasks");
+        headerLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 18));
+        headerLabel.setForeground(TEXT_DARK);
+        headerPanel.add(headerLabel, BorderLayout.CENTER);
 
         // Create wrapper panel for tasks with BoxLayout
         tasksWrapper = createPanel.panel(BACKGROUND_COLOR, null, null);
@@ -252,7 +291,10 @@ public class HomePanel {
         JPanel scrollWrapper = createPanel.panel(BACKGROUND_COLOR, new BorderLayout(), null);
         scrollWrapper.add(taskListContainer, BorderLayout.CENTER);
 
+        // Add header and scroll wrapper to main container
+        TaskContainer.add(headerPanel, BorderLayout.NORTH);
         TaskContainer.add(scrollWrapper, BorderLayout.CENTER);
+        
         return TaskContainer;
     }
 
@@ -288,6 +330,7 @@ public class HomePanel {
     }
 
     private static void refreshTasksList() {
+        System.out.println("[Home Panel] Refreshing tasks list at: ");
         if (tasksWrapper == null) return;
         
         tasksWrapper.removeAll();
@@ -309,19 +352,23 @@ public class HomePanel {
             }
 
             if (!hasItems) {
-                JLabel noTasksLabel = new JLabel("No tasks available");
-                noTasksLabel.setFont(new Font("Segoe UI Variable", Font.PLAIN, 14));
-                noTasksLabel.setForeground(new Color(0x6D6D6D));
-                noTasksLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+                // Add "No tasks" message
+                JLabel noTasksLabel = new JLabel("No tasks found");
+                noTasksLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+                noTasksLabel.setForeground(TEXT_DARK);
                 tasksWrapper.add(noTasksLabel);
             }
 
             tasksWrapper.revalidate();
             tasksWrapper.repaint();
             
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-            JOptionPane.showMessageDialog(null, "Error fetching tasks: " + ex.getMessage());
+            if (taskListContainer != null) {
+                taskListContainer.revalidate();
+                taskListContainer.repaint();
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 
