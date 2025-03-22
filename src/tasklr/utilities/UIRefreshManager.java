@@ -9,18 +9,14 @@ public class UIRefreshManager {
     private static UIRefreshManager instance;
     private final ScheduledExecutorService scheduler;
     private final Map<String, ScheduledFuture<?>> refreshTasks;
-    private static final int DEFAULT_REFRESH_RATE = 5000; // Changed from 2000 to 5000
+    private static final int DEFAULT_REFRESH_RATE = 5000;
 
-    // Refresh task identifiers
+    // Only keeping the identifiers that are actually used
     public static final String TASK_COUNTER = "task_counter";
-    public static final String QUIZ_PANEL = "quiz_panel";
     public static final String TASK_GRAPH = "task_graph";
     public static final String QUIZ_STATS = "quiz_stats";
     public static final String TASK_LIST = "task_list";
-    // Add new identifiers for QuizzerPanel
-    public static final String QUIZ_LIST = "quiz_list";
-    public static final String QUIZ_PROGRESS = "quiz_progress";
-    public static final String FLASHCARD_SETS = "flashcard_sets";
+    public static final String QUIZ_CONTAINER = "quiz_container";
 
     private UIRefreshManager() {
         scheduler = Executors.newScheduledThreadPool(1, r -> {
@@ -77,4 +73,6 @@ public class UIRefreshManager {
         return future != null && !future.isCancelled();
     }
 }
+
+
 

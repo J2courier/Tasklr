@@ -17,6 +17,8 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 import tasklr.utilities.UIRefreshManager;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 
 public class overview {
     // Color constants
@@ -220,24 +222,21 @@ public class overview {
         container.add(headerPanel, BorderLayout.NORTH);
         container.add(taskBarGraph, BorderLayout.CENTER);
 
-        // Start auto-refresh
-        startGraphRefresh();
+        // Initial refresh instead of auto-refresh
+        refreshTaskGraph();
 
         return container;
     }
 
-    private static void startGraphRefresh() {
-        Timer timer = new Timer(2000, e -> {
-            if (taskBarGraph != null) {
-                try {
-                    Map<String, Integer> taskCounts = getTaskCounts();
-                    taskBarGraph.updateData(taskCounts);
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
+    public static void refreshTaskGraph() {
+        if (taskBarGraph != null) {
+            try {
+                Map<String, Integer> taskCounts = getTaskCounts();
+                taskBarGraph.updateData(taskCounts);
+            } catch (Exception ex) {
+                ex.printStackTrace();
             }
-        });
-        timer.start();
+        }
     }
 
     private static Map<String, Integer> getTaskCounts() {
@@ -268,9 +267,6 @@ public class overview {
     }
 
     public static JPanel createOverview(String username) {
-        // Initialize the refresh manager
-        refreshManager = UIRefreshManager.getInstance();
-        
         JPanel mainPanel = createPanel.panel(BACKGROUND_COLOR, new GridBagLayout(), null);
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.fill = GridBagConstraints.BOTH;
@@ -289,8 +285,8 @@ public class overview {
         gbc.gridy = 2;
         mainPanel.add(createQuizStatsBarGraph(), gbc);
 
-        // Start the refresh mechanisms
-        initializeRefresh();
+        // Initial refresh of all components
+        refreshTaskGraph();
 
         return mainPanel;
     }
@@ -334,166 +330,7 @@ public class overview {
         container.add(headerPanel, BorderLayout.NORTH);
         container.add(quizStatsBarGraph, BorderLayout.CENTER);
 
-        // Start auto-refresh
-        startQuizStatsRefresh();
-
         return container;
     }
 
-    private static void startQuizStatsRefresh() {
-        Timer timer = new Timer(2000, e -> {
-            if (quizStatsBarGraph != null) {
-                try {
-                    Map<String, Integer> quizStats = getQuizStatistics();
-                    quizStatsBarGraph.updateData(quizStats);
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
-            }
-        });
-        timer.start();
-    }
-
-    private static int getTotalFlashcardItems() {
-        int count = 0;
-        try {
-            String query = 
-                "SELECT COUNT(*) AS total_items " +
-                "FROM flashcards f " +
-                "JOIN flashcard_sets fs ON f.set_id = fs.id " +
-                "WHERE fs.user_id = ?";
-            ResultSet rs = DatabaseManager.executeQuery(query, UserSession.getUserId());
-            if (rs.next()) {
-                count = rs.getInt("total_items");
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return count;
-    }
-
-    private static int getAverageFirstAttemptScore() {
-        int avgScore = 0;
-        try {
-            String query = 
-                "SELECT COALESCE(ROUND(AVG(qa.score * 100.0 / qa.total_questions)), 0) AS avg_score " +
-                "FROM quiz_attempts qa " +
-                "INNER JOIN ( " +
-                "    SELECT user_id, set_id, MIN(completion_date) AS first_attempt_date " +
-                "    FROM quiz_attempts " +
-                "    GROUP BY user_id, set_id " +
-                ") first_attempt " +
-                "ON qa.user_id = first_attempt.user_id " +
-                "AND qa.set_id = first_attempt.set_id " +
-                "AND qa.completion_date = first_attempt.first_attempt_date " +
-                "WHERE qa.user_id = ?";
-            ResultSet rs = DatabaseManager.executeQuery(query, UserSession.getUserId());
-            if (rs.next()) {
-                avgScore = rs.getInt("avg_score");
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return avgScore;
-    }
-
-    private static int getTotalCorrectItemsFirstAttempt() {
-        int count = 0;
-        try {
-            String query = 
-                "SELECT COALESCE(SUM(qa.score), 0) AS correct_items " +
-                "FROM quiz_attempts qa " +
-                "INNER JOIN ( " +
-                "    SELECT user_id, set_id, MIN(completion_date) AS first_attempt_date " +
-                "    FROM quiz_attempts " +
-                "    GROUP BY user_id, set_id " +
-                ") first_attempt " +
-                "ON qa.user_id = first_attempt.user_id " +
-                "AND qa.set_id = first_attempt.set_id " +
-                "AND qa.completion_date = first_attempt.first_attempt_date " +
-                "WHERE qa.user_id = ?";
-            ResultSet rs = DatabaseManager.executeQuery(query, UserSession.getUserId());
-            if (rs.next()) {
-                count = rs.getInt("correct_items");
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return count;
-    }
-
-    private static int getTotalIncorrectItemsFirstAttempt() {
-        int count = 0;
-        try {
-            String query = 
-                "SELECT COALESCE(SUM(qa.total_questions - qa.score), 0) AS incorrect_items " +
-                "FROM quiz_attempts qa " +
-                "INNER JOIN ( " +
-                "    SELECT user_id, set_id, MIN(completion_date) AS first_attempt_date " +
-                "    FROM quiz_attempts " +
-                "    GROUP BY user_id, set_id " +
-                ") first_attempt " +
-                "ON qa.user_id = first_attempt.user_id " +
-                "AND qa.set_id = first_attempt.set_id " +
-                "AND qa.completion_date = first_attempt.first_attempt_date " +
-                "WHERE qa.user_id = ?";
-            ResultSet rs = DatabaseManager.executeQuery(query, UserSession.getUserId());
-            if (rs.next()) {
-                count = rs.getInt("incorrect_items");
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return count;
-    }
-
-    private static Map<String, Integer> getQuizStatistics() {
-        System.out.println("[Overview Panel] Fetching quiz statistics at: ");
-        Map<String, Integer> stats = new HashMap<>();
-        
-        // Get statistics
-        stats.put("total_items", getTotalFlashcardItems());
-        stats.put("avg_first_score", getAverageFirstAttemptScore());
-        stats.put("correct_items", getTotalCorrectItemsFirstAttempt());
-        stats.put("incorrect_items", getTotalIncorrectItemsFirstAttempt());
-        
-        System.out.println("[Overview Panel] Quiz statistics fetched: " + stats);
-        
-        return stats;
-    }
-
-    private static void initializeRefresh() {
-        // Start task graph refresh
-        refreshManager.startRefresh(UIRefreshManager.TASK_GRAPH, () -> {
-            try {
-                Map<String, Integer> taskCounts = getTaskCounts();
-                if (taskBarGraph != null) {
-                    taskBarGraph.updateData(taskCounts);
-                }
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-        }, REFRESH_INTERVAL);
-
-        // Start quiz stats refresh
-        refreshManager.startRefresh(UIRefreshManager.QUIZ_STATS, () -> {
-            try {
-                Map<String, Integer> quizStats = getQuizStatistics();
-                if (quizStatsBarGraph != null) {
-                    quizStatsBarGraph.updateData(quizStats);
-                }
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-        }, REFRESH_INTERVAL);
-    }
-
-    public static void cleanup() {
-        if (refreshManager != null) {
-            refreshManager.stopRefresh(UIRefreshManager.TASK_GRAPH);
-            refreshManager.stopRefresh(UIRefreshManager.QUIZ_STATS);
-            // Consider adding any other refresh tasks that need to be stopped
-            refreshManager.stopRefresh(UIRefreshManager.TASK_COUNTER);
-        }
-    }
 }

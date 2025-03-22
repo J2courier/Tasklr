@@ -4,6 +4,8 @@ import javax.swing.*;
 import tasklr.utilities.*;
 import tasklr.authentication.UserSession;
 import java.awt.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.sql.*;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -21,8 +23,15 @@ public class QuizzerPanel {
     private static final String dbPass = "";
     private static JPanel quizContainer;
     private static JScrollPane scrollPane;
-    private static ScheduledExecutorService scheduler;
-    private static ScheduledFuture<?> refreshTask;
+    private static CardLayout cardLayout;
+    private static JPanel quizViewPanel;
+    private static JPanel mainPanel;
+    private static UIRefreshManager refreshManager;
+    
+    // Remove the old scheduler variables as we'll use UIRefreshManager instead
+    // private static ScheduledExecutorService scheduler;
+    // private static ScheduledFuture<?> refreshTask;
+
     private static final Color TEXT_COLOR = new Color(0x242424);
     private static final Color BACKGROUND_COLOR = new Color(0xFFFFFF);
     private static final Color LIST_CONTAINER_COLOR = new Color(0xFFFFFF);
@@ -32,9 +41,6 @@ public class QuizzerPanel {
     private static final Color PRIMARY_BUTTON_COLOR = new Color(0x275CE2);
     private static final Color PRIMARY_BUTTON_HOVER = new Color(0x3B6FF0);
     private static final Color PRIMARY_BUTTON_TEXT = Color.WHITE;
-    private static JPanel mainPanel;
-    private static CardLayout cardLayout;
-    private static JPanel quizViewPanel;
     
     public static JPanel createQuizzerPanel() {
         // Use full size for the main panel
@@ -57,6 +63,19 @@ public class QuizzerPanel {
         
         // Start the auto-refresh mechanism
         startAutoRefresh();
+        
+        // Add component listener to handle cleanup
+        mainPanel.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentHidden(ComponentEvent e) {
+                stopAutoRefresh();
+            }
+            
+            @Override
+            public void componentShown(ComponentEvent e) {
+                startAutoRefresh();
+            }
+        });
         
         // Show empty state initially
         cardLayout.show(quizViewPanel, "EMPTY_STATE");
@@ -117,24 +136,20 @@ public class QuizzerPanel {
     }
 
     private static void startAutoRefresh() {
-        // Create a single-thread scheduler
-        scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
-            Thread t = new Thread(r);
-            t.setDaemon(true); // Make it a daemon thread so it doesn't prevent JVM shutdown
-            return t;
+        refreshManager = UIRefreshManager.getInstance();
+        refreshManager.startRefresh(UIRefreshManager.QUIZ_CONTAINER, () -> {
+            try {
+                refreshQuizContainer();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         });
+    }
 
-        // Schedule the refresh task to run every 5 seconds
-        refreshTask = scheduler.scheduleAtFixedRate(() -> {
-            // Ensure UI updates happen on EDT
-            SwingUtilities.invokeLater(() -> {
-                try {
-                    refreshQuizContainer();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            });
-        }, 0, 5, TimeUnit.SECONDS);
+    private static void stopAutoRefresh() {
+        if (refreshManager != null) {
+            refreshManager.stopRefresh(UIRefreshManager.QUIZ_CONTAINER);
+        }
     }
 
     private static void showCenteredOptionPane(Component parentComponent, String message, String title, int messageType) {
@@ -145,7 +160,7 @@ public class QuizzerPanel {
     }
 
     public static synchronized void refreshQuizContainer() {
-        if (quizContainer == null) return;
+        if (quizContainer == null || !mainPanel.isShowing()) return;
         
         SwingUtilities.invokeLater(() -> {
             quizContainer.removeAll();
@@ -168,26 +183,14 @@ public class QuizzerPanel {
                             quizContainer.add(Box.createRigidArea(new Dimension(0, 5)));
                         }
                         
-                        if (!hasItems) {
-                            JLabel noItemsLabel = new JLabel("No flashcard sets available for quiz!");
-                            noItemsLabel.setFont(new Font("Segoe UI Variable", Font.PLAIN, 14));
-                            noItemsLabel.setForeground(TEXT_COLOR);
-                            noItemsLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-                            quizContainer.add(noItemsLabel);
-                        }
+                        // Update UI
+                        quizContainer.revalidate();
+                        quizContainer.repaint();
                     }
                 }
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-                Toast.error("Error fetching flashcard sets: " + ex.getMessage());
-            }
-
-            quizContainer.revalidate();
-            quizContainer.repaint();
-            
-            if (scrollPane != null) {
-                scrollPane.getViewport().revalidate();
-                scrollPane.getViewport().repaint();
+            } catch (SQLException e) {
+                e.printStackTrace();
+                Toast.error("Failed to refresh quiz container: " + e.getMessage());
             }
         });
     }
@@ -815,6 +818,11 @@ public class QuizzerPanel {
         // Add to quiz view panel and show
         quizViewPanel.add(overviewPanel, "OVERVIEW");
         cardLayout.show(quizViewPanel, "OVERVIEW");
+    }
+
+    // Add cleanup method to be called when the panel is being disposed
+    public static void cleanup() {
+        stopAutoRefresh();
     }
 }
         

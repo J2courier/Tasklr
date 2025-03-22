@@ -4,20 +4,14 @@ import javax.swing.*;
 import java.awt.*;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
 import java.util.Map;
 import tasklr.utilities.createPanel;
 import tasklr.main.ui.components.TaskCounterPanel;
 import tasklr.main.ui.panels.TaskPanel.TaskFetcher;
-import tasklr.main.ui.panels.overveiw.overview;
-import tasklr.utilities.DatabaseManager;
-import tasklr.utilities.RefreshUI;
+import tasklr.utilities.*;
 import tasklr.authentication.UserSession;
-import tasklr.utilities.createButton;
 import java.sql.*;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import tasklr.utilities.UIRefreshManager;
 
 public class HomePanel {
@@ -33,11 +27,9 @@ public class HomePanel {
     private static final Color DROP_COLOR = new Color(0xFB2C36);
     private static final Color COMPLETED_COLOR = new Color(0x7CCE00);
     private static JPanel tasksContainer;
-    private static JPanel mainPanel;
-    private static ScheduledExecutorService scheduler;
     private static JPanel tasksWrapper;
     private static JScrollPane taskListContainer;
-    private static final int REFRESH_INTERVAL = 2000; // Changed from 5000 to 2000 milliseconds (2 seconds)
+    private static final int REFRESH_INTERVAL = 5000; // Changed from 5000 to 2000 milliseconds (2 seconds)
     private static UIRefreshManager refreshManager;
 
     private static TaskCounterPanel pendingTasksPanel;
@@ -46,16 +38,12 @@ public class HomePanel {
     
     // Add new panel variables for flashcard statistics
     private static TaskCounterPanel totalFlashcardSetsPanel;
-    private static TaskCounterPanel pendingQuizProgressPanel;
-    private static TaskCounterPanel completedQuizProgressPanel;
+    private static TaskCounterPanel totalQuizTakenPanel;
+    private static TaskCounterPanel totalQuizRetakedPanel;
 
     public static JPanel createOverview(String username) {            
-        // Initialize the refresh manager
-        refreshManager = UIRefreshManager.getInstance();
-        
         JPanel mainPanel = createPanel.panel(BACKGROUND_COLOR, new GridBagLayout(), new Dimension(400, 0));
 
-        JPanel spacer = createPanel.panel(BACKGROUND_COLOR, null, new Dimension(0, 300));
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.fill = GridBagConstraints.BOTH;
         gbc.weightx = 1;
@@ -73,16 +61,13 @@ public class HomePanel {
         gbc.gridy = 2;
         mainPanel.add(createFlashcardStatisticsSection(), gbc);
 
-        // Recent Quiz Progress Section
+        // Task Container Section
         gbc.gridy = 3;
-        mainPanel.add(createRecentQuizProgressSection(), gbc);
-
-        gbc.gridy = 4;
         gbc.weighty = 1.0;
-        mainPanel.add(TaskContainer(), gbc);
+        mainPanel.add(createTaskContainer(), gbc);
 
-        // Start the refresh mechanisms
-        initializeRefresh();
+        // Initial fetch and display of tasks
+        refreshTasksList();
 
         return mainPanel;
     }
@@ -112,15 +97,15 @@ public class HomePanel {
         JPanel statsPanel = createPanel.panel(null, new GridLayout(1, 3, 15, 0), null);
         statsPanel.setOpaque(false);
 
-        totalFlashcardSetsPanel = new TaskCounterPanel(0, "Total Sets");
-        pendingQuizProgressPanel = new TaskCounterPanel(0, "Pending Quiz");
-        completedQuizProgressPanel = new TaskCounterPanel(0, "Completed Quiz");
+        totalFlashcardSetsPanel = new TaskCounterPanel(0, "Total Flashcard Sets");
+        totalQuizTakenPanel = new TaskCounterPanel(0, "Total Quiz Taken");
+        totalQuizRetakedPanel = new TaskCounterPanel(0, "Total Quiz Retaked");
 
         // Style and add counter panels
         for (TaskCounterPanel panel : new TaskCounterPanel[]{
             totalFlashcardSetsPanel, 
-            pendingQuizProgressPanel, 
-            completedQuizProgressPanel
+            totalQuizTakenPanel, 
+            totalQuizRetakedPanel
         }) {
             JPanel card = panel.createPanel();
             styleCard(card);
@@ -129,6 +114,8 @@ public class HomePanel {
 
         return statsPanel;
     }
+
+
 
     public static void refreshTaskCounters() {
         System.out.println("[Home Panel] Refreshing task counters at: ");
@@ -256,87 +243,67 @@ public class HomePanel {
     }
         
 
-    public static JPanel TaskContainer() {
-        JPanel TaskContainer = createPanel.panel(BACKGROUND_COLOR, new BorderLayout(), new Dimension(500, 0));
-
-        // Create header panel
-        JPanel headerPanel = createPanel.panel(CARD_COLOR, new BorderLayout(), new Dimension(0, 60));
-        headerPanel.setBorder(BorderFactory.createEmptyBorder(15, 20, 15, 20));
+    private static JPanel createTaskContainer() {
+        JPanel taskContainer = createPanel.panel(BACKGROUND_COLOR, new BorderLayout(), new Dimension(500, 0));
         
-        JLabel headerLabel = new JLabel("Your Tasks");
-        headerLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 18));
-        headerLabel.setForeground(TEXT_DARK);
-        headerPanel.add(headerLabel, BorderLayout.CENTER);
+        // Create header panel with "Remaining Task" label
+        JPanel headerPanel = createPanel.panel(CARD_COLOR, new BorderLayout(), new Dimension(0, 50));
+        headerPanel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createMatteBorder(0, 0, 1, 0, BORDER_COLOR),
+            BorderFactory.createEmptyBorder(10, 20, 10, 20)
+        ));
 
-        // Create wrapper panel for tasks with BoxLayout
-        tasksWrapper = createPanel.panel(BACKGROUND_COLOR, null, null);
+        JLabel remainingTaskLabel = new JLabel("Remaining Tasks");
+        remainingTaskLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 16));
+        remainingTaskLabel.setForeground(TEXT_DARK);
+        headerPanel.add(remainingTaskLabel, BorderLayout.CENTER);
+
+        // Tasks wrapper panel
+        tasksWrapper = new JPanel();
         tasksWrapper.setLayout(new BoxLayout(tasksWrapper, BoxLayout.Y_AXIS));
-        tasksWrapper.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        tasksWrapper.setBackground(BACKGROUND_COLOR);
+        tasksWrapper.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
 
-        // Initial load of tasks
-        refreshTasksList();
-
-        // Create scroll pane for tasks
         taskListContainer = new JScrollPane(tasksWrapper);
         taskListContainer.setBorder(null);
-        taskListContainer.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-        taskListContainer.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        taskListContainer.getVerticalScrollBar().setUnitIncrement(16);
-        taskListContainer.getViewport().setBackground(BACKGROUND_COLOR);
-        taskListContainer.setPreferredSize(new Dimension(0, 400));
-
-        // Start the auto-refresh scheduler
-        startAutoRefresh();
-
-        JPanel scrollWrapper = createPanel.panel(BACKGROUND_COLOR, new BorderLayout(), null);
-        scrollWrapper.add(taskListContainer, BorderLayout.CENTER);
-
-        // Add header and scroll wrapper to main container
-        TaskContainer.add(headerPanel, BorderLayout.NORTH);
-        TaskContainer.add(scrollWrapper, BorderLayout.CENTER);
+        taskListContainer.setBackground(BACKGROUND_COLOR);
         
-        return TaskContainer;
-    }
-
-    private static void startAutoRefresh() {
-        // Stop existing scheduler if running
-        stopAutoRefresh();
+        // Enhance scrolling behavior
+        taskListContainer.getVerticalScrollBar().setUnitIncrement(32);
+        taskListContainer.getVerticalScrollBar().setBlockIncrement(128);
+        taskListContainer.getVerticalScrollBar().putClientProperty("JScrollBar.smoothScrolling", true);
         
-        // Create new scheduler
-        scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
-            Thread t = new Thread(r);
-            t.setDaemon(true);
-            return t;
+        // Optional: Add mouse wheel listener for even smoother scrolling
+        tasksWrapper.addMouseWheelListener(e -> {
+            JScrollBar scrollBar = taskListContainer.getVerticalScrollBar();
+            int direction = e.getWheelRotation();
+            int increment = scrollBar.getUnitIncrement() * 3; // Multiply by 3 for faster scrolling
+            int newValue = scrollBar.getValue() + (direction * increment);
+            scrollBar.setValue(newValue);
         });
 
-        // Schedule periodic refresh
-        scheduler.scheduleAtFixedRate(() -> {
-            SwingUtilities.invokeLater(() -> {
-                refreshTasksList();
-                // showToaster("Tasks Refreshed Successfully");
-            });
-        }, REFRESH_INTERVAL, REFRESH_INTERVAL, TimeUnit.MILLISECONDS);
+        // Add components to main container
+        taskContainer.add(headerPanel, BorderLayout.NORTH);
+        taskContainer.add(taskListContainer, BorderLayout.CENTER);
+        
+        return taskContainer;
     }
 
-    private static void stopAutoRefresh() {
-        if (scheduler != null && !scheduler.isShutdown()) {
-            scheduler.shutdown();
-            try {
-                scheduler.awaitTermination(1, TimeUnit.SECONDS);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    private static void refreshTasksList() {
-        System.out.println("[Home Panel] Refreshing tasks list at: ");
+    public static void refreshTasksList() {
         if (tasksWrapper == null) return;
         
         tasksWrapper.removeAll();
         
         try {
-            String query = "SELECT title, status, due_date FROM tasks WHERE user_id = ? ORDER BY due_date ASC";
+            // Modified query to order by status (pending first) and then due_date
+            String query = "SELECT title, status, due_date FROM tasks " +
+                          "WHERE user_id = ? " +
+                          "ORDER BY CASE " +
+                              "WHEN status = 'pending' THEN 0 " +
+                              "WHEN status = 'completed' THEN 1 " +
+                              "ELSE 2 END, " +
+                          "due_date ASC";
+                          
             ResultSet rs = DatabaseManager.executeQuery(query, UserSession.getUserId());
 
             boolean hasItems = false;
@@ -352,7 +319,6 @@ public class HomePanel {
             }
 
             if (!hasItems) {
-                // Add "No tasks" message
                 JLabel noTasksLabel = new JLabel("No tasks found");
                 noTasksLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
                 noTasksLabel.setForeground(TEXT_DARK);
@@ -362,13 +328,9 @@ public class HomePanel {
             tasksWrapper.revalidate();
             tasksWrapper.repaint();
             
-            if (taskListContainer != null) {
-                taskListContainer.revalidate();
-                taskListContainer.repaint();
-            }
-
-        } catch (SQLException e) {
-            e.printStackTrace();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            Toast.error("Error fetching tasks: " + ex.getMessage());
         }
     }
 
@@ -573,35 +535,5 @@ public class HomePanel {
         }
     }
 
-    // private static void showToaster(String message) {
-    //     JPanel toaster = new JPanel();
-    //     toaster.setBackground(new Color(0x059669));
-    //     toaster.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
-        
-    //     JLabel label = new JLabel(message);
-    //     label.setForeground(Color.WHITE);
-    //     label.setFont(new Font("Segoe UI Variable", Font.PLAIN, 14));
-    //     toaster.add(label);
-        
-    //     JDialog dialog = new JDialog();
-    //     dialog.setUndecorated(true);
-    //     dialog.setContentPane(toaster);
-    //     dialog.pack();
-        
-    //     // Position the toaster at the bottom right
-    //     Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-    //     dialog.setLocation(
-    //         screenSize.width - dialog.getWidth() - 20,
-    //         screenSize.height - dialog.getHeight() - 40
-    //     );
-        
-    //     dialog.setVisible(true);
-        
-    //     // Hide the toaster after 2 seconds
-    //     Timer timer = new Timer(2000, e -> {
-    //         dialog.dispose();
-    //     });
-    //     timer.setRepeats(false);
-    //     timer.start();
-    // }
+
 }

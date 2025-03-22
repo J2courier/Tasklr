@@ -168,7 +168,14 @@ public class task {
             if (insertTask(title, dueDate)) {
                 titleField.setText("");
                 dateChooser.setDate(null);
-                refreshTaskContainer();
+                
+                // Refresh all necessary panels
+                refreshTaskContainer(); // Original refresh
+                tasklr.main.ui.panels.Home.HomePanel.refreshTasksList(); // Home panel refresh
+                tasklr.main.ui.panels.overveiw.overview.refreshTaskGraph(); // Overview panel refresh
+                
+                // Show success message
+                Toast.success("Task added successfully!");
             }
         });
 
@@ -193,16 +200,13 @@ public class task {
                 stmt.setTimestamp(3, dueDate != null ? new Timestamp(dueDate.getTime()) : null);
                 
                 int result = stmt.executeUpdate();
-                if (result > 0) {
-                    Toast.success("Task added successfully!");
-                    return true;
-                }
+                return result > 0;
             }
         } catch (SQLException ex) {
             ex.printStackTrace();
             Toast.error("Error adding task: " + ex.getMessage());
+            return false;
         }
-        return false;
     }
 
     private static void refreshTaskContainer() {
@@ -223,18 +227,13 @@ public class task {
                 taskContainer.add(taskPanel);
                 taskContainer.add(Box.createRigidArea(new Dimension(0, 5)));
             }
+
+            taskContainer.revalidate();
+            taskContainer.repaint();
+            
         } catch (SQLException ex) {
             ex.printStackTrace();
             Toast.error("Error fetching tasks: " + ex.getMessage());
-        }
-
-        // Ensure the UI updates
-        taskContainer.revalidate();
-        taskContainer.repaint();
-        
-        if (scrollPane != null) {
-            scrollPane.revalidate();
-            scrollPane.repaint();
         }
     }
 
