@@ -5,14 +5,13 @@ import java.awt.*;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
-import tasklr.utilities.createPanel;
+
 import tasklr.main.ui.components.TaskCounterPanel;
 import tasklr.main.ui.panels.TaskPanel.TaskFetcher;
 import tasklr.utilities.*;
 import tasklr.authentication.UserSession;
 import java.sql.*;
 import java.util.concurrent.ScheduledExecutorService;
-import tasklr.utilities.UIRefreshManager;
 
 public class HomePanel {
     private static final Color PRIMARY_COLOR = new Color(0x275CE2);    // Primary blue
@@ -25,7 +24,7 @@ public class HomePanel {
     private static final Color TASK_DONE_COLOR = new Color(0x34D399);  // Green for completed tasks
     private static final Color TASK_PENDING_COLOR = new Color(0xF87171); // Red for pending tasks
     private static final Color DROP_COLOR = new Color(0xFB2C36);
-    private static final Color COMPLETED_COLOR = new Color(0x7CCE00);
+    private static final Color COMPLETED_COLOR = new Color(0x59F070);
     private static JPanel tasksContainer;
     private static JPanel tasksWrapper;
     private static JScrollPane taskListContainer;
@@ -246,17 +245,48 @@ public class HomePanel {
     private static JPanel createTaskContainer() {
         JPanel taskContainer = createPanel.panel(BACKGROUND_COLOR, new BorderLayout(), new Dimension(500, 0));
         
-        // Create header panel with "Remaining Task" label
-        JPanel headerPanel = createPanel.panel(CARD_COLOR, new BorderLayout(), new Dimension(0, 50));
+        // Create header panel with "Remaining Task" label and refresh button
+        JPanel headerPanel = createPanel.panel(CARD_COLOR, new BorderLayout(), new Dimension(0, 70));
         headerPanel.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createMatteBorder(0, 0, 1, 0, BORDER_COLOR),
             BorderFactory.createEmptyBorder(10, 20, 10, 20)
         ));
 
+        // Left side - Title
         JLabel remainingTaskLabel = new JLabel("Remaining Tasks");
         remainingTaskLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 16));
         remainingTaskLabel.setForeground(TEXT_DARK);
-        headerPanel.add(remainingTaskLabel, BorderLayout.CENTER);
+        
+        // Right side - Refresh button
+        JButton refreshButton = new JButton();
+        refreshButton.setPreferredSize(new Dimension(100, 40));
+        refreshButton.setText("⟳"); 
+        refreshButton.setBorderPainted(false);
+        refreshButton.setContentAreaFilled(true); // Changed to true to show background color
+        refreshButton.setFocusPainted(false);
+        refreshButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        refreshButton.setToolTipText("Refresh tasks");
+        refreshButton.setBackground(COMPLETED_COLOR);
+        refreshButton.setForeground(Color.WHITE);
+        
+        refreshButton.addActionListener(e -> {
+            refreshButton.setEnabled(false);
+            refreshTasksList();
+            refreshTaskCounters();
+            // Re-enable the button after a short delay
+            Timer timer = new Timer(1000, event -> refreshButton.setEnabled(true));
+            timer.setRepeats(false);
+            timer.start();
+        });
+
+        // Create a panel for the right side
+        JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        // rightPanel.setPreferredSize(new Dimension(100, 40));
+        rightPanel.setOpaque(false);
+        rightPanel.add(refreshButton);
+
+        headerPanel.add(rightPanel, BorderLayout.WEST);
+        // headerPanel.add(, BorderLayout.EAST);
 
         // Tasks wrapper panel
         tasksWrapper = new JPanel();
@@ -433,15 +463,20 @@ public class HomePanel {
         JButton dropBtn = createButton.button("Drop Task", DROP_COLOR, Color.WHITE, null, false);
         dropBtn.setPreferredSize(new Dimension(100, 35));
         dropBtn.addActionListener(e -> {
-            int confirm = JOptionPane.showConfirmDialog(
-                parent,
+            // Create a JOptionPane and center it
+            JOptionPane optionPane = new JOptionPane(
                 "Are you sure you want to delete this task?",
-                "Confirm Delete",
-                JOptionPane.YES_NO_OPTION,
-                JOptionPane.WARNING_MESSAGE
+                JOptionPane.WARNING_MESSAGE,
+                JOptionPane.YES_NO_OPTION
             );
-
-            if (confirm == JOptionPane.YES_OPTION) {
+            
+            JDialog dialog = optionPane.createDialog(parent, "Confirm Delete");
+            dialog.setLocationRelativeTo(null); // Center the dialog
+            dialog.setVisible(true);
+            
+            // Get the user's selection
+            Object selectedValue = optionPane.getValue();
+            if (selectedValue != null && selectedValue.equals(JOptionPane.YES_OPTION)) {
                 try {
                     String query = "DELETE FROM tasks WHERE title = ? AND user_id = ?";
                     DatabaseManager.executeUpdate(query, title, UserSession.getUserId());
@@ -450,12 +485,14 @@ public class HomePanel {
                     refreshTaskContainer();
                 } catch (SQLException ex) {
                     ex.printStackTrace();
-                    JOptionPane.showMessageDialog(
-                        parent,
+                    // Create centered error dialog
+                    JOptionPane errorPane = new JOptionPane(
                         "Error deleting task: " + ex.getMessage(),
-                        "Error",
                         JOptionPane.ERROR_MESSAGE
                     );
+                    JDialog errorDialog = errorPane.createDialog(parent, "Error");
+                    errorDialog.setLocationRelativeTo(null);
+                    errorDialog.setVisible(true);
                 }
             }
         });
@@ -503,12 +540,8 @@ public class HomePanel {
         dialog.setContentPane(popupPanel);
         dialog.pack();
         
-        // Center the popup relative to the parent component
-        Point location = parent.getLocationOnScreen();
-        dialog.setLocation(
-            location.x + (parent.getWidth() - dialog.getWidth()) / 2,
-            location.y + (parent.getHeight() - dialog.getHeight()) / 2
-        );
+        // Center the dialog on the screen
+        dialog.setLocationRelativeTo(null);
         
         dialog.setVisible(true);
     }
