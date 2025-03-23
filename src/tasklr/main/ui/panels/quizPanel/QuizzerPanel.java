@@ -240,18 +240,44 @@ public class QuizzerPanel {
 
     private static void showQuizTypeDialog(int setId, String subject) {
         String[] options = {"Identification", "Multiple Choice"};
-        JPanel dialogPanel = new JPanel(new GridLayout(3, 1, 0, 10));
+        
+        // Main dialog panel with padding
+        JPanel dialogPanel = new JPanel(new BorderLayout(0, 10));
         dialogPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         
+        // Title panel at the top
+        JPanel titlePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
         JLabel titleLabel = new JLabel("Select Quiz Type for: " + subject);
         titleLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 14));
+        titlePanel.add(titleLabel);
         
+        // Content panel for label and combo box
+        JPanel contentPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        contentPanel.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
+        
+        // Label and combo box panel
+        JPanel inputPanel = new JPanel();
+        inputPanel.setLayout(new BoxLayout(inputPanel, BoxLayout.Y_AXIS));
+        
+        // Quiz type label aligned to the left
+        JLabel typeLabel = new JLabel("Quiz Type:");
+        typeLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        // Combo box panel to maintain left alignment
+        JPanel comboPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 5));
         JComboBox<String> quizTypeCombo = new JComboBox<>(options);
         quizTypeCombo.setPreferredSize(new Dimension(200, 30));
+        comboPanel.add(quizTypeCombo);
+        comboPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
         
-        dialogPanel.add(titleLabel);
-        dialogPanel.add(new JLabel("Quiz Type:"));
-        dialogPanel.add(quizTypeCombo);
+        // Add components to input panel
+        inputPanel.add(typeLabel);
+        inputPanel.add(comboPanel);
+        
+        // Add all panels to dialog panel
+        contentPanel.add(inputPanel);
+        dialogPanel.add(titlePanel, BorderLayout.NORTH);
+        dialogPanel.add(contentPanel, BorderLayout.CENTER);
 
         int result = JOptionPane.showConfirmDialog(
             mainPanel,
