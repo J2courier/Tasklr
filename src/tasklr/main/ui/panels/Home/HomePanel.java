@@ -12,6 +12,8 @@ import tasklr.utilities.*;
 import tasklr.authentication.UserSession;
 import java.sql.*;
 import java.util.concurrent.ScheduledExecutorService;
+import tasklr.main.ui.panels.quizPanel.QuizzerPanel;
+import tasklr.utilities.Toast;
 
 public class HomePanel {
     private static final Color PRIMARY_COLOR = new Color(0x275CE2);    // Primary blue
@@ -59,6 +61,9 @@ public class HomePanel {
         // Flashcard Statistics Section
         gbc.gridy = 2;
         mainPanel.add(createFlashcardStatisticsSection(), gbc);
+
+        // Add this after creating the flashcard statistics section
+        QuizzerPanel.initializeHomePanel();
 
         // Task Container Section
         gbc.gridy = 3;
@@ -223,7 +228,52 @@ public class HomePanel {
         JPanel quizProgressListPanel = new JPanel();
         quizProgressListPanel.setLayout(new BoxLayout(quizProgressListPanel, BoxLayout.Y_AXIS));
         quizProgressListPanel.setOpaque(false);
-        // Quiz progress items will be added here later
+
+        // Add statistics panels
+        JPanel statsPanel = new JPanel(new GridLayout(2, 1, 0, 10));
+        statsPanel.setOpaque(false);
+
+        // Initialize the counter panels if they haven't been created yet
+        if (totalQuizTakenPanel == null) {
+            totalQuizTakenPanel = new TaskCounterPanel(0, "Total Quiz Taken");
+        }
+        if (totalQuizRetakedPanel == null) {
+            totalQuizRetakedPanel = new TaskCounterPanel(0, "Total Quiz Retaked");
+        }
+
+        // Add the counter panels
+        statsPanel.add(totalQuizTakenPanel.createPanel());
+        statsPanel.add(totalQuizRetakedPanel.createPanel());
+
+        // Initial statistics update
+        try {
+            String countQuery = """
+                SELECT 
+                    COUNT(*) as total_taken,
+                    SUM(CASE 
+                        WHEN EXISTS (
+                            SELECT 1 FROM quiz_attempts qa2 
+                            WHERE qa2.user_id = qa1.user_id 
+                            AND qa2.set_id = qa1.set_id 
+                            AND qa2.completion_date < qa1.completion_date
+                        ) THEN 1 
+                        ELSE 0 
+                    END) as total_retaken
+                FROM quiz_attempts qa1 
+                WHERE user_id = ?
+            """;
+            
+            ResultSet rs = DatabaseManager.executeQuery(countQuery, UserSession.getUserId());
+            if (rs.next()) {
+                totalQuizTakenPanel.updateCount(rs.getInt("total_taken"));
+                totalQuizRetakedPanel.updateCount(rs.getInt("total_retaken"));
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            Toast.error("Error fetching quiz statistics: " + ex.getMessage());
+        }
+
+        quizProgressListPanel.add(statsPanel);
 
         recentQuizPanel.add(headerPanel, BorderLayout.NORTH);
         recentQuizPanel.add(quizProgressListPanel, BorderLayout.CENTER);
@@ -285,8 +335,8 @@ public class HomePanel {
         rightPanel.setOpaque(false);
         rightPanel.add(refreshButton);
 
-        headerPanel.add(rightPanel, BorderLayout.WEST);
-        // headerPanel.add(, BorderLayout.EAST);
+        headerPanel.add(remainingTaskLabel, BorderLayout.WEST);
+        headerPanel.add(rightPanel, BorderLayout.EAST);
 
         // Tasks wrapper panel
         tasksWrapper = new JPanel();
@@ -568,5 +618,12 @@ public class HomePanel {
         }
     }
 
+    // Add getter methods for the counter panels
+    public static TaskCounterPanel getTotalQuizTakenPanel() {
+        return totalQuizTakenPanel;
+    }
 
+    public static TaskCounterPanel getTotalQuizRetakedPanel() {
+        return totalQuizRetakedPanel;
+    }
 }

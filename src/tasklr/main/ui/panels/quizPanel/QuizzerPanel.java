@@ -16,6 +16,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.Enumeration;
+import tasklr.main.ui.components.TaskCounterPanel;
+import tasklr.main.ui.panels.Home.HomePanel;
+import tasklr.utilities.Toast;
 
 public class QuizzerPanel {
     private static final String url = "jdbc:mysql://localhost:3306/tasklrdb";
@@ -42,6 +45,26 @@ public class QuizzerPanel {
     private static final Color PRIMARY_BUTTON_HOVER = new Color(0x3B6FF0);
     private static final Color PRIMARY_BUTTON_TEXT = Color.WHITE;
     
+    // Add references to HomePanel's counter panels
+    private static TaskCounterPanel totalQuizTakenPanel;
+    private static TaskCounterPanel totalQuizRetakedPanel;
+
+    // Add setter methods to establish connection with HomePanel's counters
+    public static void setCounterPanels(TaskCounterPanel quizTakenPanel, TaskCounterPanel quizRetakedPanel) {
+        totalQuizTakenPanel = quizTakenPanel;
+        totalQuizRetakedPanel = quizRetakedPanel;
+    }
+
+    // Add this method to initialize the connection
+    public static void initializeHomePanel() {
+        if (HomePanel.getTotalQuizTakenPanel() != null && HomePanel.getTotalQuizRetakedPanel() != null) {
+            setCounterPanels(
+                HomePanel.getTotalQuizTakenPanel(),
+                HomePanel.getTotalQuizRetakedPanel()
+            );
+        }
+    }
+
     public static JPanel createQuizzerPanel() {
         // Use full size for the main panel
         mainPanel = createPanel.panel(BACKGROUND_COLOR, new BorderLayout(), null);
@@ -346,6 +369,58 @@ public class QuizzerPanel {
         return flashcards;
     }
 
+    // Helper method to create consistent question panels for both quiz types
+    private static JPanel createStandardQuestionPanel(int questionNumber, String definition, int width) {
+        JPanel questionPanel = new JPanel();
+        questionPanel.setLayout(new BoxLayout(questionPanel, BoxLayout.Y_AXIS));
+        questionPanel.setBackground(BACKGROUND_COLOR);
+        questionPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+        
+        // Question container for proper alignment
+        JPanel questionContainer = new JPanel(new BorderLayout(10, 0));
+        questionContainer.setBackground(BACKGROUND_COLOR);
+        questionContainer.setMaximumSize(new Dimension(width - 30, Integer.MAX_VALUE));
+        
+        // Question number
+        JLabel numberLabel = new JLabel(questionNumber + ".");
+        numberLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 14));
+        numberLabel.setVerticalAlignment(SwingConstants.TOP);
+        
+        // Definition with dynamic wrapping
+        JTextArea definitionLabel = new JTextArea(definition);
+        definitionLabel.setFont(new Font("Segoe UI Variable", Font.PLAIN, 14));
+        definitionLabel.setBackground(BACKGROUND_COLOR);
+        definitionLabel.setEditable(false);
+        definitionLabel.setWrapStyleWord(true);
+        definitionLabel.setLineWrap(true);
+        definitionLabel.setBorder(null);
+        
+        // Calculate preferred height based on text content
+        FontMetrics fm = definitionLabel.getFontMetrics(definitionLabel.getFont());
+        int textWidth = width - 80;
+        int lineHeight = fm.getHeight();
+        int textLength = fm.stringWidth(definition);
+        int lines = (textLength / textWidth) + 1;
+        int definitionHeight = Math.max(50, lines * lineHeight);
+        
+        definitionLabel.setPreferredSize(new Dimension(textWidth, definitionHeight));
+        
+        questionContainer.add(numberLabel, BorderLayout.WEST);
+        questionContainer.add(definitionLabel, BorderLayout.CENTER);
+        
+        questionPanel.add(questionContainer);
+        questionPanel.add(Box.createRigidArea(new Dimension(0, 15))); // Increased spacing after question
+        
+        // Calculate total height based on content
+        int contentHeight = definitionHeight + 30; // Basic height for question
+        
+        // Set panel sizes - remove fixed maximum height to allow content to expand
+        questionPanel.setPreferredSize(new Dimension(width, contentHeight));
+        // Remove setMaximumSize to allow panel to grow based on content
+        
+        return questionPanel;
+    }
+
     private static JPanel createIdentificationQuizPanel(List<FlashCard> flashcards, String subject, int setId) {
         // Randomize flashcards
         Collections.shuffle(flashcards);
@@ -361,6 +436,7 @@ public class QuizzerPanel {
         JLabel titleLabel = new JLabel(subject + " - Identification Quiz");
         titleLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 24));
         headerPanel.add(titleLabel, BorderLayout.NORTH);
+        headerPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
         // Questions container
         JPanel questionsPanel = new JPanel();
@@ -377,31 +453,60 @@ public class QuizzerPanel {
         List<JTextField> answerFields = new ArrayList<>();
         List<FlashCard> questionOrder = new ArrayList<>(flashcards);
 
-        // Create question panels
+        // Create individual question panels
         for (int i = 0; i < flashcards.size(); i++) {
             FlashCard card = flashcards.get(i);
             
-            JPanel questionPanel = new JPanel();
-            questionPanel.setLayout(new BoxLayout(questionPanel, BoxLayout.Y_AXIS));
+            // Create question panel with GridBagLayout
+            JPanel questionPanel = new JPanel(new GridBagLayout());
             questionPanel.setBackground(BACKGROUND_COLOR);
-            questionPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 20, 0));
+            questionPanel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(0xE0E0E0)),
+                BorderFactory.createEmptyBorder(15, 15, 15, 15)
+            ));
             
-            JLabel questionLabel = new JLabel((i + 1) + ". " + card.definition);
+            GridBagConstraints gbc = new GridBagConstraints();
+            gbc.fill = GridBagConstraints.HORIZONTAL;
+            gbc.insets = new Insets(5, 5, 5, 5);
+            
+            // Question label (row 1)
+            JTextArea questionLabel = new JTextArea((i + 1) + ". " + card.definition);
             questionLabel.setFont(new Font("Segoe UI Variable", Font.PLAIN, 14));
-            questionLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+            questionLabel.setBackground(BACKGROUND_COLOR);
+            questionLabel.setEditable(false);
+            questionLabel.setWrapStyleWord(true);
+            questionLabel.setLineWrap(true);
+            questionLabel.setBorder(null);
             
+            gbc.gridx = 0;
+            gbc.gridy = 0;
+            gbc.weightx = 1.0;
+            gbc.anchor = GridBagConstraints.WEST;
+            questionPanel.add(questionLabel, gbc);
+            
+            // Answer field (row 2)
             JTextField answerField = new JTextField();
-            answerField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 35));
             answerField.setFont(new Font("Segoe UI Variable", Font.PLAIN, 14));
+            answerField.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(0xE0E0E0)),
+                BorderFactory.createEmptyBorder(5, 10, 5, 10)
+            ));
+            answerField.setPreferredSize(new Dimension(0, 35));
             answerFields.add(answerField);
             
-            questionPanel.add(questionLabel);
-            questionPanel.add(Box.createRigidArea(new Dimension(0, 10)));
-            questionPanel.add(answerField);
+            gbc.gridy = 1;
+            gbc.insets = new Insets(10, 5, 5, 5); // Extra top padding for the answer field
+            questionPanel.add(answerField, gbc);
             
+            // Add question panel to questions container
             questionsPanel.add(questionPanel);
+            questionsPanel.add(Box.createRigidArea(new Dimension(0, 15)));
         }
 
+        // Button panel
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        buttonPanel.setBackground(BACKGROUND_COLOR);
+        
         // Submit button
         JButton submitButton = new JButton("Submit Quiz");
         submitButton.setFont(new Font("Segoe UI Variable", Font.BOLD, 14));
@@ -435,14 +540,10 @@ public class QuizzerPanel {
         closeButton.setForeground(Color.WHITE);
         closeButton.setFocusPainted(false);
         closeButton.addActionListener(e -> {
-            // Show empty state and remove the quiz panel
             cardLayout.show(quizViewPanel, "EMPTY_STATE");
             quizViewPanel.remove(mainPanel);
         });
 
-        // Button panel
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        buttonPanel.setBackground(BACKGROUND_COLOR);
         buttonPanel.add(submitButton);
         buttonPanel.add(closeButton);
 
@@ -569,15 +670,17 @@ public class QuizzerPanel {
         // Header
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setBackground(BACKGROUND_COLOR);
+        headerPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         JLabel titleLabel = new JLabel(subject + " - Multiple Choice Quiz");
         titleLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 24));
         headerPanel.add(titleLabel, BorderLayout.NORTH);
 
-        // Questions container
+        // Questions container with vertical BoxLayout
         JPanel questionsPanel = new JPanel();
         questionsPanel.setLayout(new BoxLayout(questionsPanel, BoxLayout.Y_AXIS));
         questionsPanel.setBackground(BACKGROUND_COLOR);
 
+        // Scrollable container
         JScrollPane scrollPane = new JScrollPane(questionsPanel);
         scrollPane.setBorder(null);
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
@@ -587,51 +690,67 @@ public class QuizzerPanel {
         List<ButtonGroup> answerGroups = new ArrayList<>();
         List<FlashCard> questionOrder = new ArrayList<>(flashcards);
 
-        // Create question panels
+        // Create individual question panels
         for (int i = 0; i < flashcards.size(); i++) {
             FlashCard currentCard = flashcards.get(i);
             
-            JPanel questionPanel = new JPanel();
-            questionPanel.setLayout(new BoxLayout(questionPanel, BoxLayout.Y_AXIS));
+            // Create question panel with GridBagLayout
+            JPanel questionPanel = new JPanel(new GridBagLayout());
             questionPanel.setBackground(BACKGROUND_COLOR);
-            questionPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 20, 0));
+            questionPanel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(0xE0E0E0)),
+                BorderFactory.createEmptyBorder(15, 15, 15, 15)
+            ));
             
-            // Question label
-            JLabel questionLabel = new JLabel((i + 1) + ". " + currentCard.definition);
+            GridBagConstraints gbc = new GridBagConstraints();
+            gbc.fill = GridBagConstraints.HORIZONTAL;
+            gbc.insets = new Insets(5, 5, 5, 5);
+            
+            // Question label (row 1, spans both columns)
+            JTextArea questionLabel = new JTextArea((i + 1) + ". " + currentCard.definition);
             questionLabel.setFont(new Font("Segoe UI Variable", Font.PLAIN, 14));
-            questionLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+            questionLabel.setBackground(BACKGROUND_COLOR);
+            questionLabel.setEditable(false);
+            questionLabel.setWrapStyleWord(true);
+            questionLabel.setLineWrap(true);
+            questionLabel.setBorder(null);
             
-            // Create choices
-            ButtonGroup choiceGroup = new ButtonGroup();
-            JPanel choicesPanel = new JPanel();
-            choicesPanel.setLayout(new BoxLayout(choicesPanel, BoxLayout.Y_AXIS));
-            choicesPanel.setBackground(BACKGROUND_COLOR);
-            choicesPanel.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+            gbc.gridx = 0;
+            gbc.gridy = 0;
+            gbc.gridwidth = 2;
+            gbc.weightx = 1.0;
+            gbc.anchor = GridBagConstraints.WEST;
+            questionPanel.add(questionLabel, gbc);
             
             // Generate choices
-            List<String> choices = generateChoices(flashcards, currentCard, 
-                Math.min(4, flashcards.size())); // Maximum 4 choices
+            List<String> choices = generateChoices(flashcards, currentCard, 4);
+            ButtonGroup choiceGroup = new ButtonGroup();
             
-            for (String choice : choices) {
-                JRadioButton radioBtn = new JRadioButton(choice);
+            // Add radio buttons in 2x2 grid
+            for (int j = 0; j < choices.size(); j++) {
+                JRadioButton radioBtn = new JRadioButton(choices.get(j));
                 radioBtn.setFont(new Font("Segoe UI Variable", Font.PLAIN, 14));
                 radioBtn.setBackground(BACKGROUND_COLOR);
                 choiceGroup.add(radioBtn);
                 
-                // Create a panel for each choice for better alignment
-                JPanel choiceItemPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-                choiceItemPanel.setBackground(BACKGROUND_COLOR);
-                choiceItemPanel.add(radioBtn);
-                choicesPanel.add(choiceItemPanel);
+                gbc.gridx = j % 2;
+                gbc.gridy = (j / 2) + 1;
+                gbc.gridwidth = 1;
+                gbc.weightx = 0.5;
+                questionPanel.add(radioBtn, gbc);
             }
             
             answerGroups.add(choiceGroup);
             
-            questionPanel.add(questionLabel);
-            questionPanel.add(choicesPanel);
+            // Add question panel to questions container
             questionsPanel.add(questionPanel);
+            questionsPanel.add(Box.createRigidArea(new Dimension(0, 15)));
         }
 
+        // Button panel
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        buttonPanel.setBackground(BACKGROUND_COLOR);
+        
         // Submit button
         JButton submitButton = new JButton("Submit Quiz");
         submitButton.setFont(new Font("Segoe UI Variable", Font.BOLD, 14));
@@ -653,7 +772,7 @@ public class QuizzerPanel {
                 }
             }
             
-            // Show results
+            // Collect user answers
             List<String> userAnswers = new ArrayList<>();
             for (ButtonGroup group : answerGroups) {
                 String selectedAnswer = "";
@@ -666,6 +785,7 @@ public class QuizzerPanel {
                 }
                 userAnswers.add(selectedAnswer);
             }
+            
             showQuizResults(score.get(), flashcards.size(), mainPanel, 
                 flashcards, subject, "Multiple Choice", setId, userAnswers);
         });
@@ -677,17 +797,14 @@ public class QuizzerPanel {
         closeButton.setForeground(Color.WHITE);
         closeButton.setFocusPainted(false);
         closeButton.addActionListener(e -> {
-            // Show empty state and remove the quiz panel
             cardLayout.show(quizViewPanel, "EMPTY_STATE");
             quizViewPanel.remove(mainPanel);
         });
 
-        // Button panel
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        buttonPanel.setBackground(BACKGROUND_COLOR);
         buttonPanel.add(submitButton);
         buttonPanel.add(closeButton);
 
+        // Add all components to main panel
         mainPanel.add(headerPanel, BorderLayout.NORTH);
         mainPanel.add(scrollPane, BorderLayout.CENTER);
         mainPanel.add(buttonPanel, BorderLayout.SOUTH);
@@ -813,6 +930,8 @@ public class QuizzerPanel {
                     } else {
                         startMultipleChoiceQuiz(setId, subject);
                     }
+                    // Update statistics in HomePanel
+                    updateHomeStatistics();
                 });
 
                 // Close button
@@ -849,6 +968,38 @@ public class QuizzerPanel {
     // Add cleanup method to be called when the panel is being disposed
     public static void cleanup() {
         stopAutoRefresh();
+    }
+
+    // Add this method to update the counters in HomePanel
+    private static void updateHomeStatistics() {
+        if (totalQuizTakenPanel != null && totalQuizRetakedPanel != null) {
+            try {
+                String countQuery = """
+                    SELECT 
+                        COUNT(*) as total_taken,
+                        SUM(CASE 
+                            WHEN EXISTS (
+                                SELECT 1 FROM quiz_attempts qa2 
+                                WHERE qa2.user_id = qa1.user_id 
+                                AND qa2.set_id = qa1.set_id 
+                                AND qa2.completion_date < qa1.completion_date
+                            ) THEN 1 
+                            ELSE 0 
+                        END) as total_retaken
+                    FROM quiz_attempts qa1 
+                    WHERE user_id = ?
+                """;
+                
+                ResultSet rs = DatabaseManager.executeQuery(countQuery, UserSession.getUserId());
+                if (rs.next()) {
+                    totalQuizTakenPanel.updateCount(rs.getInt("total_taken"));
+                    totalQuizRetakedPanel.updateCount(rs.getInt("total_retaken"));
+                }
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                Toast.error("Error updating quiz statistics: " + ex.getMessage());
+            }
+        }
     }
 }
         
