@@ -29,7 +29,9 @@ public class Tasklr extends JFrame {
         getContentPane().setBackground(new Color(0xFFFFFF));
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         
-        ImageIcon appIcon = new ImageIcon("C:/Users/ADMIN/Desktop/Tasklr/resource/icons/AppLogo.png");
+        ImageIcon originalIcon = new ImageIcon("C:/Users/ADMIN/Desktop/Tasklr/resource/icons/AppLogo.png");
+        Image scaledImage = originalIcon.getImage().getScaledInstance(32, 32, Image.SCALE_SMOOTH); // Increased from default to 32x32
+        ImageIcon appIcon = new ImageIcon(scaledImage);
         setIconImage(appIcon.getImage());
         
         // Initialize body panel with CardLayout

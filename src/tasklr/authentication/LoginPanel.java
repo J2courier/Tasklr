@@ -23,7 +23,6 @@ public class LoginPanel {
     private final JTextField usernameField;
     private final JPasswordField passwordField;
     private final JButton loginButton;
-    private final JButton signupButton;
     private final JCheckBox showPasswordCheckBox; // Add this field
     
     public LoginPanel() {
@@ -31,7 +30,6 @@ public class LoginPanel {
         usernameField = createTextField();
         passwordField = createPasswordField();
         loginButton = createButton("Login");
-        signupButton = createButton("Sign Up");
         showPasswordCheckBox = createShowPasswordCheckBox(); // Initialize checkbox
         
         setupLayout();
@@ -124,12 +122,15 @@ public class LoginPanel {
     }
 
     private void addLogo(GridBagConstraints gbc) {
-        ImageIcon compLogo = new ImageIcon(LOGO_PATH);
-        JLabel logoLabel = new JLabel(compLogo);
+        ImageIcon logo = new ImageIcon(LOGO_PATH);
+        JLabel logoLabel = new JLabel(logo);
+        
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridwidth = 2;
+        gbc.insets = new Insets(20, 10, 40, 10); // Add padding around the logo
         loginPanel.add(logoLabel, gbc);
+        gbc.insets = new Insets(5, 10, 10, 10); // Reset insets for other components
     }
 
     private void addUsernameComponents(GridBagConstraints gbc) {
@@ -165,14 +166,47 @@ public class LoginPanel {
         gbc.gridy = 6; // Increment gridy by 1 for login button
         loginPanel.add(loginButton, gbc);
 
-        gbc.gridy = 7; // Increment gridy by 1 for signup button
-        loginPanel.add(signupButton, gbc);
+        // Add signup label
+        JLabel signupLabel = createSignupLabel();
+        gbc.gridy = 7;
+        gbc.fill = GridBagConstraints.NONE; // Don't stretch the label
+        gbc.anchor = GridBagConstraints.CENTER; // Center the label
+        loginPanel.add(signupLabel, gbc);
     }
 
     private JLabel createLabel(String text) {
         JLabel label = new JLabel(text);
         label.setForeground(Color.BLACK);
         return label;
+    }
+
+    private JLabel createSignupLabel() {
+        JLabel signupLabel = new JLabel("New user sign up here!");
+        signupLabel.setForeground(new Color(0x275CE2)); // Blue color
+        signupLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        
+        signupLabel.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                Window window = SwingUtilities.getWindowAncestor(loginPanel);
+                if (window != null) {
+                    window.dispose();
+                    new Signup().setVisible(true);
+                }
+            }
+            
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                signupLabel.setText("<html><u>New user sign up here!</u></html>");
+            }
+            
+            @Override
+            public void mouseExited(MouseEvent e) {
+                signupLabel.setText("New user sign up here!");
+            }
+        });
+        
+        return signupLabel;
     }
 
     private void setupKeyListeners() {
@@ -209,10 +243,6 @@ public class LoginPanel {
         loginButton.addActionListener(listener);
     }
 
-    public void addSignupListener(ActionListener listener) {
-        signupButton.addActionListener(listener);
-    }
-
     // Add this method to create the checkbox
     private JCheckBox createShowPasswordCheckBox() {
         JCheckBox checkBox = new JCheckBox("Show Password");
@@ -227,5 +257,44 @@ public class LoginPanel {
             }
         });
         return checkBox;
+    }
+
+    public boolean validateFields() {
+        String username = usernameField.getText().trim();
+        String password = new String(passwordField.getPassword()).trim();
+        
+        if (username.isEmpty() && password.isEmpty()) {
+            JOptionPane.showMessageDialog(
+                loginPanel,
+                "Please fill in both username and password fields!",
+                "Empty Fields",
+                JOptionPane.WARNING_MESSAGE
+            );
+            return false;
+        }
+        
+        if (username.isEmpty()) {
+            JOptionPane.showMessageDialog(
+                loginPanel,
+                "Please enter your username!",
+                "Username Required",
+                JOptionPane.WARNING_MESSAGE
+            );
+            usernameField.requestFocus();
+            return false;
+        }
+        
+        if (password.isEmpty()) {
+            JOptionPane.showMessageDialog(
+                loginPanel,
+                "Please enter your password!",
+                "Password Required",
+                JOptionPane.WARNING_MESSAGE
+            );
+            passwordField.requestFocus();
+            return false;
+        }
+        
+        return true;
     }
 }

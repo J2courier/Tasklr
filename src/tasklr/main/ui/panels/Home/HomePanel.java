@@ -116,6 +116,36 @@ public class HomePanel {
             statsPanel.add(card);
         }
 
+        // Load initial quiz statistics
+        try {
+            String countQuery = """
+                SELECT 
+                    COUNT(*) as total_taken,
+                    SUM(CASE 
+                        WHEN EXISTS (
+                            SELECT 1 FROM quiz_attempts qa2 
+                            WHERE qa2.user_id = qa1.user_id 
+                            AND qa2.set_id = qa1.set_id 
+                            AND qa2.completion_date < qa1.completion_date
+                        ) THEN 1 
+                        ELSE 0 
+                    END) as total_retaken,
+                    (SELECT COUNT(*) FROM flashcard_sets WHERE user_id = ?) as total_sets
+                FROM quiz_attempts qa1 
+                WHERE user_id = ?
+            """;
+            
+            ResultSet rs = DatabaseManager.executeQuery(countQuery, UserSession.getUserId(), UserSession.getUserId());
+            if (rs.next()) {
+                totalQuizTakenPanel.updateCount(rs.getInt("total_taken"));
+                totalQuizRetakedPanel.updateCount(rs.getInt("total_retaken"));
+                totalFlashcardSetsPanel.updateCount(rs.getInt("total_sets"));
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            Toast.error("Error fetching quiz statistics: " + ex.getMessage());
+        }
+
         return statsPanel;
     }
 

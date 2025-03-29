@@ -9,10 +9,10 @@ import tasklr.main.ui.frames.Tasklr;
 import tasklr.utilities.DatabaseManager;
 
 public class Login extends JFrame {
-    private static final int WINDOW_WIDTH = 700;
-    private static final int WINDOW_HEIGHT = 920;
+    private static final int WINDOW_WIDTH = 900;
+    private static final int WINDOW_HEIGHT = 760;
     private static final int MIN_WIDTH = 900;
-    private static final int MIN_HEIGHT = 1000;
+    private static final int MIN_HEIGHT = 700;
     private static final Color BACKGROUND_COLOR = new Color(0xf1f3f6);
     private static final String APP_ICON_PATH = "C:/Users/ADMIN/Desktop/Tasklr/resource/icons/AppLogo.png";
     
@@ -33,7 +33,9 @@ public class Login extends JFrame {
         setMinimumSize(new Dimension(MIN_WIDTH, MIN_HEIGHT));
         getContentPane().setBackground(BACKGROUND_COLOR);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
-        setIconImage(new ImageIcon(APP_ICON_PATH).getImage());
+        ImageIcon originalIcon = new ImageIcon(APP_ICON_PATH);
+        Image scaledImage = originalIcon.getImage().getScaledInstance(32, 32, Image.SCALE_SMOOTH);
+        setIconImage(scaledImage);
     }
 
     private JPanel createCenterContainer() {
@@ -45,12 +47,15 @@ public class Login extends JFrame {
     private void initializeLoginPanel() {
         LoginPanel loginPanel = new LoginPanel();
         setupLoginListener(loginPanel);
-        setupSignupListener(loginPanel);
         addLoginPanelToFrame(loginPanel);
     }
 
     private void setupLoginListener(LoginPanel loginPanel) {
         loginPanel.addLoginListener(e -> {
+            if (!loginPanel.validateFields()) {
+                return;
+            }
+            
             String username = loginPanel.getUsername();
             String password = loginPanel.getPassword();
             String hashedPassword = hashPassword(password);
@@ -61,13 +66,6 @@ public class Login extends JFrame {
             } else {
                 JOptionPane.showMessageDialog(this, "Invalid username or password!");
             }
-        });
-    }
-
-    private void setupSignupListener(LoginPanel loginPanel) {
-        loginPanel.addSignupListener(e -> {
-            new Signup().setVisible(true);
-            dispose();
         });
     }
 

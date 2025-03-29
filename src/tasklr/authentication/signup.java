@@ -14,10 +14,10 @@ import tasklr.main.ui.frames.Tasklr;
 import tasklr.utilities.DatabaseManager;
 
 public class Signup extends JFrame {
-    private static final int WINDOW_WIDTH = 1200;
-    private static final int WINDOW_HEIGHT = 920;
-    private static final int MIN_WIDTH = 900;
-    private static final int MIN_HEIGHT = 1000;
+    private static final int WINDOW_WIDTH = 900;
+    private static final int WINDOW_HEIGHT = 760;
+    private static final int MIN_WIDTH = 800;
+    private static final int MIN_HEIGHT = 700;
     private static final int PANEL_SIZE = 700;
     private static final int FIELD_WIDTH = 500;
     private static final int FIELD_HEIGHT = 40;
@@ -27,6 +27,7 @@ public class Signup extends JFrame {
     private static final Color BUTTON_PRESSED_COLOR = new Color(0x2563EB); // Pressed color
     private static final Color TEXT_COLOR = Color.WHITE;
     private static final String APP_ICON_PATH = "C:/Users/ADMIN/Desktop/Tasklr/resource/icons/AppLogo.png";
+    private static final String LOGO_PATH = "C://Users//ADMIN//Desktop//Tasklr//resource//icons//logo1.png";
 
     private final JTextField createUsernameField;
     private final JPasswordField createPasswordField;
@@ -57,7 +58,9 @@ public class Signup extends JFrame {
         setMinimumSize(new Dimension(MIN_WIDTH, MIN_HEIGHT));
         getContentPane().setBackground(BACKGROUND_COLOR);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
-        setIconImage(new ImageIcon(APP_ICON_PATH).getImage());
+        ImageIcon originalIcon = new ImageIcon(APP_ICON_PATH);
+        Image scaledImage = originalIcon.getImage().getScaledInstance(32, 32, Image.SCALE_SMOOTH);
+        setIconImage(scaledImage);
     }
 
     private JPanel createSignupPanel() {
@@ -138,18 +141,30 @@ public class Signup extends JFrame {
     private void setupComponents() {
         GridBagConstraints gbc = createGridBagConstraints();
 
+        // Add company logo
+        ImageIcon logo = new ImageIcon(LOGO_PATH);
+        JLabel logoLabel = new JLabel(logo);
+        
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.insets = new Insets(20, 10, 40, 10); // Add padding around the logo
+        signupPanel.add(logoLabel, gbc);
+        
+        // Reset insets for other components
+        gbc.insets = new Insets(5, 10, 10, 10);
+
         // Username components
-        addLabelAndField(gbc, "Create Username", createUsernameField, 0);
+        addLabelAndField(gbc, "Create Username", createUsernameField, 1);
 
         // Password components
-        addLabelAndField(gbc, "Create Password", createPasswordField, 2);
+        addLabelAndField(gbc, "Create Password", createPasswordField, 3);
         
         // Confirm password components
-        gbc.gridy = 4;
-        addLabelAndField(gbc, "Confirm Password", confirmPasswordField, 4);
+        gbc.gridy = 5;
+        addLabelAndField(gbc, "Confirm Password", confirmPasswordField, 5);
         
         // Add single show password checkbox
-        gbc.gridy = 6;
+        gbc.gridy = 7;
         gbc.fill = GridBagConstraints.NONE;
         gbc.anchor = GridBagConstraints.WEST;
         signupPanel.add(showPasswordCheckBox, gbc);
@@ -159,7 +174,7 @@ public class Signup extends JFrame {
         gbc.anchor = GridBagConstraints.CENTER;
 
         // Signup button
-        gbc.gridy = 7;
+        gbc.gridy = 8;
         signupPanel.add(signupButton, gbc);
 
         // Login section
@@ -190,18 +205,34 @@ public class Signup extends JFrame {
     private void setupLoginSection(GridBagConstraints gbc) {
         JLabel loginLabel = new JLabel("Already have an account?");
         loginLabel.setForeground(new Color(0x275CE2));
-        gbc.gridy = 9;
-        gbc.gridwidth = 1;
-        signupPanel.add(loginLabel, gbc);
-
-        JButton loginButton = createButton("Login");  // Using the new createButton method
-        gbc.gridx = 1;
-        signupPanel.add(loginButton, gbc);
-
-        loginButton.addActionListener(e -> {
-            new Login().setVisible(true);
-            dispose();
+        loginLabel.setCursor(new Cursor(Cursor.HAND_CURSOR)); // Changes cursor to hand when hovering
+        
+        // Add mouse listener to handle click events
+        loginLabel.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                new Login().setVisible(true);
+                dispose();
+            }
+            
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                // Optional: Add underline when hovering
+                loginLabel.setText("<html><u>Already have an account?</u></html>");
+            }
+            
+            @Override
+            public void mouseExited(MouseEvent e) {
+                // Remove underline when not hovering
+                loginLabel.setText("Already have an account?");
+            }
         });
+
+        gbc.gridy = 10;
+        gbc.gridwidth = 2; // Make it span both columns
+        gbc.fill = GridBagConstraints.NONE; // Don't stretch the label
+        gbc.anchor = GridBagConstraints.CENTER; // Center the label
+        signupPanel.add(loginLabel, gbc);
     }
 
     private void addPanelToFrame() {
@@ -236,20 +267,81 @@ public class Signup extends JFrame {
         signupButton.addActionListener(e -> handleSignup());
     }
 
-    private void handleSignup() {
-        String username = createUsernameField.getText();
-        String password = createPasswordField.getText();
-        String confirmPassword = new String(confirmPasswordField.getPassword());
+    private boolean validateFields() {
+        String username = createUsernameField.getText().trim();
+        String password = new String(createPasswordField.getPassword()).trim();
+        String confirmPass = new String(confirmPasswordField.getPassword()).trim();
+        
+        if (username.isEmpty() && password.isEmpty() && confirmPass.isEmpty()) {
+            JOptionPane.showMessageDialog(
+                this,
+                "Please fill in all required fields!",
+                "Empty Fields",
+                JOptionPane.WARNING_MESSAGE
+            );
+            return false;
+        }
+        
+        if (username.isEmpty()) {
+            JOptionPane.showMessageDialog(
+                this,
+                "Please create a username!",
+                "Username Required",
+                JOptionPane.WARNING_MESSAGE
+            );
+            createUsernameField.requestFocus();
+            return false;
+        }
+        
+        if (password.isEmpty()) {
+            JOptionPane.showMessageDialog(
+                this,
+                "Please create a password!",
+                "Password Required",
+                JOptionPane.WARNING_MESSAGE
+            );
+            createPasswordField.requestFocus();
+            return false;
+        }
+        
+        if (confirmPass.isEmpty()) {
+            JOptionPane.showMessageDialog(
+                this,
+                "Please confirm your password!",
+                "Confirmation Required",
+                JOptionPane.WARNING_MESSAGE
+            );
+            confirmPasswordField.requestFocus();
+            return false;
+        }
+        
+        if (!password.equals(confirmPass)) {
+            JOptionPane.showMessageDialog(
+                this,
+                "Passwords do not match!",
+                "Password Mismatch",
+                JOptionPane.WARNING_MESSAGE
+            );
+            confirmPasswordField.requestFocus();
+            return false;
+        }
+        
+        return true;
+    }
 
-        if (password.equals(confirmPassword)) {
-            String hashedPassword = hashPassword(password);
-            if (insertUser(username, hashedPassword)) {
-                clearFields();
-                new Tasklr(username).setVisible(true);
-                dispose();
-            }
-        } else {
-            JOptionPane.showMessageDialog(this, "Passwords do not match!");
+    private void handleSignup() {
+        if (!validateFields()) {
+            return;
+        }
+
+        String username = createUsernameField.getText().trim();
+        String password = new String(createPasswordField.getPassword()).trim();
+        
+        String hashedPassword = hashPassword(password);
+        if (insertUser(username, hashedPassword)) {
+            clearFields();
+            new Tasklr(username).setVisible(true);
+            dispose();
         }
     }
 
