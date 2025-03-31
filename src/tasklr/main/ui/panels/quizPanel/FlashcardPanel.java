@@ -263,7 +263,7 @@ public class FlashcardPanel {
         
         quizContainer = createPanel.panel(LIST_CONTAINER_COLOR, null, null);
         quizContainer.setLayout(new BoxLayout(quizContainer, BoxLayout.Y_AXIS));
-        quizContainer.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        quizContainer.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         
         refreshListContainer();
         
@@ -298,7 +298,7 @@ public class FlashcardPanel {
                     
                     JPanel setPanel = createSetItemPanel(setId, subject, description);
                     quizContainer.add(setPanel);
-                    quizContainer.add(Box.createVerticalStrut(10));
+                    quizContainer.add(Box.createVerticalStrut(2));
                 }
             }
         } catch (SQLException ex) {
@@ -513,7 +513,7 @@ public class FlashcardPanel {
         
         // Inner panel for consistent padding
         JPanel contentPanel = createPanel.panel(LIST_ITEM_COLOR, new BorderLayout(), new Dimension(0, 70));
-        contentPanel.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
+        contentPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         
         // Text panel for term and definition
         JPanel textPanel = createPanel.panel(LIST_ITEM_COLOR, new GridLayout(2, 1, 2, 2), null);

@@ -7,7 +7,6 @@ import java.awt.*;
 import tasklr.main.ui.panels.TaskPanel.TaskFetcher;
 import tasklr.main.ui.panels.TaskPanel.task;
 import tasklr.main.ui.panels.overveiw.overview;
-import tasklr.main.ui.panels.quizPanel.QuizzerPanel;
 import tasklr.main.ui.panels.quizPanel.StudyPanel;
 import tasklr.main.ui.panels.Home.HomePanel;
 import tasklr.utilities.createPanel;

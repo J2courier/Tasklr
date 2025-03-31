@@ -121,21 +121,11 @@ public class QuizzerPanel {
     private static JPanel createListContainer() {
         // Main container with fixed width
         JPanel mainPanel = createPanel.panel(LIST_CONTAINER_COLOR, new BorderLayout(), new Dimension(600, 0));
-        mainPanel.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 1, LIST_ITEM_HOVER_BORDER));
-
-        // Title Panel
-        JPanel titlePanel = createPanel.panel(LIST_CONTAINER_COLOR, new BorderLayout(), null);
-        titlePanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        
-        JLabel titleLabel = new JLabel("Available Flashcard Sets");
-        titleLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 18));
-        titleLabel.setForeground(TEXT_COLOR);
-        titlePanel.add(titleLabel, BorderLayout.CENTER);
-
+        // mainPanel.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 1, LIST_ITEM_HOVER_BORDER));
         // Configure quiz container
         quizContainer = createPanel.panel(LIST_CONTAINER_COLOR, null, null);
         quizContainer.setLayout(new BoxLayout(quizContainer, BoxLayout.Y_AXIS));
-        quizContainer.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        quizContainer.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
         // Create wrapper panel for proper scrolling
         JPanel wrapperPanel = createPanel.panel(LIST_CONTAINER_COLOR, new BorderLayout(), null);
@@ -149,7 +139,6 @@ public class QuizzerPanel {
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
         scrollPane.getViewport().setBackground(LIST_CONTAINER_COLOR);
 
-        mainPanel.add(titlePanel, BorderLayout.NORTH);
         mainPanel.add(scrollPane, BorderLayout.CENTER);
 
         // Initial refresh
