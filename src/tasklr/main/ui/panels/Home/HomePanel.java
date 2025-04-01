@@ -27,11 +27,15 @@ public class HomePanel {
     private static final Color TASK_PENDING_COLOR = new Color(0xF87171); // Red for pending tasks
     private static final Color DROP_COLOR = new Color(0xFB2C36);
     private static final Color COMPLETED_COLOR = new Color(0x59F070);
+    private static final int WELCOME_HEADER_HEIGHT = 100; // Adjust this value to your preferred height
     private static JPanel tasksContainer;
     private static JPanel tasksWrapper;
     private static JScrollPane taskListContainer;
     private static final int REFRESH_INTERVAL = 5000; // Changed from 5000 to 2000 milliseconds (2 seconds)
     private static UIRefreshManager refreshManager;
+    private static JPanel recentTasksWrapper;
+    private static JScrollPane recentTaskListContainer;
+    private static final int CONTAINER_WIDTH = 400; // Width for both containers
 
     private static TaskCounterPanel pendingTasksPanel;
     private static TaskCounterPanel completedTasksPanel;
@@ -65,13 +69,24 @@ public class HomePanel {
         // Add this after creating the flashcard statistics section
         QuizzerPanel.initializeHomePanel();
 
+        // Create a container panel for both task containers
+        JPanel taskContainersPanel = new JPanel(new GridLayout(1, 2, 20, 0));
+        taskContainersPanel.setBackground(BACKGROUND_COLOR);
+
         // Task Container Section
+        taskContainersPanel.add(createTaskContainer());
+        
+        // Recent Task Container Section
+        taskContainersPanel.add(createRecentTaskContainer());
+
+        // Add the containers panel
         gbc.gridy = 3;
         gbc.weighty = 1.0;
-        mainPanel.add(createTaskContainer(), gbc);
+        mainPanel.add(taskContainersPanel, gbc);
 
         // Initial fetch and display of tasks
         refreshTasksList();
+        refreshRecentTasksList();
 
         return mainPanel;
     }
@@ -168,39 +183,50 @@ public class HomePanel {
     }
 
     private static JPanel createHeaderSection(String username) {
-        JPanel headerPanel = createPanel.panel(PRIMARY_COLOR, new BorderLayout(20, 0), null);
-        headerPanel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
+        // Create panel with fixed height using Dimension
+        JPanel headerPanel = createPanel.panel(PRIMARY_COLOR, new BorderLayout(20, 0), 
+            new Dimension(0, WELCOME_HEADER_HEIGHT));
+        headerPanel.setBorder(BorderFactory.createEmptyBorder(20, 30, 20, 30));
 
         // Left side - Welcome message
-        JPanel welcomePanel = new JPanel(new GridLayout(2, 1, 0, 5));
+        // Changed from GridLayout to a more flexible BoxLayout
+        JPanel welcomePanel = new JPanel();
+        welcomePanel.setLayout(new BoxLayout(welcomePanel, BoxLayout.Y_AXIS));
         welcomePanel.setOpaque(false);
 
+        // Add vertical glue at the top for centering
+        welcomePanel.add(Box.createVerticalGlue());
+
+        // Date label
         JLabel dateLabel = new JLabel(LocalDate.now().format(DateTimeFormatter.ofPattern("EEEE, MMMM d")));
         dateLabel.setForeground(new Color(0xFFFFFF, true));
         dateLabel.setFont(new Font("Segoe UI Variable", Font.PLAIN, 14));
+        dateLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        welcomePanel.add(dateLabel);
 
+        // Add small gap between labels
+        welcomePanel.add(Box.createVerticalStrut(5));
+
+        // Welcome label
         JLabel welcomeLabel = new JLabel("WELCOME, " + username);
         welcomeLabel.setForeground(Color.WHITE);
-        welcomeLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 28));
-
-        welcomePanel.add(dateLabel);
+        welcomeLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 24));
+        welcomeLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         welcomePanel.add(welcomeLabel);
+
+        // Add vertical glue at the bottom for centering
+        welcomePanel.add(Box.createVerticalGlue());
 
         // Right side - Quick summary with notification icon
         JPanel summaryPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 0));
         summaryPanel.setOpaque(false);
 
-        // Add notification icon
+        // Add notification icon with adjusted size
         try {
             ImageIcon notifIcon = new ImageIcon("C://Users//ADMIN//Desktop//Tasklr//resource//icons//NotificationIcon.png");
-            Image scaledImage = notifIcon.getImage().getScaledInstance(24, 24, Image.SCALE_SMOOTH);
+            Image scaledImage = notifIcon.getImage().getScaledInstance(25, 25, Image.SCALE_SMOOTH); // Increased from 20x20 to 25x25
             JLabel notificationLabel = new JLabel(new ImageIcon(scaledImage));
             notificationLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
-            notificationLabel.addMouseListener(new java.awt.event.MouseAdapter() {
-                public void mouseEntered(java.awt.event.MouseEvent evt) {
-                    notificationLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
-                }
-            });
             summaryPanel.add(notificationLabel);
         } catch (Exception e) {
             System.err.println("Failed to load notification icon: " + e.getMessage());
@@ -323,7 +349,8 @@ public class HomePanel {
         
 
     private static JPanel createTaskContainer() {
-        JPanel taskContainer = createPanel.panel(BACKGROUND_COLOR, new BorderLayout(), new Dimension(500, 0));
+        JPanel taskContainer = createPanel.panel(BACKGROUND_COLOR, new BorderLayout(), new Dimension(CONTAINER_WIDTH, 0));
+        taskContainer.setBorder(BorderFactory.createLineBorder(BORDER_COLOR, 1));
         
         // Create header panel with "Remaining Task" label and refresh button
         JPanel headerPanel = createPanel.panel(CARD_COLOR, new BorderLayout(), new Dimension(0, 70));
@@ -405,14 +432,10 @@ public class HomePanel {
         tasksWrapper.removeAll();
         
         try {
-            // Modified query to order by status (pending first) and then due_date
+            // Modified query to only show pending tasks
             String query = "SELECT title, status, due_date FROM tasks " +
-                          "WHERE user_id = ? " +
-                          "ORDER BY CASE " +
-                              "WHEN status = 'pending' THEN 0 " +
-                              "WHEN status = 'completed' THEN 1 " +
-                              "ELSE 2 END, " +
-                          "due_date ASC";
+                          "WHERE user_id = ? AND status = 'pending' " +
+                          "ORDER BY due_date ASC";
                           
             ResultSet rs = DatabaseManager.executeQuery(query, UserSession.getUserId());
 
@@ -437,6 +460,9 @@ public class HomePanel {
 
             tasksWrapper.revalidate();
             tasksWrapper.repaint();
+            
+            // Refresh recent tasks list as well
+            refreshRecentTasksList();
             
         } catch (SQLException ex) {
             ex.printStackTrace();
@@ -656,4 +682,91 @@ public class HomePanel {
     public static TaskCounterPanel getTotalQuizRetakedPanel() {
         return totalQuizRetakedPanel;
     }
+
+    private static JPanel createRecentTaskContainer() {
+        JPanel recentTaskContainer = createPanel.panel(BACKGROUND_COLOR, new BorderLayout(), new Dimension(CONTAINER_WIDTH, 0));
+        recentTaskContainer.setBorder(BorderFactory.createLineBorder(BORDER_COLOR, 1));
+        // Create header panel
+        JPanel headerPanel = createPanel.panel(CARD_COLOR, new BorderLayout(), new Dimension(0, 70));
+        headerPanel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createMatteBorder(0, 0, 1, 0, BORDER_COLOR),
+            BorderFactory.createEmptyBorder(10, 20, 10, 20)
+        ));
+
+        JLabel completedTaskLabel = new JLabel("Completed Tasks");
+        completedTaskLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 16));
+        completedTaskLabel.setForeground(TEXT_DARK);
+        headerPanel.add(completedTaskLabel, BorderLayout.WEST);
+
+        // Initialize recentTasksWrapper
+        recentTasksWrapper = new JPanel();
+        recentTasksWrapper.setLayout(new BoxLayout(recentTasksWrapper, BoxLayout.Y_AXIS));
+        recentTasksWrapper.setBackground(BACKGROUND_COLOR);
+        recentTasksWrapper.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
+
+        // Create scroll pane
+        recentTaskListContainer = new JScrollPane(recentTasksWrapper);
+        recentTaskListContainer.setBorder(null);
+        recentTaskListContainer.setBackground(BACKGROUND_COLOR);
+        recentTaskListContainer.getVerticalScrollBar().setUnitIncrement(16);
+
+        // Initial load of completed tasks
+        refreshRecentTasksList();
+
+        // Add components to main container
+        recentTaskContainer.add(headerPanel, BorderLayout.NORTH);
+        recentTaskContainer.add(recentTaskListContainer, BorderLayout.CENTER);
+        
+        return recentTaskContainer;
+    }
+
+    public static void refreshRecentTasksList() {
+        if (recentTasksWrapper == null) return;
+        
+        recentTasksWrapper.removeAll();
+        
+        try {
+            String query = "SELECT title FROM tasks " + "WHERE user_id = ? AND status = 'completed' ";
+                          
+            ResultSet rs = DatabaseManager.executeQuery(query, UserSession.getUserId());
+
+            boolean hasItems = false;
+            while (rs.next()) {
+                hasItems = true;
+                String title = rs.getString("title");
+
+                JPanel taskItemPanel = new JPanel(new BorderLayout(10, 0));
+                taskItemPanel.setBackground(CARD_COLOR);
+                taskItemPanel.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(BORDER_COLOR, 1),
+                    BorderFactory.createEmptyBorder(15, 15, 15, 15)
+                ));
+
+                JLabel titleLabel = new JLabel(title);
+                titleLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+                titleLabel.setForeground(TEXT_DARK);
+                taskItemPanel.add(titleLabel, BorderLayout.CENTER);
+
+                recentTasksWrapper.add(taskItemPanel);
+                recentTasksWrapper.add(Box.createRigidArea(new Dimension(0, 10)));
+            }
+
+            if (!hasItems) {
+                JLabel noTasksLabel = new JLabel("No completed tasks");
+                noTasksLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+                noTasksLabel.setForeground(TEXT_DARK);
+                noTasksLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+                recentTasksWrapper.add(noTasksLabel);
+            }
+
+            recentTasksWrapper.revalidate();
+            recentTasksWrapper.repaint();
+            
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            Toast.error("Error fetching completed tasks: " + ex.getMessage());
+        }
+    }
+
+
 }

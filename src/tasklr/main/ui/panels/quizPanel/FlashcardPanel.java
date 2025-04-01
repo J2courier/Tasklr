@@ -830,13 +830,18 @@ public class FlashcardPanel {
             BorderFactory.createEmptyBorder(15, 15, 15, 15)
         ));
         
-        // Term panel
-        JPanel termPanel = createPanel.panel(null, new BorderLayout(), null);
+        // Content Panel
+        JPanel contentPanel = createPanel.panel(panel.getBackground(), new BorderLayout(10, 0), null);
+        
+        // Term and Definition Panel
+        JPanel textPanel = createPanel.panel(panel.getBackground(), new BorderLayout(0, 10), null);
+        
+        // Term panel with More button
+        JPanel termPanel = createPanel.panel(panel.getBackground(), new BorderLayout(10, 0), null);
         JLabel termLabel = new JLabel(term);
         termLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 16));
-        termPanel.add(termLabel);
         
-        // Definition panel
+        // Definition area
         JTextArea definitionArea = new JTextArea(definition);
         definitionArea.setFont(new Font("Segoe UI Variable", Font.PLAIN, 14));
         definitionArea.setLineWrap(true);
@@ -848,9 +853,172 @@ public class FlashcardPanel {
         definitionScroll.setBorder(null);
         definitionScroll.setBackground(panel.getBackground());
         
-        // Add components
-        panel.add(termPanel, BorderLayout.NORTH);
-        panel.add(definitionScroll, BorderLayout.CENTER);
+        // More button
+        JButton moreBtn = new JButton();
+        try {
+            ImageIcon moreIcon = new ImageIcon("C:\\Users\\ADMIN\\Desktop\\Tasklr\\resource\\icons\\moreIconBlack.png");
+            Image scaledImage = moreIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
+            moreBtn.setIcon(new ImageIcon(scaledImage));
+        } catch (Exception e) {
+            moreBtn.setText("•••");
+        }
+        moreBtn.setBorderPainted(false);
+        moreBtn.setContentAreaFilled(false);
+        moreBtn.setFocusPainted(false);
+        moreBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        moreBtn.setPreferredSize(new Dimension(30, 30));
+
+        // Popup menu
+        JPopupMenu popupMenu = new JPopupMenu();
+        
+        // Edit menu item
+        JMenuItem editItem = new JMenuItem("Edit");
+        try {
+            ImageIcon editIcon = new ImageIcon("C:\\Users\\ADMIN\\Desktop\\Tasklr\\resource\\icons\\editIcon.png");
+            Image scaledEditImage = editIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
+            editItem.setIcon(new ImageIcon(scaledEditImage));
+        } catch (Exception e) {
+            System.err.println("Failed to load edit icon: " + e.getMessage());
+        }
+        
+        // Delete menu item
+        JMenuItem deleteItem = new JMenuItem("Delete");
+        try {
+            ImageIcon deleteIcon = new ImageIcon("C:\\Users\\ADMIN\\Desktop\\Tasklr\\resource\\icons\\deleteIcon.png");
+            Image scaledDeleteImage = deleteIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
+            deleteItem.setIcon(new ImageIcon(scaledDeleteImage));
+        } catch (Exception e) {
+            System.err.println("Failed to load delete icon: " + e.getMessage());
+        }
+
+        // Add action listeners
+        editItem.addActionListener(e -> {
+            JTextField termField = new JTextField(term);
+            JTextArea definitionField = new JTextArea(definition);
+            definitionField.setLineWrap(true);
+            definitionField.setWrapStyleWord(true);
+            
+            JPanel editPanel = new JPanel(new GridLayout(4, 1, 5, 5));
+            editPanel.add(new JLabel("Edit term:"));
+            editPanel.add(termField);
+            editPanel.add(new JLabel("Edit definition:"));
+            
+            JScrollPane scrollPane = new JScrollPane(definitionField);
+            scrollPane.setPreferredSize(new Dimension(300, 100));
+            editPanel.add(scrollPane);
+            
+            int result = JOptionPane.showConfirmDialog(
+                null, 
+                editPanel, 
+                "Edit Flashcard",
+                JOptionPane.OK_CANCEL_OPTION, 
+                JOptionPane.PLAIN_MESSAGE
+            );
+            
+            if (result == JOptionPane.OK_OPTION) {
+                String newTerm = termField.getText().trim();
+                String newDefinition = definitionField.getText().trim();
+                
+                if (!newTerm.isEmpty() && !newDefinition.isEmpty()) {
+                    try {
+                        DatabaseManager.executeUpdate(
+                            "UPDATE quizzes SET term = ?, definition = ? WHERE term = ? AND user_id = ?",
+                            newTerm, newDefinition, term, UserSession.getUserId()
+                        );
+                        
+                        // Update the UI components directly
+                        termLabel.setText(newTerm);
+                        definitionArea.setText(newDefinition);
+                        
+                        // Update the panel's layout
+                        panel.revalidate();
+                        panel.repaint();
+                        
+                        Toast.success("Flashcard updated successfully!");
+                    } catch (SQLException ex) {
+                        ex.printStackTrace();
+                        Toast.error("Error updating flashcard: " + ex.getMessage());
+                    }
+                } else {
+                    Toast.error("Both term and definition are required!");
+                }
+            }
+        });
+        
+        deleteItem.addActionListener(e -> {
+            int confirm = JOptionPane.showConfirmDialog(
+                null,
+                "Are you sure you want to delete this flashcard?",
+                "Confirm Delete",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE
+            );
+            
+            if (confirm == JOptionPane.YES_OPTION) {
+                try {
+                    // First check if the flashcard exists for this user
+                    String checkQuery = "SELECT COUNT(*) FROM flashcards WHERE term = ? AND set_id IN " +
+                                      "(SELECT set_id FROM flashcard_sets WHERE user_id = ?)";
+                    ResultSet rs = DatabaseManager.executeQuery(checkQuery, term, UserSession.getUserId());
+                    
+                    if (rs.next() && rs.getInt(1) > 0) {
+                        // Delete the flashcard
+                        String deleteQuery = "DELETE FROM flashcards WHERE term = ? AND set_id IN " +
+                                          "(SELECT set_id FROM flashcard_sets WHERE user_id = ?)";
+                        DatabaseManager.executeUpdate(deleteQuery, term, UserSession.getUserId());
+                        
+                        // Remove the panel from its parent container
+                        Container parent = panel.getParent();
+                        if (parent != null) {
+                            parent.remove(panel);
+                            parent.revalidate();
+                            parent.repaint();
+                        }
+                        
+                        Toast.success("Flashcard deleted successfully!");
+                        
+                        // Update the flashcards list
+                        flashcardsList.removeIf(card -> card.get("term").equals(term));
+                        
+                        // If in card view mode, navigate to the previous card if necessary
+                        if (isCardView && !flashcardsList.isEmpty()) {
+                            if (currentCardIndex >= flashcardsList.size()) {
+                                currentCardIndex = flashcardsList.size() - 1;
+                            }
+                            refreshFlashcardView((JPanel)parent.getParent(), currentSetId);
+                        }
+                    } else {
+                        Toast.error("Flashcard not found or you don't have permission to delete it.");
+                    }
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                    Toast.error("Error deleting flashcard: " + ex.getMessage());
+                }
+            }
+        });
+
+        // Add items to popup menu
+        popupMenu.add(editItem);
+        popupMenu.add(deleteItem);
+
+        // Add action listener to more button
+        moreBtn.addActionListener(e -> {
+            popupMenu.show(moreBtn, 0, moreBtn.getHeight());
+        });
+        
+        // Add components to term panel
+        termPanel.add(termLabel, BorderLayout.CENTER);
+        termPanel.add(moreBtn, BorderLayout.EAST);
+        
+        // Add components to text panel
+        textPanel.add(termPanel, BorderLayout.NORTH);
+        textPanel.add(definitionScroll, BorderLayout.CENTER);
+        
+        // Add text panel to content panel
+        contentPanel.add(textPanel, BorderLayout.CENTER);
+        
+        // Add content panel to main panel
+        panel.add(contentPanel, BorderLayout.CENTER);
         
         // Set preferred size
         panel.setPreferredSize(new Dimension(600, 150));

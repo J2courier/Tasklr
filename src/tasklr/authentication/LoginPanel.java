@@ -18,19 +18,22 @@ public class LoginPanel {
     private static final Color TEXT_COLOR = Color.WHITE;
     private static final String LOGO_PATH = "C://Users//ADMIN//Desktop//Tasklr//resource//icons//logo1.png";
     private static final Dimension PANEL_SIZE = new Dimension(700, 700);
+    private static final Color LINK_COLOR = new Color(0x275CE2); // Add this constant for consistency
     
     private final JPanel loginPanel;
     private final JTextField usernameField;
     private final JPasswordField passwordField;
     private final JButton loginButton;
     private final JCheckBox showPasswordCheckBox; // Add this field
+    private final JLabel forgotPasswordLabel; // Add this field
     
     public LoginPanel() {
         loginPanel = createMainPanel();
         usernameField = createTextField();
         passwordField = createPasswordField();
         loginButton = createButton("Login");
-        showPasswordCheckBox = createShowPasswordCheckBox(); // Initialize checkbox
+        showPasswordCheckBox = createShowPasswordCheckBox();
+        forgotPasswordLabel = createForgotPasswordLabel(); // Initialize the label
         
         setupLayout();
         setupKeyListeners();
@@ -151,14 +154,28 @@ public class LoginPanel {
         gbc.gridy = 4;
         loginPanel.add(passwordField, gbc);
 
-        // Add checkbox in the next row
+        // Create a panel for checkbox and forgot password
+        JPanel passwordOptionsPanel = new JPanel(new GridBagLayout());
+        passwordOptionsPanel.setBackground(null);
+        
+        GridBagConstraints optionsGbc = new GridBagConstraints();
+        optionsGbc.gridx = 0;
+        optionsGbc.gridy = 0;
+        optionsGbc.anchor = GridBagConstraints.WEST;
+        optionsGbc.weightx = 1.0; // Give weight to create space between components
+        passwordOptionsPanel.add(showPasswordCheckBox, optionsGbc);
+        
+        optionsGbc.gridx = 1;
+        optionsGbc.anchor = GridBagConstraints.EAST;
+        optionsGbc.weightx = 0.0; // Reset weight for the forgot password label
+        passwordOptionsPanel.add(forgotPasswordLabel, optionsGbc);
+
+        // Add the options panel
         gbc.gridy = 5;
-        gbc.fill = GridBagConstraints.NONE; // Don't stretch the checkbox
-        gbc.anchor = GridBagConstraints.WEST; // Align to the left
-        loginPanel.add(showPasswordCheckBox, gbc);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        loginPanel.add(passwordOptionsPanel, gbc);
         
         // Reset constraints for subsequent components
-        gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.anchor = GridBagConstraints.CENTER;
     }
 
@@ -207,6 +224,36 @@ public class LoginPanel {
         });
         
         return signupLabel;
+    }
+
+    private JLabel createForgotPasswordLabel() {
+        JLabel label = new JLabel("Forgot password?");
+        label.setForeground(LINK_COLOR);
+        label.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        
+        // Add hover effect
+        label.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                label.setText("<html><u>Forgot password?</u></html>");
+            }
+            
+            @Override
+            public void mouseExited(MouseEvent e) {
+                label.setText("Forgot password?");
+            }
+            
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                // TODO: Implement forgot password functionality
+                JOptionPane.showMessageDialog(loginPanel, 
+                    "Forgot password functionality will be implemented soon.",
+                    "Coming Soon",
+                    JOptionPane.INFORMATION_MESSAGE);
+            }
+        });
+        
+        return label;
     }
 
     private void setupKeyListeners() {

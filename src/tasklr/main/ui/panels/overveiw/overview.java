@@ -207,13 +207,62 @@ public class overview {
             BorderFactory.createEmptyBorder(10, 10, 10, 10)
         ));
 
-        // Header
+        // Header with refresh button
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setBackground(CARD_COLOR);
+        
+        // Title
         JLabel titleLabel = new JLabel("Task Statistics");
         titleLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 18));
         titleLabel.setForeground(TEXT_DARK);
-        headerPanel.add(titleLabel, BorderLayout.WEST);
+        
+        // Refresh button
+        JButton refreshButton = new JButton("Refresh");
+        refreshButton.setPreferredSize(new Dimension(100, 30));  // Set size to 100x70
+        refreshButton.setFont(new Font("Segoe UI Variable", Font.PLAIN, 12));  // Increased font size
+        refreshButton.setFocusPainted(false);
+        refreshButton.setBorderPainted(true);
+        refreshButton.setContentAreaFilled(true);
+        refreshButton.setBackground(new Color(0x0D98BA));  // Original color
+        refreshButton.setForeground(Color.WHITE);  // White text
+        refreshButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        refreshButton.setToolTipText("Refresh Statistics");
+        
+        // Add hover effect with slightly lighter color
+        refreshButton.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                Color originalColor = new Color(0x0D98BA);
+                // Create a slightly lighter version of the original color
+                Color lighterColor = new Color(
+                    Math.min(255, (int)(originalColor.getRed() * 1.2)),
+                    Math.min(255, (int)(originalColor.getGreen() * 1.2)),
+                    Math.min(255, (int)(originalColor.getBlue() * 1.2))
+                );
+                refreshButton.setBackground(lighterColor);
+            }
+            
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                refreshButton.setBackground(new Color(0x0D98BA));  // Return to original color
+            }
+        });
+        
+        // Add refresh button action (maintaining existing functionality)
+        refreshButton.addActionListener(e -> {
+            refreshButton.setEnabled(false);
+            refreshTaskGraph();
+            
+            // Re-enable the button after a short delay
+            Timer timer = new Timer(1000, event -> refreshButton.setEnabled(true));
+            timer.setRepeats(false);
+            timer.start();
+        });
+        
+        // Add components to header
+        JPanel titleWrapper = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        titleWrapper.setBackground(CARD_COLOR);
+        titleWrapper.add(titleLabel);
+        titleWrapper.add(refreshButton);
+        headerPanel.add(titleWrapper, BorderLayout.WEST);
 
         // Bar Graph
         taskBarGraph = new CustomBarGraph();
@@ -222,7 +271,7 @@ public class overview {
         container.add(headerPanel, BorderLayout.NORTH);
         container.add(taskBarGraph, BorderLayout.CENTER);
 
-        // Initial refresh instead of auto-refresh
+        // Initial refresh
         refreshTaskGraph();
 
         return container;

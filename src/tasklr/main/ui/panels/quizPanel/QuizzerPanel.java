@@ -251,6 +251,13 @@ public class QuizzerPanel {
     }
 
     private static void showQuizTypeDialog(int setId, String subject) {
+        // First, get the total number of flashcards
+        int totalFlashcards = getTotalFlashcards(setId);
+        if (totalFlashcards == 0) {
+            Toast.error("No flashcards found in this set!");
+            return;
+        }
+
         String[] options = {"Identification", "Multiple Choice"};
         
         // Main dialog panel with padding
@@ -263,31 +270,57 @@ public class QuizzerPanel {
         titleLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 14));
         titlePanel.add(titleLabel);
         
-        // Content panel for label and combo box
-        JPanel contentPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        // Content panel for all inputs
+        JPanel contentPanel = new JPanel();
+        contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
         contentPanel.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
         
-        // Label and combo box panel
-        JPanel inputPanel = new JPanel();
-        inputPanel.setLayout(new BoxLayout(inputPanel, BoxLayout.Y_AXIS));
+        // Quiz type section
+        JPanel quizTypeSection = new JPanel();
+        quizTypeSection.setLayout(new BoxLayout(quizTypeSection, BoxLayout.Y_AXIS));
+        quizTypeSection.setAlignmentX(Component.LEFT_ALIGNMENT);
         
-        // Quiz type label aligned to the left
         JLabel typeLabel = new JLabel("Quiz Type:");
         typeLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         
-        // Combo box panel to maintain left alignment
         JPanel comboPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 5));
         JComboBox<String> quizTypeCombo = new JComboBox<>(options);
         quizTypeCombo.setPreferredSize(new Dimension(200, 30));
         comboPanel.add(quizTypeCombo);
         comboPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
         
-        // Add components to input panel
-        inputPanel.add(typeLabel);
-        inputPanel.add(comboPanel);
+        quizTypeSection.add(typeLabel);
+        quizTypeSection.add(comboPanel);
+        
+        // Number of items section
+        JPanel itemsSection = new JPanel();
+        itemsSection.setLayout(new BoxLayout(itemsSection, BoxLayout.Y_AXIS));
+        itemsSection.setAlignmentX(Component.LEFT_ALIGNMENT);
+        itemsSection.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
+        
+        JLabel itemsLabel = new JLabel("Number of Items (max " + totalFlashcards + "):");
+        itemsLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        JPanel spinnerPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 5));
+        SpinnerNumberModel spinnerModel = new SpinnerNumberModel(
+            totalFlashcards, // initial value
+            1,              // minimum value
+            totalFlashcards,// maximum value
+            1               // step
+        );
+        JSpinner itemsSpinner = new JSpinner(spinnerModel);
+        itemsSpinner.setPreferredSize(new Dimension(100, 30));
+        spinnerPanel.add(itemsSpinner);
+        spinnerPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        itemsSection.add(itemsLabel);
+        itemsSection.add(spinnerPanel);
+        
+        // Add all sections to content panel
+        contentPanel.add(quizTypeSection);
+        contentPanel.add(itemsSection);
         
         // Add all panels to dialog panel
-        contentPanel.add(inputPanel);
         dialogPanel.add(titlePanel, BorderLayout.NORTH);
         dialogPanel.add(contentPanel, BorderLayout.CENTER);
 
@@ -301,21 +334,45 @@ public class QuizzerPanel {
 
         if (result == JOptionPane.OK_OPTION) {
             String selectedType = (String) quizTypeCombo.getSelectedItem();
+            int numberOfItems = (Integer) itemsSpinner.getValue();
+            
             if ("Identification".equals(selectedType)) {
-                startIdentificationQuiz(setId, subject);
+                startIdentificationQuiz(setId, subject, numberOfItems);
             } else {
-                startMultipleChoiceQuiz(setId, subject);
+                startMultipleChoiceQuiz(setId, subject, numberOfItems);
             }
         }
     }
 
-    private static void startIdentificationQuiz(int setId, String subject) {
+    private static int getTotalFlashcards(int setId) {
+        try (Connection conn = DatabaseManager.getConnection()) {
+            String query = "SELECT COUNT(*) as total FROM flashcards WHERE set_id = ?";
+            try (PreparedStatement stmt = conn.prepareStatement(query)) {
+                stmt.setInt(1, setId);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    if (rs.next()) {
+                        return rs.getInt("total");
+                    }
+                }
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            Toast.error("Error counting flashcards: " + ex.getMessage());
+        }
+        return 0;
+    }
+
+    private static void startIdentificationQuiz(int setId, String subject, int numberOfItems) {
         List<FlashCard> flashcards = fetchFlashcardsForSet(setId);
         
         if (flashcards.isEmpty()) {
             Toast.error("No flashcards found in this set!");
             return;
         }
+
+        // Shuffle and limit to selected number of items
+        Collections.shuffle(flashcards);
+        flashcards = flashcards.subList(0, Math.min(numberOfItems, flashcards.size()));
 
         JPanel quizPanel = createIdentificationQuizPanel(flashcards, subject, setId);
         quizViewPanel.add(quizPanel, "QUIZ_" + setId);
@@ -503,7 +560,33 @@ public class QuizzerPanel {
         submitButton.setForeground(Color.WHITE);
         submitButton.setFocusPainted(false);
         submitButton.addActionListener(e -> {
-            // Check answers and calculate score
+            // Validate all fields are filled
+            boolean allFieldsFilled = true;
+            List<Integer> emptyQuestions = new ArrayList<>();
+            
+            for (int i = 0; i < answerFields.size(); i++) {
+                if (answerFields.get(i).getText().trim().isEmpty()) {
+                    allFieldsFilled = false;
+                    emptyQuestions.add(i + 1);
+                }
+            }
+            
+            if (!allFieldsFilled) {
+                StringBuilder message = new StringBuilder("Please answer all questions before submitting.\n\nUnanswered questions:\n");
+                for (int questionNum : emptyQuestions) {
+                    message.append("Question ").append(questionNum).append("\n");
+                }
+                
+                JOptionPane.showMessageDialog(
+                    mainPanel,
+                    message.toString(),
+                    "Incomplete Quiz",
+                    JOptionPane.WARNING_MESSAGE
+                );
+                return;
+            }
+
+            // Proceed with existing score calculation
             for (int i = 0; i < answerFields.size(); i++) {
                 String userAnswer = answerFields.get(i).getText().trim().toLowerCase();
                 String correctAnswer = questionOrder.get(i).term.toLowerCase();
@@ -629,7 +712,7 @@ public class QuizzerPanel {
         }
     }
 
-    private static void startMultipleChoiceQuiz(int setId, String subject) {
+    private static void startMultipleChoiceQuiz(int setId, String subject, int numberOfItems) {
         List<FlashCard> flashcards = fetchFlashcardsForSet(setId);
         
         if (flashcards.isEmpty()) {
@@ -641,6 +724,10 @@ public class QuizzerPanel {
             Toast.error("Multiple choice quiz requires at least 2 flashcards!");
             return;
         }
+
+        // Shuffle and limit to selected number of items
+        Collections.shuffle(flashcards);
+        flashcards = flashcards.subList(0, Math.min(numberOfItems, flashcards.size()));
 
         JPanel quizPanel = createMultipleChoiceQuizPanel(flashcards, subject, setId);
         quizViewPanel.add(quizPanel, "QUIZ_" + setId);
@@ -747,7 +834,43 @@ public class QuizzerPanel {
         submitButton.setForeground(Color.WHITE);
         submitButton.setFocusPainted(false);
         submitButton.addActionListener(e -> {
-            // Check answers
+            // Validate all questions have been answered
+            boolean allQuestionsAnswered = true;
+            List<Integer> unansweredQuestions = new ArrayList<>();
+            
+            for (int i = 0; i < answerGroups.size(); i++) {
+                ButtonGroup group = answerGroups.get(i);
+                boolean answered = false;
+                
+                for (Enumeration<AbstractButton> buttons = group.getElements(); buttons.hasMoreElements();) {
+                    if (buttons.nextElement().isSelected()) {
+                        answered = true;
+                        break;
+                    }
+                }
+                
+                if (!answered) {
+                    allQuestionsAnswered = false;
+                    unansweredQuestions.add(i + 1);
+                }
+            }
+            
+            if (!allQuestionsAnswered) {
+                StringBuilder message = new StringBuilder("Please answer all questions before submitting.\n\nUnanswered questions:\n");
+                for (int questionNum : unansweredQuestions) {
+                    message.append("Question ").append(questionNum).append("\n");
+                }
+                
+                JOptionPane.showMessageDialog(
+                    mainPanel,
+                    message.toString(),
+                    "Incomplete Quiz",
+                    JOptionPane.WARNING_MESSAGE
+                );
+                return;
+            }
+
+            // Proceed with existing score calculation
             for (int i = 0; i < answerGroups.size(); i++) {
                 ButtonGroup group = answerGroups.get(i);
                 String correctAnswer = questionOrder.get(i).term;
@@ -829,7 +952,7 @@ public class QuizzerPanel {
     }
 
     private static void showQuizOverview(List<FlashCard> flashcards, String subject, int score, 
-            int total, String quizType, int setId, List<String> userAnswers) {  // Add userAnswers parameter
+            int total, String quizType, int setId, List<String> userAnswers) {
         JPanel overviewPanel = new JPanel(new BorderLayout());
         overviewPanel.setBackground(BACKGROUND_COLOR);
         overviewPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
@@ -851,10 +974,16 @@ public class QuizzerPanel {
         headerPanel.add(subjectLabel, BorderLayout.WEST);
         headerPanel.add(scoreLabel, BorderLayout.EAST);
 
-        // Content Panel with ScrollPane
-        JPanel contentPanel = new JPanel();
-        contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
+        // Content Panel with GridBagLayout for better spacing
+        JPanel contentPanel = new JPanel(new GridBagLayout());
         contentPanel.setBackground(BACKGROUND_COLOR);
+        
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        gbc.weightx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.insets = new Insets(0, 0, 10, 0);
+        gbc.anchor = GridBagConstraints.WEST; // Align components to the left
 
         // Add items for each flashcard
         for (int i = 0; i < flashcards.size(); i++) {
@@ -865,79 +994,97 @@ public class QuizzerPanel {
             JPanel itemPanel = new JPanel();
             itemPanel.setLayout(new BoxLayout(itemPanel, BoxLayout.Y_AXIS));
             itemPanel.setBackground(Color.WHITE);
-            itemPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+            itemPanel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(0xE0E0E0), 1),
+                BorderFactory.createEmptyBorder(15, 15, 15, 15)
+            ));
+            itemPanel.setAlignmentX(Component.LEFT_ALIGNMENT); // Align panel to the left
 
             // Question number and definition
-            JLabel definitionLabel = new JLabel((i + 1) + ". " + card.definition);
+            JLabel definitionLabel = new JLabel("<html><body style='width: 100%'>" + (i + 1) + ". " + card.definition + "</body></html>");
             definitionLabel.setFont(new Font("Segoe UI Variable", Font.PLAIN, 14));
-            // Set red color for question number if answer was wrong
+            definitionLabel.setAlignmentX(Component.LEFT_ALIGNMENT); // Align label to the left
             if (!isCorrect) {
                 String numberPart = (i + 1) + ". ";
                 String definitionPart = card.definition;
-                definitionLabel.setText("<html><font color='#FF0000'>" + numberPart + "</font>" + definitionPart + "</html>");
-                definitionLabel.putClientProperty("html.disable", Boolean.FALSE);
+                definitionLabel.setText("<html><body style='width: 100%'><font color='#FF0000'>" + numberPart + "</font>" + definitionPart + "</body></html>");
             }
 
-            // User's answer
+            // User's answer with icon
+            JPanel userAnswerPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+            userAnswerPanel.setBackground(Color.WHITE);
+            userAnswerPanel.setAlignmentX(Component.LEFT_ALIGNMENT); // Align panel to the left
+            
+            // Add icon based on correctness
+            ImageIcon icon = new ImageIcon(isCorrect ? 
+                "src/tasklr/resources/images/correct.png" : 
+                "src/tasklr/resources/images/wrong.png");
+            Image scaledImage = icon.getImage().getScaledInstance(16, 16, Image.SCALE_SMOOTH);
+            JLabel iconLabel = new JLabel(new ImageIcon(scaledImage));
+            iconLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));
+            
             JLabel userAnswerLabel = new JLabel("Your answer: " + userAnswers.get(i));
             userAnswerLabel.setFont(new Font("Segoe UI Variable", Font.PLAIN, 14));
             if (!isCorrect) {
                 userAnswerLabel.setForeground(new Color(0xFF0000));
             }
+            
+            userAnswerPanel.add(iconLabel);
+            userAnswerPanel.add(userAnswerLabel);
 
             // Correct answer
             JLabel answerLabel = new JLabel("Correct answer: " + card.term);
             answerLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 14));
             answerLabel.setForeground(new Color(0x275CE2));
+            answerLabel.setAlignmentX(Component.LEFT_ALIGNMENT); // Align label to the left
 
+            // Add components to item panel
             itemPanel.add(definitionLabel);
-            itemPanel.add(Box.createRigidArea(new Dimension(0, 5)));
-            itemPanel.add(userAnswerLabel);
+            itemPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+            itemPanel.add(userAnswerPanel);
             itemPanel.add(Box.createRigidArea(new Dimension(0, 5)));
             itemPanel.add(answerLabel);
             
-            // Add spacing between items
-            contentPanel.add(itemPanel);
-            contentPanel.add(Box.createRigidArea(new Dimension(0, 10)));
-
-            // If this is the last item, add the button panel
-            if (i == flashcards.size() - 1) {
-                JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-                buttonPanel.setBackground(BACKGROUND_COLOR);
-                buttonPanel.setBorder(BorderFactory.createEmptyBorder(20, 0, 0, 0));
-
-                // Retake button
-                JButton retakeButton = new JButton("Retake Quiz");
-                retakeButton.setFont(new Font("Segoe UI Variable", Font.BOLD, 14));
-                retakeButton.setBackground(PRIMARY_BUTTON_COLOR);
-                retakeButton.setForeground(Color.WHITE);
-                retakeButton.setFocusPainted(false);
-                retakeButton.addActionListener(e -> {
-                    closeQuiz(overviewPanel);
-                    if ("Identification".equals(quizType)) {
-                        startIdentificationQuiz(setId, subject);
-                    } else {
-                        startMultipleChoiceQuiz(setId, subject);
-                    }
-                    // Update statistics in HomePanel
-                    updateHomeStatistics();
-                });
-
-                // Close button
-                JButton closeButton = new JButton("Close");
-                closeButton.setFont(new Font("Segoe UI Variable", Font.BOLD, 14));
-                closeButton.setBackground(Color.RED);
-                closeButton.setForeground(Color.WHITE);
-                closeButton.setFocusPainted(false);
-                closeButton.addActionListener(e -> closeQuiz(overviewPanel));
-
-                buttonPanel.add(retakeButton);
-                buttonPanel.add(Box.createRigidArea(new Dimension(10, 0)));
-                buttonPanel.add(closeButton);
-                
-                contentPanel.add(buttonPanel);
-            }
+            // Add item panel to content panel
+            contentPanel.add(itemPanel, gbc);
         }
+
+        // Add empty space at the bottom to push content up
+        gbc.weighty = 1.0;
+        contentPanel.add(Box.createVerticalGlue(), gbc);
+
+        // Button Panel
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        buttonPanel.setBackground(BACKGROUND_COLOR);
+        buttonPanel.setBorder(BorderFactory.createEmptyBorder(20, 0, 0, 0));
+
+        // Retake button
+        JButton retakeButton = new JButton("Retake Quiz");
+        retakeButton.setFont(new Font("Segoe UI Variable", Font.BOLD, 14));
+        retakeButton.setBackground(PRIMARY_BUTTON_COLOR);
+        retakeButton.setForeground(Color.WHITE);
+        retakeButton.setFocusPainted(false);
+        retakeButton.addActionListener(e -> {
+            closeQuiz(overviewPanel);
+            if ("Identification".equals(quizType)) {
+                startIdentificationQuiz(setId, subject, total);
+            } else {
+                startMultipleChoiceQuiz(setId, subject, total);
+            }
+            updateHomeStatistics();
+        });
+
+        // Close button
+        JButton closeButton = new JButton("Close");
+        closeButton.setFont(new Font("Segoe UI Variable", Font.BOLD, 14));
+        closeButton.setBackground(Color.RED);
+        closeButton.setForeground(Color.WHITE);
+        closeButton.setFocusPainted(false);
+        closeButton.addActionListener(e -> closeQuiz(overviewPanel));
+
+        buttonPanel.add(retakeButton);
+        buttonPanel.add(Box.createRigidArea(new Dimension(10, 0)));
+        buttonPanel.add(closeButton);
 
         // Create scroll pane
         JScrollPane scrollPane = new JScrollPane(contentPanel);
@@ -948,6 +1095,7 @@ public class QuizzerPanel {
         // Add components to main panel
         overviewPanel.add(headerPanel, BorderLayout.NORTH);
         overviewPanel.add(scrollPane, BorderLayout.CENTER);
+        overviewPanel.add(buttonPanel, BorderLayout.SOUTH);
 
         // Add to quiz view panel and show
         quizViewPanel.add(overviewPanel, "OVERVIEW");
