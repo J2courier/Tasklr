@@ -3,13 +3,14 @@ package tasklr.main.ui.panels.quizPanel;
 import javax.swing.*;
 import javax.swing.border.Border;
 import tasklr.utilities.createButton;
-import tasklr.utilities.createPanel;
+import tasklr.utilities.*;
 import java.awt.*;
 
 public class StudyPanel {
     private static JPanel cardPanel;
     private static CardLayout cardLayout;
-    private static final Color BACKGROUND_COLOR = new Color(0xFFFFFF);
+    private static final Color PRIMARY_COLOR = new Color(0x275CE2);    // Add this constant for header color
+    private static final int HEADER_HEIGHT = 70;                       // Add this constant for header height
     private static JLabel navLabel;
 
     public static JPanel createStudyPanel() {
@@ -35,35 +36,62 @@ public class StudyPanel {
     }
 
     private static JPanel createNavPanel() {
-        JPanel navPanel = createPanel.panel(BACKGROUND_COLOR, new FlowLayout(FlowLayout.LEFT), new Dimension(0, 60));
-        Border navBorder = BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0xE0E3E2));
-        navPanel.setBorder(navBorder);
+        // Change background color to PRIMARY_COLOR and set fixed height
+        JPanel navPanel = createPanel.panel(PRIMARY_COLOR, new BorderLayout(), new Dimension(0, HEADER_HEIGHT));
+        navPanel.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 20));
 
-        // Initialize navLabel with default text "Flashcards"
-        navLabel = new JLabel("Flashcards");
-        navLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 16));
-        navLabel.setForeground(new Color(0x1d1d1d));
-        navLabel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 280));
-        navPanel.add(navLabel);
+        // Left side of header with title
+        JPanel titlePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        titlePanel.setOpaque(false);  // Make transparent to show header background
+        
+        // Update navLabel style to match other headers
+        navLabel = new JLabel("FLASHCARDS");
+        navLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 24));
+        navLabel.setForeground(Color.WHITE);  // Change text color to white
+        titlePanel.add(navLabel);
 
-        JButton flashcardBtn = createButton.button("Flashcards", new Color(0x0082FC), Color.WHITE, null, false);
-        flashcardBtn.setPreferredSize(new Dimension(100, 40));
-        JButton quizzerBtn = createButton.button("Quizzer", new Color(0x0082FC), Color.WHITE, null, false);
-        quizzerBtn.setPreferredSize(new Dimension(100, 40));
+        // Right side of header with buttons
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 15));
+        buttonPanel.setOpaque(false);  // Make transparent to show header background
 
-        // Modify the action listeners to update the navLabel text
+        // Update button styles
+        JButton flashcardBtn = createButton.button("Flashcards", PRIMARY_COLOR, Color.WHITE, null, false);
+        flashcardBtn.setPreferredSize(new Dimension(120, 40));
+        
+        JButton quizzerBtn = createButton.button("Quizzer", PRIMARY_COLOR, Color.WHITE, null, false);
+        quizzerBtn.setPreferredSize(new Dimension(120, 40));
+
+        // Add hover effects to buttons
+        new HoverButtonEffect(flashcardBtn, 
+            new Color(PRIMARY_COLOR.getRGB()),  // default background
+            new Color(0x153C9B),  // hover background
+            Color.WHITE,          // default text
+            Color.WHITE          // hover text
+        );
+
+        new HoverButtonEffect(quizzerBtn, 
+            new Color(PRIMARY_COLOR.getRGB()),  // default background
+            new Color(0x153C9B),  // hover background
+            Color.WHITE,          // default text
+            Color.WHITE          // hover text
+        );
+
         flashcardBtn.addActionListener(e -> {
             cardLayout.show(cardPanel, "flashcard");
-            navLabel.setText("Flashcards");
+            navLabel.setText("FLASHCARDS");
         });
 
         quizzerBtn.addActionListener(e -> {
             cardLayout.show(cardPanel, "quizzer");
-            navLabel.setText("Quizzer");
+            navLabel.setText("QUIZZER");
         });
 
-        navPanel.add(flashcardBtn);
-        navPanel.add(quizzerBtn);
+        buttonPanel.add(flashcardBtn);
+        buttonPanel.add(quizzerBtn);
+
+        // Add components to navPanel
+        navPanel.add(titlePanel, BorderLayout.WEST);
+        navPanel.add(buttonPanel, BorderLayout.EAST);
 
         return navPanel;
     }

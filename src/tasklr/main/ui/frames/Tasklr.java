@@ -45,19 +45,25 @@ public class Tasklr extends JFrame {
         add(navbar, BorderLayout.WEST);
 
         // Create navigation icons
-        ImageIcon homeBtn = new ImageIcon(new ImageIcon("C:/Users/ADMIN/Desktop/Tasklr/resource/icons/HomeLogo.png")
+        ImageIcon homeBtn = new ImageIcon(new ImageIcon("C:/Users/ADMIN/Desktop/Tasklr/resource/icons/Home.png")
             .getImage().getScaledInstance(40, 40, Image.SCALE_SMOOTH));
-        ImageIcon taskBtn = new ImageIcon(new ImageIcon("C:/Users/ADMIN/Desktop/Tasklr/resource/icons/TaskLogo.png")
+        ImageIcon taskBtn = new ImageIcon(new ImageIcon("C:/Users/ADMIN/Desktop/Tasklr/resource/icons/Task.png")
             .getImage().getScaledInstance(40, 40, Image.SCALE_SMOOTH));
-        ImageIcon quizBtn = new ImageIcon(new ImageIcon("C:/Users/ADMIN/Desktop/Tasklr/resource/icons/AddQuizWhite.png")
+        ImageIcon quizBtn = new ImageIcon(new ImageIcon("C:/Users/ADMIN/Desktop/Tasklr/resource/icons/FlashcardIcon.png")
             .getImage().getScaledInstance(40, 40, Image.SCALE_SMOOTH));
-        ImageIcon overviewBtn = new ImageIcon(new ImageIcon("C:/Users/ADMIN/Desktop/Tasklr/resource/icons/overviewIcon.png")
+        ImageIcon overviewBtn = new ImageIcon(new ImageIcon("C:/Users/ADMIN/Desktop/Tasklr/resource/icons/Overview.png")
             .getImage().getScaledInstance(40, 40, Image.SCALE_SMOOTH));
 
         JLabel homeBtnIcon = new JLabel(homeBtn);
         JLabel taskBtnIcon = new JLabel(taskBtn);
         JLabel quizBtnIcon = new JLabel(quizBtn);
         JLabel overviewBtnIcon = new JLabel(overviewBtn);
+        
+        // Add tooltips to navigation buttons
+        homeBtnIcon.setToolTipText("Home Dashboard");
+        taskBtnIcon.setToolTipText("Manage Tasks");
+        quizBtnIcon.setToolTipText("Flashcards & Quizzes");
+        overviewBtnIcon.setToolTipText("Progress Overview");
         
         // Add icons to navbar
         navbar.add(homeBtnIcon);

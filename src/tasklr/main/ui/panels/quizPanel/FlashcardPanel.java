@@ -30,6 +30,7 @@ public class FlashcardPanel {
     private static final Color PRIMARY_BUTTON_HOVER = new Color(0x3B6FF0);
     private static final Color PRIMARY_BUTTON_TEXT = Color.WHITE;
     private static int currentSetId = -1; // Track current set ID
+    private static String currentSubject = ""; // Track current subject
     
     // Temporary storage for terms before set creation
     private static List<Map<String, String>> temporaryTerms = new ArrayList<>();
@@ -37,6 +38,7 @@ public class FlashcardPanel {
     private static boolean isCardView = false;
     private static int currentCardIndex = 0;
     private static List<Map<String, String>> flashcardsList = new ArrayList<>();
+    private static JLabel termsInputTitleLabel;
 
     public static JPanel createFlashcardPanel() {
         JPanel panel = createPanel.panel(BACKGROUND_COLOR, new BorderLayout(), new Dimension(100, 100));
@@ -124,30 +126,50 @@ public class FlashcardPanel {
     }
 
     private static JPanel createTermsInputPanel() {
-        JPanel panel = createPanel.panel(Color.WHITE, new GridBagLayout(), new Dimension(0, 0));
+        JPanel panel = createPanel.panel(Color.WHITE, new BorderLayout(), null);
+        
+        // Add empty border around the entire panel
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         
         // Create header panel
         JPanel headerPanel = createPanel.panel(Color.WHITE, new BorderLayout(), new Dimension(0, 60));
         headerPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         
-        JLabel titleLabel = new JLabel("ADD TERMS TO SET");
-        titleLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 16));
+        termsInputTitleLabel = new JLabel("ADD TERMS TO NEW SET");
+        termsInputTitleLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 16));
         
         // Create Save button in header
         JButton saveBtn = createButton.button("Save", null, Color.WHITE, null, false);
-        saveBtn.setBackground(new Color(0x0065D9));
-        saveBtn.setPreferredSize(new Dimension(100, 40));
+        saveBtn.setBackground(new Color(0x34D399));  // Green color
+        saveBtn.setPreferredSize(new Dimension(130, 40));
+        
+        // Add hover effect for the save button
+        new HoverButtonEffect(saveBtn, 
+            new Color(0x34D399),  // default background (green)
+            new Color(0x10B981),  // hover background (darker green)
+            Color.WHITE,          // default text
+            Color.WHITE          // hover text
+        );
         
         // Add components to header
-        headerPanel.add(titleLabel, BorderLayout.WEST);
+        headerPanel.add(termsInputTitleLabel, BorderLayout.WEST);
         headerPanel.add(saveBtn, BorderLayout.EAST);
+
+        // Create main content panel
+        JPanel contentPanel = createPanel.panel(Color.WHITE, new GridBagLayout(), null);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1.0;
+        gbc.insets = new Insets(10, 10, 10, 10);
         
+        // Term section
         JLabel termLabel = new JLabel("Term");
         termLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 16));
         
-        JTextField termField = new JTextField(20);
-        termField.setPreferredSize(new Dimension(700, 40));
+        JTextField termField = new JTextField();
+        termField.setPreferredSize(new Dimension(0, 40));
         
+        // Definition section
         JLabel definitionLabel = new JLabel("Definition");
         definitionLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 16));
         
@@ -155,14 +177,16 @@ public class FlashcardPanel {
         definitionArea.setLineWrap(true);
         definitionArea.setWrapStyleWord(true);
         JScrollPane definitionScroll = new JScrollPane(definitionArea);
-        definitionScroll.setPreferredSize(new Dimension(700, 150));
+        definitionScroll.setPreferredSize(new Dimension(0, 150));
         
-        JPanel buttonPanel = createPanel.panel(null, new FlowLayout(FlowLayout.RIGHT), new Dimension(700, 50));
+        // Button panel
+        JPanel buttonPanel = createPanel.panel(Color.WHITE, new FlowLayout(FlowLayout.RIGHT), null);
         
         JButton addTermBtn = createButton.button("Add Term", null, Color.WHITE, null, false);
         addTermBtn.setBackground(new Color(0x275CE2));
         addTermBtn.setPreferredSize(new Dimension(120, 40));
         
+        // Add action listeners (keeping existing functionality)
         addTermBtn.addActionListener(e -> {
             String term = termField.getText().trim();
             String definition = definitionArea.getText().trim();
@@ -179,21 +203,40 @@ public class FlashcardPanel {
             }
         });
         
-        // Maintain the same functionality as the original "Done" button
         saveBtn.addActionListener(e -> {
             cardLayout.show(mainCardPanel, "setCreation");
             currentSetId = -1; // Reset current set
+            currentSubject = ""; // Reset current subject
         });
         
         buttonPanel.add(addTermBtn);
+
+        // Add components to content panel with GridBagLayout
+        gbc.gridy = 0;
+        contentPanel.add(termLabel, gbc);
         
-        // Add components using ComponentUtil
-        ComponentUtil.addComponent(panel, headerPanel, 0, 0, 2, 1, new Insets(0, 0, 20, 0), 0);
-        ComponentUtil.addComponent(panel, termLabel, 0, 1, 1, 1, new Insets(5, 10, 5, 5), 0);
-        ComponentUtil.addComponent(panel, termField, 0, 2, 2, 1, new Insets(0, 10, 20, 5), 0);
-        ComponentUtil.addComponent(panel, definitionLabel, 0, 3, 1, 1, new Insets(5, 10, 5, 5), 0);
-        ComponentUtil.addComponent(panel, definitionScroll, 0, 4, 2, 1, new Insets(0, 10, 20, 5), 0);
-        ComponentUtil.addComponent(panel, buttonPanel, 0, 5, 2, 1, new Insets(0, 10, 10, 5), 0);
+        gbc.gridy = 1;
+        gbc.insets = new Insets(0, 10, 20, 10);
+        contentPanel.add(termField, gbc);
+        
+        gbc.gridy = 2;
+        gbc.insets = new Insets(10, 10, 10, 10);
+        contentPanel.add(definitionLabel, gbc);
+        
+        gbc.gridy = 3;
+        gbc.weighty = 1.0;  // Make definition area expand vertically
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.insets = new Insets(0, 10, 20, 10);
+        contentPanel.add(definitionScroll, gbc);
+        
+        gbc.gridy = 4;
+        gbc.weighty = 0.0;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        contentPanel.add(buttonPanel, gbc);
+
+        // Add header and content to main panel
+        panel.add(headerPanel, BorderLayout.NORTH);
+        panel.add(contentPanel, BorderLayout.CENTER);
         
         return panel;
     }
@@ -367,6 +410,17 @@ public class FlashcardPanel {
             System.err.println("Failed to load edit icon: " + e.getMessage());
         }
         editItem.setText("Edit");
+
+        // Edit Sets menu item with icon
+        JMenuItem editSetsItem = new JMenuItem();
+        try {
+            ImageIcon editSetsIcon = new ImageIcon("C:\\Users\\ADMIN\\Desktop\\Tasklr\\resource\\icons\\editIcon.png");
+            Image scaledEditSetsImage = editSetsIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
+            editSetsItem.setIcon(new ImageIcon(scaledEditSetsImage));
+        } catch (Exception e) {
+            System.err.println("Failed to load edit sets icon: " + e.getMessage());
+        }
+        editSetsItem.setText("Edit Sets");
         
         // Delete menu item with icon
         JMenuItem deleteItem = new JMenuItem();
@@ -381,15 +435,16 @@ public class FlashcardPanel {
 
         // Add items to popup menu
         popupMenu.add(editItem);
+        popupMenu.add(editSetsItem);
         popupMenu.add(deleteItem);
 
-        // Add action listeners (keeping existing functionality)
+        // Add action listeners
         moreBtn.addActionListener(e -> {
             popupMenu.show(moreBtn, 0, moreBtn.getHeight());
         });
 
+        // Existing edit functionality remains the same
         editItem.addActionListener(e -> {
-            // Existing edit functionality
             JTextField subjectField = new JTextField(subject);
             JTextArea descriptionArea = new JTextArea(description);
             descriptionArea.setLineWrap(true);
@@ -430,6 +485,18 @@ public class FlashcardPanel {
             }
         });
 
+        // Add Edit Sets functionality (similar to Add More Terms)
+        editSetsItem.addActionListener(e -> {
+            // We can directly use the 'subject' parameter here
+            termsInputTitleLabel.setText("ADD TERMS TO " + subject.toUpperCase());
+            
+            isCardView = false;
+            currentCardIndex = 0;
+            currentSetId = setId;
+            cardLayout.show(mainCardPanel, "termsInput");
+        });
+
+        // Existing delete functionality remains the same
         deleteItem.addActionListener(e -> {
             int confirm = JOptionPane.showConfirmDialog(
                 null,
@@ -440,34 +507,28 @@ public class FlashcardPanel {
             
             if (confirm == JOptionPane.YES_OPTION) {
                 try {
-                    // Start a transaction to ensure both deletes happen or neither does
                     Connection conn = DatabaseManager.getConnection();
                     conn.setAutoCommit(false);
                     
                     try {
-                        // First delete all flashcards associated with this set
                         DatabaseManager.executeUpdate(
                             "DELETE FROM flashcards WHERE set_id = ? AND set_id IN " +
                             "(SELECT set_id FROM flashcard_sets WHERE user_id = ?)",
                             setId, UserSession.getUserId()
                         );
                         
-                        // Then delete the flashcard set
                         DatabaseManager.executeUpdate(
                             "DELETE FROM flashcard_sets WHERE set_id = ? AND user_id = ?",
                             setId, UserSession.getUserId()
                         );
                         
-                        // If we got here without exception, commit the transaction
                         conn.commit();
                         Toast.success("Set and all associated flashcards deleted successfully!");
                         refreshListContainer();
                     } catch (SQLException ex) {
-                        // If there was an error, rollback the transaction
                         conn.rollback();
                         throw ex;
                     } finally {
-                        // Reset auto-commit to true
                         conn.setAutoCommit(true);
                         conn.close();
                     }
@@ -621,9 +682,10 @@ public class FlashcardPanel {
         JPanel leftButtonsPanel = createPanel.panel(null, new FlowLayout(FlowLayout.LEFT, 10, 0), null);
         
         // Back button
-        JButton backButton = createButton.button("Back to Sets", null, Color.WHITE, null, false);
+        JButton backButton = createButton.button("←", null, Color.WHITE, null, false);
         backButton.setBackground(new Color(0x0065D9));
-        backButton.setPreferredSize(new Dimension(120, 40));
+        backButton.setPreferredSize(new Dimension(70, 40));
+        backButton.setFont(new Font("Segoe UI Variable", Font.BOLD, 24));
         backButton.addActionListener(e -> {
             isCardView = false;
             currentCardIndex = 0;
@@ -631,10 +693,26 @@ public class FlashcardPanel {
         });
         
         // Add More Terms button
-        JButton addMoreTermsBtn = createButton.button("Add More Terms", null, Color.WHITE, null, false);
+        JButton addMoreTermsBtn = createButton.button("More Terms", null, Color.WHITE, null, false);
         addMoreTermsBtn.setBackground(new Color(0x275CE2));
         addMoreTermsBtn.setPreferredSize(new Dimension(120, 40));
         addMoreTermsBtn.addActionListener(e -> {
+            try {
+                String query = "SELECT subject FROM flashcard_sets WHERE set_id = ?";
+                try (Connection conn = DatabaseManager.getConnection();
+                     PreparedStatement stmt = conn.prepareStatement(query)) {
+                    stmt.setInt(1, setId);
+                    ResultSet rs = stmt.executeQuery();
+                    
+                    if (rs.next()) {
+                        String subject = rs.getString("subject");
+                        termsInputTitleLabel.setText("ADD TERMS TO " + subject.toUpperCase());
+                    }
+                }
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+            
             isCardView = false;
             currentCardIndex = 0;
             currentSetId = setId;
@@ -1086,6 +1164,7 @@ public class FlashcardPanel {
     }
     
     private static boolean createNewSet(String subject, String description) {
+        currentSubject = subject; // Set the current subject
         try {
             // First create the set
             String setQuery = "INSERT INTO flashcard_sets (user_id, subject, description) VALUES (?, ?, ?)";

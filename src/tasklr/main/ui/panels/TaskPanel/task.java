@@ -239,7 +239,7 @@ public class task {
 
     private static JPanel createListContainer() {
         // Main panel with fixed width
-        JPanel mainPanel = createPanel.panel(LIST_CONTAINER_COLOR, new BorderLayout(), new Dimension(400, 0));
+        JPanel mainPanel = createPanel.panel(LIST_CONTAINER_COLOR, new BorderLayout(), new Dimension(300, 0));
     
         
         // Configure task container with BoxLayout (Y_AXIS)
