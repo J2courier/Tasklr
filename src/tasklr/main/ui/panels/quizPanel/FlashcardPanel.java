@@ -42,6 +42,7 @@ public class FlashcardPanel {
     private static JPanel listContainer;
     private static JButton addMoreTermsBtn;
     private static JButton viewToggleBtn;
+    private static List<JButton> toggleButtons = new ArrayList<>();
     private static boolean isListVisible = true;
     private static JButton setCreationToggleBtn; // Store reference to set creation panel's toggle button
 
@@ -606,6 +607,22 @@ public class FlashcardPanel {
         panel.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
+                // Hide list container
+                isListVisible = false;
+                listContainer.setPreferredSize(new Dimension(0, 0));
+                
+                // Update all toggle buttons to "Show List"
+                for (JButton button : toggleButtons) {
+                    button.setText("Show List");
+                }
+                
+                // Store the state for when user returns via back button
+                setCreationToggleBtn.setText("Hide List");
+                
+                listContainer.revalidate();
+                listContainer.repaint();
+                
+                // Show flashcard mode
                 showFlashcardMode(setId);
             }
         });
@@ -742,6 +759,14 @@ public class FlashcardPanel {
         backButton.addActionListener(e -> {
             isCardView = false;
             currentCardIndex = 0;
+            isListVisible = true;  // Reset to true when going back
+            listContainer.setPreferredSize(new Dimension(600, 0));
+            
+            // Update all toggle buttons to "Hide List"
+            for (JButton button : toggleButtons) {
+                button.setText("Hide List");
+            }
+            
             cardLayout.show(mainCardPanel, "setCreation");
         });
 
