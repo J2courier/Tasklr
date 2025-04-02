@@ -42,6 +42,8 @@ public class FlashcardPanel {
     private static JPanel listContainer;
     private static JButton addMoreTermsBtn;
     private static JButton viewToggleBtn;
+    private static boolean isListVisible = true;
+    private static JButton setCreationToggleBtn; // Store reference to set creation panel's toggle button
 
     public static JPanel createFlashcardPanel() {
         JPanel panel = createPanel.panel(BACKGROUND_COLOR, new BorderLayout(), new Dimension(100, 100));
@@ -74,7 +76,8 @@ public class FlashcardPanel {
     }
 
     private static JPanel createSetCreationPanel() {
-        JPanel panel = createPanel.panel(Color.WHITE, new GridBagLayout(), new Dimension(0, 0));
+        JPanel panel = createPanel.panel(Color.WHITE, new BorderLayout(), null);
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         
         // Create header panel
         JPanel headerPanel = createPanel.panel(Color.WHITE, new BorderLayout(), new Dimension(0, 60));
@@ -86,55 +89,59 @@ public class FlashcardPanel {
         titleLabel.setForeground(new Color(0x1d1d1d));
         
         // Right side of header with toggle button
-        JButton toggleListBtn = createButton.button("Hide List", null, Color.WHITE, null, false);
-        toggleListBtn.setBackground(new Color(0x275CE2));
-        toggleListBtn.setPreferredSize(new Dimension(120, 40));
+        setCreationToggleBtn = createButton.button(isListVisible ? "Hide List" : "Show List", null, Color.WHITE, null, false);
+        setCreationToggleBtn.setBackground(new Color(0x275CE2));
+        setCreationToggleBtn.setPreferredSize(new Dimension(120, 40));
         
         // Add hover effect
-        new HoverButtonEffect(toggleListBtn, 
+        new HoverButtonEffect(setCreationToggleBtn, 
             new Color(0x275CE2),  // default background
             new Color(0x1E40AF),  // hover background
             Color.WHITE,          // default text
             Color.WHITE          // hover text
         );
         
-        toggleListBtn.addActionListener(e -> {
-            if (listContainer != null) {
-                if (toggleListBtn.getText().equals("Hide List")) {
-                    listContainer.setPreferredSize(new Dimension(0, 0));
-                    toggleListBtn.setText("Show List");
-                } else {
-                    listContainer.setPreferredSize(new Dimension(600, 0));
-                    toggleListBtn.setText("Hide List");
-                }
-                listContainer.revalidate();
-                listContainer.repaint();
-                panel.revalidate();
-                panel.repaint();
-            }
-        });
+        setCreationToggleBtn.addActionListener(e -> toggleListVisibility(setCreationToggleBtn));
         
         headerPanel.add(titleLabel, BorderLayout.WEST);
-        headerPanel.add(toggleListBtn, BorderLayout.EAST);
+        headerPanel.add(setCreationToggleBtn, BorderLayout.EAST);
 
         // Main content
         JPanel contentPanel = createPanel.panel(Color.WHITE, new GridBagLayout(), null);
+        contentPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.NORTHWEST;
+        gbc.weightx = 1.0;
+        
+        // Subject Label and Field
         JLabel subjectLabel = new JLabel("Subject Title");
         subjectLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 16));
+        gbc.insets = new Insets(0, 0, 5, 0);
+        contentPanel.add(subjectLabel, gbc);
         
-        JTextField subjectField = new JTextField(20);
-        subjectField.setPreferredSize(new Dimension(700, 40));
+        JTextField subjectField = new JTextField();
+        subjectField.setPreferredSize(new Dimension(0, 40));
+        gbc.insets = new Insets(0, 0, 20, 0);
+        contentPanel.add(subjectField, gbc);
         
+        // Description Label and Area
         JLabel descriptionLabel = new JLabel("Description (Optional)");
         descriptionLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 16));
+        gbc.insets = new Insets(0, 0, 5, 0);
+        contentPanel.add(descriptionLabel, gbc);
         
         JTextArea descriptionArea = new JTextArea();
         descriptionArea.setLineWrap(true);
         descriptionArea.setWrapStyleWord(true);
         JScrollPane descriptionScroll = new JScrollPane(descriptionArea);
-        descriptionScroll.setPreferredSize(new Dimension(700, 60));
+        descriptionScroll.setPreferredSize(new Dimension(0, 100));
+        gbc.insets = new Insets(0, 0, 20, 0);
+        contentPanel.add(descriptionScroll, gbc);
         
+        // Create Set Button
         JButton createSetBtn = createButton.button("Create Set", null, Color.WHITE, null, false);
         createSetBtn.setBackground(new Color(0x0065D9));
         createSetBtn.setPreferredSize(new Dimension(100, 40));
@@ -154,19 +161,19 @@ public class FlashcardPanel {
             }
         });
 
-        JPanel spacer = createPanel.panel(BACKGROUND_COLOR, null, new Dimension(0, 200));
+        JPanel buttonPanel = createPanel.panel(Color.WHITE, new FlowLayout(FlowLayout.LEFT, 0, 0), null);
+        buttonPanel.add(createSetBtn);
+        gbc.insets = new Insets(0, 0, 0, 0);
+        contentPanel.add(buttonPanel, gbc);
 
-        // Add components using ComponentUtil
-        ComponentUtil.addComponent(contentPanel, subjectLabel, 0, 0, 1, 1, new Insets(5, 10, 5, 5), 0);
-        ComponentUtil.addComponent(contentPanel, subjectField, 0, 1, 2, 1, new Insets(0, 10, 20, 5), 0);
-        ComponentUtil.addComponent(contentPanel, descriptionLabel, 0, 2, 1, 1, new Insets(5, 10, 5, 5), 0);
-        ComponentUtil.addComponent(contentPanel, descriptionScroll, 0, 3, 2, 1, new Insets(0, 10, 20, 5), 0);
-        ComponentUtil.addComponent(contentPanel, createSetBtn, 0, 4, 2, 1, new Insets(0, 10, 10, 5), 0);
-        ComponentUtil.addComponent(contentPanel, spacer, 0, 5, 2, 1, new Insets(0, 10, 10, 5), 0);
+        // Add glue to push everything to the top and fill remaining space
+        gbc.weighty = 1.0;
+        gbc.fill = GridBagConstraints.BOTH;
+        contentPanel.add(Box.createVerticalGlue(), gbc);
         
         // Add header and content to main panel
-        ComponentUtil.addComponent(panel, headerPanel, 0, 0, 2, 1, new Insets(0, 0, 20, 0), 0);
-        ComponentUtil.addComponent(panel, contentPanel, 0, 1, 2, 1, new Insets(0, 0, 0, 0), 0);
+        panel.add(headerPanel, BorderLayout.NORTH);
+        panel.add(contentPanel, BorderLayout.CENTER);
         
         return panel;
     }
@@ -739,7 +746,7 @@ public class FlashcardPanel {
         });
 
         // Toggle List Container button
-        JButton toggleListBtn = createButton.button("Hide List", null, Color.WHITE, null, false);
+        JButton toggleListBtn = createButton.button(isListVisible ? "Hide List" : "Show List", null, Color.WHITE, null, false);
         toggleListBtn.setBackground(new Color(0x275CE2));
         toggleListBtn.setPreferredSize(new Dimension(120, 40));
         
@@ -751,23 +758,7 @@ public class FlashcardPanel {
             Color.WHITE          // hover text
         );
         
-        toggleListBtn.addActionListener(e -> {
-            if (listContainer != null) {
-                if (toggleListBtn.getText().equals("Hide List")) {
-                    // Collapse the list container
-                    listContainer.setPreferredSize(new Dimension(0, 0));
-                    toggleListBtn.setText("Show List");
-                } else {
-                    // Restore the list container
-                    listContainer.setPreferredSize(new Dimension(600, 0));
-                    toggleListBtn.setText("Hide List");
-                }
-                listContainer.revalidate();
-                listContainer.repaint();
-                mainContainer.revalidate();
-                mainContainer.repaint();
-            }
-        });
+        toggleListBtn.addActionListener(e -> toggleListVisibility(toggleListBtn));
 
         // Add More Terms button
         addMoreTermsBtn = createButton.button("More Terms", null, Color.WHITE, null, false);
@@ -1307,6 +1298,36 @@ public class FlashcardPanel {
                 ex.printStackTrace();
                 Toast.error("Error adding term: " + ex.getMessage());
                 return false;
+            }
+        }
+    }
+    private static void toggleListVisibility(JButton sourceButton) {
+        if (listContainer != null) {
+            isListVisible = !isListVisible;
+            String buttonText = isListVisible ? "Hide List" : "Show List";
+            int listWidth = isListVisible ? 600 : 0;
+            
+            // Update both buttons if they exist
+            if (setCreationToggleBtn != null) {
+                setCreationToggleBtn.setText(buttonText);
+            }
+            
+            // Update the source button (if it's different from setCreationToggleBtn)
+            if (sourceButton != setCreationToggleBtn) {
+                sourceButton.setText(buttonText);
+            }
+            
+            // Update list container visibility
+            listContainer.setPreferredSize(new Dimension(listWidth, 0));
+            listContainer.revalidate();
+            listContainer.repaint();
+            
+            // Revalidate parent containers
+            Container parent = listContainer.getParent();
+            while (parent != null) {
+                parent.revalidate();
+                parent.repaint();
+                parent = parent.getParent();
             }
         }
     }
