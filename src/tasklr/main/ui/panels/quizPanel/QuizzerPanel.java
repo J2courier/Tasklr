@@ -30,7 +30,7 @@ public class QuizzerPanel {
     private static JPanel quizViewPanel;
     private static JPanel mainPanel;
     private static UIRefreshManager refreshManager;
-    
+
     // Remove the old scheduler variables as we'll use UIRefreshManager instead
     // private static ScheduledExecutorService scheduler;
     // private static ScheduledFuture<?> refreshTask;
@@ -44,7 +44,7 @@ public class QuizzerPanel {
     private static final Color PRIMARY_BUTTON_COLOR = new Color(0x275CE2);
     private static final Color PRIMARY_BUTTON_HOVER = new Color(0x3B6FF0);
     private static final Color PRIMARY_BUTTON_TEXT = Color.WHITE;
-    
+
     // Add references to HomePanel's counter panels
     private static TaskCounterPanel totalQuizTakenPanel;
     private static TaskCounterPanel totalQuizRetakedPanel;
@@ -68,52 +68,52 @@ public class QuizzerPanel {
     public static JPanel createQuizzerPanel() {
         // Use full size for the main panel
         mainPanel = createPanel.panel(BACKGROUND_COLOR, new BorderLayout(), null);
-        
+
         // Create and add list container
         JPanel listContainer = createListContainer();
         mainPanel.add(listContainer, BorderLayout.WEST);
-        
+
         // Create quiz view panel with CardLayout
         cardLayout = new CardLayout();
         quizViewPanel = new JPanel(cardLayout);
         quizViewPanel.setBackground(BACKGROUND_COLOR);
-        
+
         // Add empty state panel
         JPanel emptyStatePanel = createEmptyStatePanel();
         quizViewPanel.add(emptyStatePanel, "EMPTY_STATE");
-        
+
         mainPanel.add(quizViewPanel, BorderLayout.CENTER);
-        
+
         // Start the auto-refresh mechanism
         startAutoRefresh();
-        
+
         // Add component listener to handle cleanup
         mainPanel.addComponentListener(new ComponentAdapter() {
             @Override
             public void componentHidden(ComponentEvent e) {
                 stopAutoRefresh();
             }
-            
+
             @Override
             public void componentShown(ComponentEvent e) {
                 startAutoRefresh();
             }
         });
-        
+
         // Show empty state initially
         cardLayout.show(quizViewPanel, "EMPTY_STATE");
-        
+
         return mainPanel;
     }
 
     private static JPanel createEmptyStatePanel() {
         JPanel panel = new JPanel(new GridBagLayout());
         panel.setBackground(BACKGROUND_COLOR);
-        
+
         JLabel messageLabel = new JLabel("Select a flashcard set to start a quiz");
         messageLabel.setFont(new Font("Segoe UI Variable", Font.PLAIN, 16));
         messageLabel.setForeground(TEXT_COLOR);
-        
+
         panel.add(messageLabel);
         return panel;
     }
@@ -143,7 +143,7 @@ public class QuizzerPanel {
 
         // Initial refresh
         refreshQuizContainer();
-        
+
         return mainPanel;
     }
 
@@ -173,28 +173,28 @@ public class QuizzerPanel {
 
     public static synchronized void refreshQuizContainer() {
         if (quizContainer == null || !mainPanel.isShowing()) return;
-        
+
         SwingUtilities.invokeLater(() -> {
             quizContainer.removeAll();
-            
+
             try (Connection conn = DatabaseManager.getConnection()) {
                 String query = "SELECT set_id, subject, description FROM flashcard_sets WHERE user_id = ?";
                 try (PreparedStatement stmt = conn.prepareStatement(query)) {
                     stmt.setInt(1, UserSession.getUserId());
                     try (ResultSet rs = stmt.executeQuery()) {
                         boolean hasItems = false;
-                        
+
                         while (rs.next()) {
                             hasItems = true;
                             int setId = rs.getInt("set_id");
                             String subject = rs.getString("subject");
                             String description = rs.getString("description");
-                            
+
                             JPanel setPanel = createQuizSetItemPanel(setId, subject, description);
                             quizContainer.add(setPanel);
                             quizContainer.add(Box.createRigidArea(new Dimension(0, 5)));
                         }
-                        
+
                         // Update UI
                         quizContainer.revalidate();
                         quizContainer.repaint();
@@ -219,18 +219,18 @@ public class QuizzerPanel {
 
         // Text Panel (Left side)
         JPanel textPanel = createPanel.panel(null, new GridLayout(2, 1, 0, 5), null);
-        
+
         JLabel subjectLabel = new JLabel(subject);
         subjectLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 14));
         subjectLabel.setForeground(TEXT_COLOR);
-        
-        String shortDescription = description != null && description.length() > 50 
-            ? description.substring(0, 47) + "..." 
+
+        String shortDescription = description != null && description.length() > 50
+            ? description.substring(0, 47) + "..."
             : (description != null ? description : "No description");
         JLabel descriptionLabel = new JLabel(shortDescription);
         descriptionLabel.setFont(new Font("Segoe UI Variable", Font.PLAIN, 12));
         descriptionLabel.setForeground(TEXT_COLOR);
-        
+
         textPanel.add(subjectLabel);
         textPanel.add(descriptionLabel);
 
@@ -246,7 +246,7 @@ public class QuizzerPanel {
 
         // Add hover effect
         new HoverPanelEffect(panel, LIST_ITEM_COLOR, LIST_ITEM_HOVER_BG);
-        
+
         return panel;
     }
 
@@ -259,48 +259,48 @@ public class QuizzerPanel {
         }
 
         String[] options = {"Identification", "Multiple Choice"};
-        
+
         // Main dialog panel with padding
         JPanel dialogPanel = new JPanel(new BorderLayout(0, 10));
         dialogPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        
+
         // Title panel at the top
         JPanel titlePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-        JLabel titleLabel = new JLabel("Select Quiz Type for: " + subject);
+        JLabel titleLabel = new JLabel("Select Quiz Type for " + subject);
         titleLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 14));
         titlePanel.add(titleLabel);
-        
+
         // Content panel for all inputs
         JPanel contentPanel = new JPanel();
         contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
         contentPanel.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
-        
+
         // Quiz type section
         JPanel quizTypeSection = new JPanel();
         quizTypeSection.setLayout(new BoxLayout(quizTypeSection, BoxLayout.Y_AXIS));
         quizTypeSection.setAlignmentX(Component.LEFT_ALIGNMENT);
-        
+
         JLabel typeLabel = new JLabel("Quiz Type:");
         typeLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        
+
         JPanel comboPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 5));
         JComboBox<String> quizTypeCombo = new JComboBox<>(options);
-        quizTypeCombo.setPreferredSize(new Dimension(200, 30));
+        quizTypeCombo.setPreferredSize(new Dimension(230, 30));
         comboPanel.add(quizTypeCombo);
         comboPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        
+
         quizTypeSection.add(typeLabel);
         quizTypeSection.add(comboPanel);
-        
+
         // Number of items section
         JPanel itemsSection = new JPanel();
         itemsSection.setLayout(new BoxLayout(itemsSection, BoxLayout.Y_AXIS));
         itemsSection.setAlignmentX(Component.LEFT_ALIGNMENT);
         itemsSection.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
-        
+
         JLabel itemsLabel = new JLabel("Number of Items (max " + totalFlashcards + "):");
         itemsLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        
+
         JPanel spinnerPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 5));
         SpinnerNumberModel spinnerModel = new SpinnerNumberModel(
             totalFlashcards, // initial value
@@ -309,17 +309,17 @@ public class QuizzerPanel {
             1               // step
         );
         JSpinner itemsSpinner = new JSpinner(spinnerModel);
-        itemsSpinner.setPreferredSize(new Dimension(100, 30));
+        itemsSpinner.setPreferredSize(new Dimension(230, 30)); // Match the width of quizTypeCombo
         spinnerPanel.add(itemsSpinner);
         spinnerPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        
+
         itemsSection.add(itemsLabel);
         itemsSection.add(spinnerPanel);
-        
+
         // Add all sections to content panel
         contentPanel.add(quizTypeSection);
         contentPanel.add(itemsSection);
-        
+
         // Add all panels to dialog panel
         dialogPanel.add(titlePanel, BorderLayout.NORTH);
         dialogPanel.add(contentPanel, BorderLayout.CENTER);
@@ -335,7 +335,7 @@ public class QuizzerPanel {
         if (result == JOptionPane.OK_OPTION) {
             String selectedType = (String) quizTypeCombo.getSelectedItem();
             int numberOfItems = (Integer) itemsSpinner.getValue();
-            
+
             if ("Identification".equals(selectedType)) {
                 startIdentificationQuiz(setId, subject, numberOfItems);
             } else {
@@ -364,7 +364,7 @@ public class QuizzerPanel {
 
     private static void startIdentificationQuiz(int setId, String subject, int numberOfItems) {
         List<FlashCard> flashcards = fetchFlashcardsForSet(setId);
-        
+
         if (flashcards.isEmpty()) {
             Toast.error("No flashcards found in this set!");
             return;
@@ -382,7 +382,7 @@ public class QuizzerPanel {
     private static class FlashCard {
         String term;
         String definition;
-        
+
         FlashCard(String term, String definition) {
             this.term = term;
             this.definition = definition;
@@ -392,7 +392,7 @@ public class QuizzerPanel {
     private static List<FlashCard> fetchFlashcardsForSet(int setId) {
         System.out.println("[Quizzer Panel] Fetching flashcards for set " + setId + " at: ");
         List<FlashCard> flashcards = new ArrayList<>();
-        
+
         try (Connection conn = DriverManager.getConnection(url, dbUser, dbPass)) {
             String query = "SELECT term, definition FROM flashcards WHERE set_id = ?";
             try (PreparedStatement stmt = conn.prepareStatement(query)) {
@@ -411,7 +411,7 @@ public class QuizzerPanel {
             ex.printStackTrace();
             Toast.error("Error fetching flashcards: " + ex.getMessage());
         }
-        
+
         return flashcards;
     }
 
@@ -421,17 +421,17 @@ public class QuizzerPanel {
         questionPanel.setLayout(new BoxLayout(questionPanel, BoxLayout.Y_AXIS));
         questionPanel.setBackground(BACKGROUND_COLOR);
         questionPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
-        
+
         // Question container for proper alignment
         JPanel questionContainer = new JPanel(new BorderLayout(10, 0));
         questionContainer.setBackground(BACKGROUND_COLOR);
         questionContainer.setMaximumSize(new Dimension(width - 30, Integer.MAX_VALUE));
-        
+
         // Question number
         JLabel numberLabel = new JLabel(questionNumber + ".");
         numberLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 14));
         numberLabel.setVerticalAlignment(SwingConstants.TOP);
-        
+
         // Definition with dynamic wrapping
         JTextArea definitionLabel = new JTextArea(definition);
         definitionLabel.setFont(new Font("Segoe UI Variable", Font.PLAIN, 14));
@@ -440,7 +440,7 @@ public class QuizzerPanel {
         definitionLabel.setWrapStyleWord(true);
         definitionLabel.setLineWrap(true);
         definitionLabel.setBorder(null);
-        
+
         // Calculate preferred height based on text content
         FontMetrics fm = definitionLabel.getFontMetrics(definitionLabel.getFont());
         int textWidth = width - 80;
@@ -448,29 +448,29 @@ public class QuizzerPanel {
         int textLength = fm.stringWidth(definition);
         int lines = (textLength / textWidth) + 1;
         int definitionHeight = Math.max(50, lines * lineHeight);
-        
+
         definitionLabel.setPreferredSize(new Dimension(textWidth, definitionHeight));
-        
+
         questionContainer.add(numberLabel, BorderLayout.WEST);
         questionContainer.add(definitionLabel, BorderLayout.CENTER);
-        
+
         questionPanel.add(questionContainer);
         questionPanel.add(Box.createRigidArea(new Dimension(0, 15))); // Increased spacing after question
-        
+
         // Calculate total height based on content
         int contentHeight = definitionHeight + 30; // Basic height for question
-        
+
         // Set panel sizes - remove fixed maximum height to allow content to expand
         questionPanel.setPreferredSize(new Dimension(width, contentHeight));
         // Remove setMaximumSize to allow panel to grow based on content
-        
+
         return questionPanel;
     }
 
     private static JPanel createIdentificationQuizPanel(List<FlashCard> flashcards, String subject, int setId) {
         // Randomize flashcards
         Collections.shuffle(flashcards);
-        
+
         JPanel mainPanel = new JPanel();
         mainPanel.setLayout(new BorderLayout());
         mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
@@ -502,7 +502,7 @@ public class QuizzerPanel {
         // Create individual question panels
         for (int i = 0; i < flashcards.size(); i++) {
             FlashCard card = flashcards.get(i);
-            
+
             // Create question panel with GridBagLayout
             JPanel questionPanel = new JPanel(new GridBagLayout());
             questionPanel.setBackground(BACKGROUND_COLOR);
@@ -510,11 +510,11 @@ public class QuizzerPanel {
                 BorderFactory.createLineBorder(new Color(0xE0E0E0)),
                 BorderFactory.createEmptyBorder(15, 15, 15, 15)
             ));
-            
+
             GridBagConstraints gbc = new GridBagConstraints();
             gbc.fill = GridBagConstraints.HORIZONTAL;
             gbc.insets = new Insets(5, 5, 5, 5);
-            
+
             // Question label (row 1)
             JTextArea questionLabel = new JTextArea((i + 1) + ". " + card.definition);
             questionLabel.setFont(new Font("Segoe UI Variable", Font.PLAIN, 14));
@@ -523,13 +523,13 @@ public class QuizzerPanel {
             questionLabel.setWrapStyleWord(true);
             questionLabel.setLineWrap(true);
             questionLabel.setBorder(null);
-            
+
             gbc.gridx = 0;
             gbc.gridy = 0;
             gbc.weightx = 1.0;
             gbc.anchor = GridBagConstraints.WEST;
             questionPanel.add(questionLabel, gbc);
-            
+
             // Answer field (row 2)
             JTextField answerField = new JTextField();
             answerField.setFont(new Font("Segoe UI Variable", Font.PLAIN, 14));
@@ -539,11 +539,11 @@ public class QuizzerPanel {
             ));
             answerField.setPreferredSize(new Dimension(0, 35));
             answerFields.add(answerField);
-            
+
             gbc.gridy = 1;
             gbc.insets = new Insets(10, 5, 5, 5); // Extra top padding for the answer field
             questionPanel.add(answerField, gbc);
-            
+
             // Add question panel to questions container
             questionsPanel.add(questionPanel);
             questionsPanel.add(Box.createRigidArea(new Dimension(0, 15)));
@@ -552,7 +552,7 @@ public class QuizzerPanel {
         // Button panel
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         buttonPanel.setBackground(BACKGROUND_COLOR);
-        
+
         // Submit button
         JButton submitButton = new JButton("Submit Quiz");
         submitButton.setFont(new Font("Segoe UI Variable", Font.BOLD, 14));
@@ -563,20 +563,20 @@ public class QuizzerPanel {
             // Validate all fields are filled
             boolean allFieldsFilled = true;
             List<Integer> emptyQuestions = new ArrayList<>();
-            
+
             for (int i = 0; i < answerFields.size(); i++) {
                 if (answerFields.get(i).getText().trim().isEmpty()) {
                     allFieldsFilled = false;
                     emptyQuestions.add(i + 1);
                 }
             }
-            
+
             if (!allFieldsFilled) {
                 StringBuilder message = new StringBuilder("Please answer all questions before submitting.\n\nUnanswered questions:\n");
                 for (int questionNum : emptyQuestions) {
                     message.append("Question ").append(questionNum).append("\n");
                 }
-                
+
                 JOptionPane.showMessageDialog(
                     mainPanel,
                     message.toString(),
@@ -590,18 +590,18 @@ public class QuizzerPanel {
             for (int i = 0; i < answerFields.size(); i++) {
                 String userAnswer = answerFields.get(i).getText().trim().toLowerCase();
                 String correctAnswer = questionOrder.get(i).term.toLowerCase();
-                
+
                 if (userAnswer.equals(correctAnswer)) {
                     score.incrementAndGet();
                 }
             }
-            
+
             // Show results
             List<String> userAnswers = new ArrayList<>();
             for (JTextField field : answerFields) {
                 userAnswers.add(field.getText());
             }
-            showQuizResults(score.get(), flashcards.size(), mainPanel, 
+            showQuizResults(score.get(), flashcards.size(), mainPanel,
                 flashcards, subject, "Identification", setId, userAnswers);
         });
 
@@ -627,18 +627,18 @@ public class QuizzerPanel {
         return mainPanel;
     }
 
-    private static void showQuizResults(int score, int total, JPanel quizPanel, 
-            List<FlashCard> flashcards, String subject, String quizType, int setId, 
+    private static void showQuizResults(int score, int total, JPanel quizPanel,
+            List<FlashCard> flashcards, String subject, String quizType, int setId,
             List<String> userAnswers) {
         // Store the quiz attempt
         storeQuizAttempt(setId, score, total, quizType);
-        
+
         // Update statistics
         updateQuizStatistics(setId, score);
-        
+
         // Remove the current quiz panel
         quizViewPanel.remove(quizPanel);
-        
+
         // Show the overview
         showQuizOverview(flashcards, subject, score, total, quizType, setId, userAnswers);
     }
@@ -647,7 +647,7 @@ public class QuizzerPanel {
         try {
             String query = "INSERT INTO quiz_attempts (user_id, set_id, score, total_questions, quiz_type, completion_date) " +
                           "VALUES (?, ?, ?, ?, ?, NOW())";
-            
+
             DatabaseManager.executeUpdate(
                 query,
                 UserSession.getUserId(),
@@ -667,16 +667,16 @@ public class QuizzerPanel {
             // First, check if statistics exist for this user-set combination
             String checkQuery = "SELECT * FROM quiz_statistics WHERE user_id = ? AND set_id = ?";
             ResultSet rs = DatabaseManager.executeQuery(checkQuery, UserSession.getUserId(), setId);
-            
+
             if (rs.next()) {
                 // Update existing statistics
                 int currentAttempts = rs.getInt("total_attempts");
                 double currentAverage = rs.getDouble("average_score");
                 int highestScore = rs.getInt("highest_score");
-                
+
                 // Calculate new average
                 double newAverage = ((currentAverage * currentAttempts) + newScore) / (currentAttempts + 1);
-                
+
                 // Update statistics
                 String updateQuery = "UPDATE quiz_statistics SET " +
                                    "total_attempts = total_attempts + 1, " +
@@ -684,7 +684,7 @@ public class QuizzerPanel {
                                    "average_score = ?, " +
                                    "last_attempt_date = NOW() " +
                                    "WHERE user_id = ? AND set_id = ?";
-                
+
                 DatabaseManager.executeUpdate(
                     updateQuery,
                     newScore,
@@ -697,7 +697,7 @@ public class QuizzerPanel {
                 String insertQuery = "INSERT INTO quiz_statistics " +
                                    "(user_id, set_id, total_attempts, highest_score, average_score, last_attempt_date) " +
                                    "VALUES (?, ?, 1, ?, ?, NOW())";
-                
+
                 DatabaseManager.executeUpdate(
                     insertQuery,
                     UserSession.getUserId(),
@@ -714,7 +714,7 @@ public class QuizzerPanel {
 
     private static void startMultipleChoiceQuiz(int setId, String subject, int numberOfItems) {
         List<FlashCard> flashcards = fetchFlashcardsForSet(setId);
-        
+
         if (flashcards.isEmpty()) {
             Toast.error("No flashcards found in this set!");
             return;
@@ -737,7 +737,7 @@ public class QuizzerPanel {
     private static JPanel createMultipleChoiceQuizPanel(List<FlashCard> flashcards, String subject, int setId) {
         // Randomize flashcards
         Collections.shuffle(flashcards);
-        
+
         JPanel mainPanel = new JPanel();
         mainPanel.setLayout(new BorderLayout());
         mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
@@ -769,7 +769,7 @@ public class QuizzerPanel {
         // Create individual question panels
         for (int i = 0; i < flashcards.size(); i++) {
             FlashCard currentCard = flashcards.get(i);
-            
+
             // Create question panel with GridBagLayout
             JPanel questionPanel = new JPanel(new GridBagLayout());
             questionPanel.setBackground(BACKGROUND_COLOR);
@@ -777,11 +777,11 @@ public class QuizzerPanel {
                 BorderFactory.createLineBorder(new Color(0xE0E0E0)),
                 BorderFactory.createEmptyBorder(15, 15, 15, 15)
             ));
-            
+
             GridBagConstraints gbc = new GridBagConstraints();
             gbc.fill = GridBagConstraints.HORIZONTAL;
             gbc.insets = new Insets(5, 5, 5, 5);
-            
+
             // Question label (row 1, spans both columns)
             JTextArea questionLabel = new JTextArea((i + 1) + ". " + currentCard.definition);
             questionLabel.setFont(new Font("Segoe UI Variable", Font.PLAIN, 14));
@@ -790,34 +790,34 @@ public class QuizzerPanel {
             questionLabel.setWrapStyleWord(true);
             questionLabel.setLineWrap(true);
             questionLabel.setBorder(null);
-            
+
             gbc.gridx = 0;
             gbc.gridy = 0;
             gbc.gridwidth = 2;
             gbc.weightx = 1.0;
             gbc.anchor = GridBagConstraints.WEST;
             questionPanel.add(questionLabel, gbc);
-            
+
             // Generate choices
             List<String> choices = generateChoices(flashcards, currentCard, 4);
             ButtonGroup choiceGroup = new ButtonGroup();
-            
+
             // Add radio buttons in 2x2 grid
             for (int j = 0; j < choices.size(); j++) {
                 JRadioButton radioBtn = new JRadioButton(choices.get(j));
                 radioBtn.setFont(new Font("Segoe UI Variable", Font.PLAIN, 14));
                 radioBtn.setBackground(BACKGROUND_COLOR);
                 choiceGroup.add(radioBtn);
-                
+
                 gbc.gridx = j % 2;
                 gbc.gridy = (j / 2) + 1;
                 gbc.gridwidth = 1;
                 gbc.weightx = 0.5;
                 questionPanel.add(radioBtn, gbc);
             }
-            
+
             answerGroups.add(choiceGroup);
-            
+
             // Add question panel to questions container
             questionsPanel.add(questionPanel);
             questionsPanel.add(Box.createRigidArea(new Dimension(0, 15)));
@@ -826,7 +826,7 @@ public class QuizzerPanel {
         // Button panel
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         buttonPanel.setBackground(BACKGROUND_COLOR);
-        
+
         // Submit button
         JButton submitButton = new JButton("Submit Quiz");
         submitButton.setFont(new Font("Segoe UI Variable", Font.BOLD, 14));
@@ -837,30 +837,30 @@ public class QuizzerPanel {
             // Validate all questions have been answered
             boolean allQuestionsAnswered = true;
             List<Integer> unansweredQuestions = new ArrayList<>();
-            
+
             for (int i = 0; i < answerGroups.size(); i++) {
                 ButtonGroup group = answerGroups.get(i);
                 boolean answered = false;
-                
+
                 for (Enumeration<AbstractButton> buttons = group.getElements(); buttons.hasMoreElements();) {
                     if (buttons.nextElement().isSelected()) {
                         answered = true;
                         break;
                     }
                 }
-                
+
                 if (!answered) {
                     allQuestionsAnswered = false;
                     unansweredQuestions.add(i + 1);
                 }
             }
-            
+
             if (!allQuestionsAnswered) {
                 StringBuilder message = new StringBuilder("Please answer all questions before submitting.\n\nUnanswered questions:\n");
                 for (int questionNum : unansweredQuestions) {
                     message.append("Question ").append(questionNum).append("\n");
                 }
-                
+
                 JOptionPane.showMessageDialog(
                     mainPanel,
                     message.toString(),
@@ -874,7 +874,7 @@ public class QuizzerPanel {
             for (int i = 0; i < answerGroups.size(); i++) {
                 ButtonGroup group = answerGroups.get(i);
                 String correctAnswer = questionOrder.get(i).term;
-                
+
                 for (Enumeration<AbstractButton> buttons = group.getElements(); buttons.hasMoreElements();) {
                     AbstractButton button = buttons.nextElement();
                     if (button.isSelected() && button.getText().equals(correctAnswer)) {
@@ -883,7 +883,7 @@ public class QuizzerPanel {
                     }
                 }
             }
-            
+
             // Collect user answers
             List<String> userAnswers = new ArrayList<>();
             for (ButtonGroup group : answerGroups) {
@@ -897,8 +897,8 @@ public class QuizzerPanel {
                 }
                 userAnswers.add(selectedAnswer);
             }
-            
-            showQuizResults(score.get(), flashcards.size(), mainPanel, 
+
+            showQuizResults(score.get(), flashcards.size(), mainPanel,
                 flashcards, subject, "Multiple Choice", setId, userAnswers);
         });
 
@@ -927,17 +927,17 @@ public class QuizzerPanel {
     private static List<String> generateChoices(List<FlashCard> allCards, FlashCard correctCard, int numChoices) {
         List<String> choices = new ArrayList<>();
         choices.add(correctCard.term); // Add correct answer
-        
+
         // Create a list of other cards to choose from
         List<FlashCard> otherCards = new ArrayList<>(allCards);
         otherCards.remove(correctCard);
         Collections.shuffle(otherCards);
-        
+
         // Add random incorrect choices
         for (int i = 0; i < numChoices - 1 && i < otherCards.size(); i++) {
             choices.add(otherCards.get(i).term);
         }
-        
+
         // Shuffle the choices
         Collections.shuffle(choices);
         return choices;
@@ -951,7 +951,7 @@ public class QuizzerPanel {
         quizViewPanel.repaint();
     }
 
-    private static void showQuizOverview(List<FlashCard> flashcards, String subject, int score, 
+    private static void showQuizOverview(List<FlashCard> flashcards, String subject, int score,
             int total, String quizType, int setId, List<String> userAnswers) {
         JPanel overviewPanel = new JPanel(new BorderLayout());
         overviewPanel.setBackground(BACKGROUND_COLOR);
@@ -977,7 +977,7 @@ public class QuizzerPanel {
         // Content Panel with GridBagLayout for better spacing
         JPanel contentPanel = new JPanel(new GridBagLayout());
         contentPanel.setBackground(BACKGROUND_COLOR);
-        
+
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.weightx = 1;
@@ -990,7 +990,7 @@ public class QuizzerPanel {
             FlashCard card = flashcards.get(i);
             boolean isCorrect = userAnswers.get(i).trim().toLowerCase()
                 .equals(card.term.trim().toLowerCase());
-            
+
             JPanel itemPanel = new JPanel();
             itemPanel.setLayout(new BoxLayout(itemPanel, BoxLayout.Y_AXIS));
             itemPanel.setBackground(Color.WHITE);
@@ -1014,21 +1014,21 @@ public class QuizzerPanel {
             JPanel userAnswerPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
             userAnswerPanel.setBackground(Color.WHITE);
             userAnswerPanel.setAlignmentX(Component.LEFT_ALIGNMENT); // Align panel to the left
-            
+
             // Add icon based on correctness
-            ImageIcon icon = new ImageIcon(isCorrect ? 
-                "src/tasklr/resources/images/correct.png" : 
+            ImageIcon icon = new ImageIcon(isCorrect ?
+                "src/tasklr/resources/images/correct.png" :
                 "src/tasklr/resources/images/wrong.png");
             Image scaledImage = icon.getImage().getScaledInstance(16, 16, Image.SCALE_SMOOTH);
             JLabel iconLabel = new JLabel(new ImageIcon(scaledImage));
             iconLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));
-            
+
             JLabel userAnswerLabel = new JLabel("Your answer: " + userAnswers.get(i));
             userAnswerLabel.setFont(new Font("Segoe UI Variable", Font.PLAIN, 14));
             if (!isCorrect) {
                 userAnswerLabel.setForeground(new Color(0xFF0000));
             }
-            
+
             userAnswerPanel.add(iconLabel);
             userAnswerPanel.add(userAnswerLabel);
 
@@ -1044,7 +1044,7 @@ public class QuizzerPanel {
             itemPanel.add(userAnswerPanel);
             itemPanel.add(Box.createRigidArea(new Dimension(0, 5)));
             itemPanel.add(answerLabel);
-            
+
             // Add item panel to content panel
             contentPanel.add(itemPanel, gbc);
         }
@@ -1112,21 +1112,21 @@ public class QuizzerPanel {
         if (totalQuizTakenPanel != null && totalQuizRetakedPanel != null) {
             try {
                 String countQuery = """
-                    SELECT 
+                    SELECT
                         COUNT(*) as total_taken,
-                        SUM(CASE 
+                        SUM(CASE
                             WHEN EXISTS (
-                                SELECT 1 FROM quiz_attempts qa2 
-                                WHERE qa2.user_id = qa1.user_id 
-                                AND qa2.set_id = qa1.set_id 
+                                SELECT 1 FROM quiz_attempts qa2
+                                WHERE qa2.user_id = qa1.user_id
+                                AND qa2.set_id = qa1.set_id
                                 AND qa2.completion_date < qa1.completion_date
-                            ) THEN 1 
-                            ELSE 0 
+                            ) THEN 1
+                            ELSE 0
                         END) as total_retaken
-                    FROM quiz_attempts qa1 
+                    FROM quiz_attempts qa1
                     WHERE user_id = ?
                 """;
-                
+
                 ResultSet rs = DatabaseManager.executeQuery(countQuery, UserSession.getUserId());
                 if (rs.next()) {
                     totalQuizTakenPanel.updateCount(rs.getInt("total_taken"));
@@ -1139,4 +1139,4 @@ public class QuizzerPanel {
         }
     }
 }
-        
+

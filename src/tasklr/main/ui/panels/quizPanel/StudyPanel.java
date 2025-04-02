@@ -58,7 +58,7 @@ public class StudyPanel {
         JButton flashcardBtn = createButton.button("Flashcards", PRIMARY_COLOR, Color.WHITE, null, false);
         flashcardBtn.setPreferredSize(new Dimension(120, 40));
         
-        JButton quizzerBtn = createButton.button("Quizzer", PRIMARY_COLOR, Color.WHITE, null, false);
+        JButton quizzerBtn = createButton.button("Take a Quiz", PRIMARY_COLOR, Color.WHITE, null, false);
         quizzerBtn.setPreferredSize(new Dimension(120, 40));
 
         // Add hover effects to buttons

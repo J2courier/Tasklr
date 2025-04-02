@@ -15,7 +15,6 @@ public class Login extends JFrame {
     private static final int MIN_HEIGHT = 700;
     private static final Color BACKGROUND_COLOR = new Color(0xf1f3f6);
     private static final String APP_ICON_PATH = "C:/Users/ADMIN/Desktop/Tasklr/resource/icons/AppLogo.png";
-    
     private final JPanel centerContainer;
 
     public Login() {

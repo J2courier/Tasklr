@@ -3,7 +3,6 @@ package tasklr.utilities;
 import javax.swing.*;
 import java.util.concurrent.*;
 import java.util.Map;
-import java.util.HashMap;
 
 public class UIRefreshManager {
     private static UIRefreshManager instance;
@@ -39,8 +38,7 @@ public class UIRefreshManager {
     }
 
     public void startRefresh(String taskId, Runnable refreshTask, int refreshRate) {
-        stopRefresh(taskId); // Stop existing refresh if any
-
+        stopRefresh(taskId); 
         ScheduledFuture<?> future = scheduler.scheduleAtFixedRate(
             () -> SwingUtilities.invokeLater(() -> {
                 try {

@@ -11,7 +11,6 @@ import tasklr.main.ui.panels.TaskPanel.TaskFetcher;
 import tasklr.utilities.*;
 import tasklr.authentication.UserSession;
 import java.sql.*;
-import java.util.concurrent.ScheduledExecutorService;
 import tasklr.main.ui.panels.quizPanel.QuizzerPanel;
 import tasklr.utilities.Toast;
 

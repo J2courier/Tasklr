@@ -23,8 +23,8 @@ public class FlashcardPanel {
     private static final Color BACKGROUND_COLOR = new Color(0xFFFFFF);
     // private static final Color TEXTFIELD_COLOR = new Color(0xFFFFFF);
     private static final Color LIST_CONTAINER_COLOR = new Color(0xFFFFFF);
-    private static final Color LIST_ITEM_COLOR = new Color(0xFBFBFC);
-    private static final Color LIST_ITEM_HOVER_BG = new Color(0xE8EAED);
+    private static final Color LIST_ITEM_COLOR = new Color(0xFFFFFF);
+    private static final Color LIST_ITEM_HOVER_BG = new Color(0xF5F5F5);
     private static final Color LIST_ITEM_HOVER_BORDER = new Color(0x0082FC);
     private static final Color PRIMARY_BUTTON_COLOR = new Color(0x275CE2);
     private static final Color PRIMARY_BUTTON_HOVER = new Color(0x3B6FF0);
@@ -39,6 +39,9 @@ public class FlashcardPanel {
     private static int currentCardIndex = 0;
     private static List<Map<String, String>> flashcardsList = new ArrayList<>();
     private static JLabel termsInputTitleLabel;
+    private static JPanel listContainer;
+    private static JButton addMoreTermsBtn;
+    private static JButton viewToggleBtn;
 
     public static JPanel createFlashcardPanel() {
         JPanel panel = createPanel.panel(BACKGROUND_COLOR, new BorderLayout(), new Dimension(100, 100));
@@ -60,7 +63,7 @@ public class FlashcardPanel {
         mainCardPanel.add(termsInputPanel, "termsInput");
         mainCardPanel.add(flashcardModePanel, "flashcardMode");
         
-        JPanel listContainer = createListContainer();
+        listContainer = createListContainer();
         
         contentPanel.add(mainCardPanel, BorderLayout.CENTER);
         contentPanel.add(listContainer, BorderLayout.WEST);
@@ -73,9 +76,49 @@ public class FlashcardPanel {
     private static JPanel createSetCreationPanel() {
         JPanel panel = createPanel.panel(Color.WHITE, new GridBagLayout(), new Dimension(0, 0));
         
+        // Create header panel
+        JPanel headerPanel = createPanel.panel(Color.WHITE, new BorderLayout(), new Dimension(0, 60));
+        headerPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        
+        // Left side of header with title
         JLabel titleLabel = new JLabel("CREATE FLASHCARD SET");
         titleLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 16));
         titleLabel.setForeground(new Color(0x1d1d1d));
+        
+        // Right side of header with toggle button
+        JButton toggleListBtn = createButton.button("Hide List", null, Color.WHITE, null, false);
+        toggleListBtn.setBackground(new Color(0x275CE2));
+        toggleListBtn.setPreferredSize(new Dimension(120, 40));
+        
+        // Add hover effect
+        new HoverButtonEffect(toggleListBtn, 
+            new Color(0x275CE2),  // default background
+            new Color(0x1E40AF),  // hover background
+            Color.WHITE,          // default text
+            Color.WHITE          // hover text
+        );
+        
+        toggleListBtn.addActionListener(e -> {
+            if (listContainer != null) {
+                if (toggleListBtn.getText().equals("Hide List")) {
+                    listContainer.setPreferredSize(new Dimension(0, 0));
+                    toggleListBtn.setText("Show List");
+                } else {
+                    listContainer.setPreferredSize(new Dimension(600, 0));
+                    toggleListBtn.setText("Hide List");
+                }
+                listContainer.revalidate();
+                listContainer.repaint();
+                panel.revalidate();
+                panel.repaint();
+            }
+        });
+        
+        headerPanel.add(titleLabel, BorderLayout.WEST);
+        headerPanel.add(toggleListBtn, BorderLayout.EAST);
+
+        // Main content
+        JPanel contentPanel = createPanel.panel(Color.WHITE, new GridBagLayout(), null);
         
         JLabel subjectLabel = new JLabel("Subject Title");
         subjectLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 16));
@@ -107,20 +150,23 @@ public class FlashcardPanel {
                 subjectField.setText("");
                 descriptionArea.setText("");
                 cardLayout.show(mainCardPanel, "termsInput");
-                refreshListContainer(); // Refresh to show new set
+                refreshListContainer();
             }
         });
 
         JPanel spacer = createPanel.panel(BACKGROUND_COLOR, null, new Dimension(0, 200));
 
         // Add components using ComponentUtil
-        ComponentUtil.addComponent(panel, titleLabel, 0, 0, 2, 1, new Insets(10, 10, 20, 10), 0);
-        ComponentUtil.addComponent(panel, subjectLabel, 0, 1, 1, 1, new Insets(5, 10, 5, 5), 0);
-        ComponentUtil.addComponent(panel, subjectField, 0, 2, 2, 1, new Insets(0, 10, 20, 5), 0);
-        ComponentUtil.addComponent(panel, descriptionLabel, 0, 3, 1, 1, new Insets(5, 10, 5, 5), 0);
-        ComponentUtil.addComponent(panel, descriptionScroll, 0, 4, 2, 1, new Insets(0, 10, 20, 5), 0);
-        ComponentUtil.addComponent(panel, createSetBtn, 0, 5, 2, 1, new Insets(0, 10, 10, 5), 0);
-        ComponentUtil.addComponent(panel, spacer, 0, 6, 2, 1, new Insets(0, 10, 10, 5), 0);
+        ComponentUtil.addComponent(contentPanel, subjectLabel, 0, 0, 1, 1, new Insets(5, 10, 5, 5), 0);
+        ComponentUtil.addComponent(contentPanel, subjectField, 0, 1, 2, 1, new Insets(0, 10, 20, 5), 0);
+        ComponentUtil.addComponent(contentPanel, descriptionLabel, 0, 2, 1, 1, new Insets(5, 10, 5, 5), 0);
+        ComponentUtil.addComponent(contentPanel, descriptionScroll, 0, 3, 2, 1, new Insets(0, 10, 20, 5), 0);
+        ComponentUtil.addComponent(contentPanel, createSetBtn, 0, 4, 2, 1, new Insets(0, 10, 10, 5), 0);
+        ComponentUtil.addComponent(contentPanel, spacer, 0, 5, 2, 1, new Insets(0, 10, 10, 5), 0);
+        
+        // Add header and content to main panel
+        ComponentUtil.addComponent(panel, headerPanel, 0, 0, 2, 1, new Insets(0, 0, 20, 0), 0);
+        ComponentUtil.addComponent(panel, contentPanel, 0, 1, 2, 1, new Insets(0, 0, 0, 0), 0);
         
         return panel;
     }
@@ -691,9 +737,40 @@ public class FlashcardPanel {
             currentCardIndex = 0;
             cardLayout.show(mainCardPanel, "setCreation");
         });
+
+        // Toggle List Container button
+        JButton toggleListBtn = createButton.button("Hide List", null, Color.WHITE, null, false);
+        toggleListBtn.setBackground(new Color(0x275CE2));
+        toggleListBtn.setPreferredSize(new Dimension(120, 40));
         
+        // Add hover effect
+        new HoverButtonEffect(toggleListBtn, 
+            new Color(0x275CE2),  // default background
+            new Color(0x1E40AF),  // hover background
+            Color.WHITE,          // default text
+            Color.WHITE          // hover text
+        );
+        
+        toggleListBtn.addActionListener(e -> {
+            if (listContainer != null) {
+                if (toggleListBtn.getText().equals("Hide List")) {
+                    // Collapse the list container
+                    listContainer.setPreferredSize(new Dimension(0, 0));
+                    toggleListBtn.setText("Show List");
+                } else {
+                    // Restore the list container
+                    listContainer.setPreferredSize(new Dimension(600, 0));
+                    toggleListBtn.setText("Hide List");
+                }
+                listContainer.revalidate();
+                listContainer.repaint();
+                mainContainer.revalidate();
+                mainContainer.repaint();
+            }
+        });
+
         // Add More Terms button
-        JButton addMoreTermsBtn = createButton.button("More Terms", null, Color.WHITE, null, false);
+        addMoreTermsBtn = createButton.button("More Terms", null, Color.WHITE, null, false);
         addMoreTermsBtn.setBackground(new Color(0x275CE2));
         addMoreTermsBtn.setPreferredSize(new Dimension(120, 40));
         addMoreTermsBtn.addActionListener(e -> {
@@ -720,7 +797,7 @@ public class FlashcardPanel {
         });
 
         // View Toggle button
-        JButton viewToggleBtn = createButton.button(isCardView ? "List View" : "Card View", null, Color.WHITE, null, false);
+        viewToggleBtn = createButton.button(isCardView ? "List View" : "Card View", null, Color.WHITE, null, false);
         viewToggleBtn.setBackground(new Color(0x275CE2));
         viewToggleBtn.setPreferredSize(new Dimension(120, 40));
         viewToggleBtn.addActionListener(e -> {
@@ -730,6 +807,7 @@ public class FlashcardPanel {
         });
         
         leftButtonsPanel.add(backButton);
+        leftButtonsPanel.add(toggleListBtn);
         leftButtonsPanel.add(addMoreTermsBtn);
         leftButtonsPanel.add(viewToggleBtn);
         
