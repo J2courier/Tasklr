@@ -11,6 +11,7 @@ import tasklr.main.ui.panels.quizPanel.StudyPanel;
 import tasklr.main.ui.panels.Home.HomePanel;
 import tasklr.utilities.createPanel;
 import tasklr.authentication.Login;
+import tasklr.main.ui.panels.Settings.SettingsPanel;
 
 public class Tasklr extends JFrame {
     private String username;
@@ -53,29 +54,35 @@ public class Tasklr extends JFrame {
             .getImage().getScaledInstance(40, 40, Image.SCALE_SMOOTH));
         ImageIcon overviewBtn = new ImageIcon(new ImageIcon("C:/Users/ADMIN/Desktop/Tasklr/resource/icons/Overview.png")
             .getImage().getScaledInstance(40, 40, Image.SCALE_SMOOTH));
+        ImageIcon settingsBtn = new ImageIcon(new ImageIcon("C:/Users/ADMIN/Desktop/Tasklr/resource/icons/settings.png")
+            .getImage().getScaledInstance(40, 40, Image.SCALE_SMOOTH));
 
         JLabel homeBtnIcon = new JLabel(homeBtn);
         JLabel taskBtnIcon = new JLabel(taskBtn);
         JLabel quizBtnIcon = new JLabel(quizBtn);
         JLabel overviewBtnIcon = new JLabel(overviewBtn);
+        JLabel settingsBtnIcon = new JLabel(settingsBtn);
         
         // Add tooltips to navigation buttons
         homeBtnIcon.setToolTipText("Home Dashboard");
         taskBtnIcon.setToolTipText("Manage Tasks");
         quizBtnIcon.setToolTipText("Flashcards & Quizzes");
         overviewBtnIcon.setToolTipText("Progress Overview");
+        settingsBtnIcon.setToolTipText("Settings");
         
         // Add icons to navbar
         navbar.add(homeBtnIcon);
         navbar.add(taskBtnIcon);
         navbar.add(quizBtnIcon);
         navbar.add(overviewBtnIcon);
+        navbar.add(settingsBtnIcon);
   
         // Add panels to body with specific constraints
         body.add(homePanel(username), "homePanel");
         body.add(task.createTaskPanel(username), "taskPanel");
         body.add(StudyPanel.createStudyPanel(), "quizPanel");
-        body.add(overview.createOverview(username), "overviewPanel");  // Add overview panel
+        body.add(overview.createOverview(username), "overviewPanel");
+        body.add(SettingsPanel.createSettingsPanel(), "settingsPanel");  // Add settings panel
         
         // Show initial panel
         cardLayout.show(body, "homePanel");
@@ -124,6 +131,19 @@ public class Tasklr extends JFrame {
         overviewBtnIcon.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 cardLayout.show(body, "overviewPanel");
+            }
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                setCursor(new Cursor(Cursor.HAND_CURSOR));
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+            }
+        });
+
+        // Add mouse listener for settings button
+        settingsBtnIcon.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                cardLayout.show(body, "settingsPanel");
             }
             public void mouseEntered(java.awt.event.MouseEvent evt) {
                 setCursor(new Cursor(Cursor.HAND_CURSOR));
