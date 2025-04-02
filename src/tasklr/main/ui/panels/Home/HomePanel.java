@@ -697,17 +697,28 @@ public class HomePanel {
         completedTaskLabel.setForeground(TEXT_DARK);
         headerPanel.add(completedTaskLabel, BorderLayout.WEST);
 
-        // Initialize recentTasksWrapper
+        // Initialize recentTasksWrapper with defined size
         recentTasksWrapper = new JPanel();
         recentTasksWrapper.setLayout(new BoxLayout(recentTasksWrapper, BoxLayout.Y_AXIS));
         recentTasksWrapper.setBackground(BACKGROUND_COLOR);
         recentTasksWrapper.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
 
-        // Create scroll pane
+        // Create scroll pane with defined size
         recentTaskListContainer = new JScrollPane(recentTasksWrapper);
         recentTaskListContainer.setBorder(null);
         recentTaskListContainer.setBackground(BACKGROUND_COLOR);
         recentTaskListContainer.getVerticalScrollBar().setUnitIncrement(16);
+        
+        // Set preferred size for the scroll pane
+        recentTaskListContainer.setPreferredSize(new Dimension(CONTAINER_WIDTH, 300)); // Fixed height of 300px
+        
+        // Set minimum size to ensure scrollbar appears
+        recentTasksWrapper.setMinimumSize(new Dimension(CONTAINER_WIDTH - 20, 300));
+        
+        // Enable vertical scrollbar always
+        recentTaskListContainer.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+        // Disable horizontal scrollbar
+        recentTaskListContainer.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
         // Initial load of completed tasks
         refreshRecentTasksList();
@@ -725,7 +736,8 @@ public class HomePanel {
         recentTasksWrapper.removeAll();
         
         try {
-            String query = "SELECT title FROM tasks " + "WHERE user_id = ? AND status = 'completed' ";
+            String query = "SELECT title FROM tasks " + 
+                          "WHERE user_id = ? AND status = 'completed' ";
                           
             ResultSet rs = DatabaseManager.executeQuery(query, UserSession.getUserId());
 
@@ -734,20 +746,32 @@ public class HomePanel {
                 hasItems = true;
                 String title = rs.getString("title");
 
+                // Create task item panel with fixed dimensions
                 JPanel taskItemPanel = new JPanel(new BorderLayout(10, 0));
                 taskItemPanel.setBackground(CARD_COLOR);
                 taskItemPanel.setBorder(BorderFactory.createCompoundBorder(
                     BorderFactory.createLineBorder(BORDER_COLOR, 1),
                     BorderFactory.createEmptyBorder(15, 15, 15, 15)
                 ));
+                
+                // Set both preferred and maximum size
+                taskItemPanel.setPreferredSize(new Dimension(CONTAINER_WIDTH - 40, 70));
+                taskItemPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 70));
+                taskItemPanel.setMinimumSize(new Dimension(CONTAINER_WIDTH - 40, 70));
 
                 JLabel titleLabel = new JLabel(title);
                 titleLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
                 titleLabel.setForeground(TEXT_DARK);
                 taskItemPanel.add(titleLabel, BorderLayout.CENTER);
 
-                recentTasksWrapper.add(taskItemPanel);
-                recentTasksWrapper.add(Box.createRigidArea(new Dimension(0, 10)));
+                // Wrap taskItemPanel in another panel to maintain width
+                JPanel wrapperPanel = new JPanel();
+                wrapperPanel.setLayout(new BoxLayout(wrapperPanel, BoxLayout.X_AXIS));
+                wrapperPanel.setBackground(BACKGROUND_COLOR);
+                wrapperPanel.add(taskItemPanel);
+                
+                recentTasksWrapper.add(wrapperPanel);
+                recentTasksWrapper.add(Box.createRigidArea(new Dimension(0, 10))); // Spacing between items
             }
 
             if (!hasItems) {
