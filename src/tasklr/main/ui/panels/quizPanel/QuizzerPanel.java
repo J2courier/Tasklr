@@ -65,13 +65,17 @@ public class QuizzerPanel {
         }
     }
 
+    // Add static variable to track list visibility
+    private static boolean isListVisible = true;
+    private static JPanel listContainer;
+
     public static JPanel createQuizzerPanel() {
         // Use full size for the main panel
         mainPanel = createPanel.panel(BACKGROUND_COLOR, new BorderLayout(), null);
 
         // Create and add list container
-        JPanel listContainer = createListContainer();
-        mainPanel.add(listContainer, BorderLayout.WEST);
+        JPanel listContainerPanel = createListContainer();
+        mainPanel.add(listContainerPanel, BorderLayout.WEST);
 
         // Create quiz view panel with CardLayout
         cardLayout = new CardLayout();
@@ -107,20 +111,52 @@ public class QuizzerPanel {
     }
 
     private static JPanel createEmptyStatePanel() {
-        JPanel panel = new JPanel(new GridBagLayout());
+        JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(BACKGROUND_COLOR);
+
+        // Create header panel
+        JPanel headerPanel = new JPanel(new BorderLayout());
+        headerPanel.setBackground(BACKGROUND_COLOR);
+        headerPanel.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+        headerPanel.setPreferredSize(new Dimension(0, 60));
+        
+        // Create toggle button
+        JButton toggleListBtn = createButton.button(isListVisible ? "Hide List" : "Show List", null, Color.WHITE, null, false);
+        toggleListBtn.setBackground(PRIMARY_BUTTON_COLOR);
+        toggleListBtn.setPreferredSize(new Dimension(120, 40));
+        
+        // Add hover effect
+        new HoverButtonEffect(toggleListBtn, 
+            PRIMARY_BUTTON_COLOR,  // default background
+            PRIMARY_BUTTON_HOVER,  // hover background
+            PRIMARY_BUTTON_TEXT,   // default text
+            PRIMARY_BUTTON_TEXT    // hover text
+        );
+        
+        toggleListBtn.addActionListener(e -> toggleListVisibility(toggleListBtn));
+    
+        headerPanel.add(toggleListBtn, BorderLayout.EAST);
+
+        // Create content panel for the message
+        JPanel contentPanel = new JPanel(new GridBagLayout());
+        contentPanel.setBackground(BACKGROUND_COLOR);
 
         JLabel messageLabel = new JLabel("Select a flashcard set to start a quiz");
         messageLabel.setFont(new Font("Segoe UI Variable", Font.PLAIN, 16));
         messageLabel.setForeground(TEXT_COLOR);
 
-        panel.add(messageLabel);
+        contentPanel.add(messageLabel);
+
+        // Add components to main panel
+        panel.add(headerPanel, BorderLayout.NORTH);
+        panel.add(contentPanel, BorderLayout.CENTER);
+
         return panel;
     }
 
     private static JPanel createListContainer() {
         // Main container with fixed width
-        JPanel mainPanel = createPanel.panel(LIST_CONTAINER_COLOR, new BorderLayout(), new Dimension(600, 0));
+        listContainer = createPanel.panel(LIST_CONTAINER_COLOR, new BorderLayout(), new Dimension(600, 0));
         // mainPanel.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 1, LIST_ITEM_HOVER_BORDER));
         // Configure quiz container
         quizContainer = createPanel.panel(LIST_CONTAINER_COLOR, null, null);
@@ -139,12 +175,36 @@ public class QuizzerPanel {
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
         scrollPane.getViewport().setBackground(LIST_CONTAINER_COLOR);
 
-        mainPanel.add(scrollPane, BorderLayout.CENTER);
+        listContainer.add(scrollPane, BorderLayout.CENTER);
 
         // Initial refresh
         refreshQuizContainer();
 
-        return mainPanel;
+        return listContainer;
+    }
+
+    private static void toggleListVisibility(JButton toggleButton) {
+        if (listContainer != null) {
+            isListVisible = !isListVisible;
+            String buttonText = isListVisible ? "Hide List" : "Show List";
+            int listWidth = isListVisible ? 600 : 0;
+            
+            // Update button text
+            toggleButton.setText(buttonText);
+            
+            // Update list container visibility
+            listContainer.setPreferredSize(new Dimension(listWidth, 0));
+            listContainer.revalidate();
+            listContainer.repaint();
+            
+            // Revalidate parent containers
+            Container parent = listContainer.getParent();
+            while (parent != null) {
+                parent.revalidate();
+                parent.repaint();
+                parent = parent.getParent();
+            }
+        }
     }
 
     private static void startAutoRefresh() {
@@ -333,6 +393,13 @@ public class QuizzerPanel {
         );
 
         if (result == JOptionPane.OK_OPTION) {
+            // Hide list container when starting quiz
+            isListVisible = false;
+            listContainer.setPreferredSize(new Dimension(0, 0));
+            updateAllToggleButtons();
+            listContainer.revalidate();
+            listContainer.repaint();
+
             String selectedType = (String) quizTypeCombo.getSelectedItem();
             int numberOfItems = (Integer) itemsSpinner.getValue();
 
@@ -341,6 +408,21 @@ public class QuizzerPanel {
             } else {
                 startMultipleChoiceQuiz(setId, subject, numberOfItems);
             }
+        } else {
+            // Show list container when dialog is cancelled
+            isListVisible = true;
+            listContainer.setPreferredSize(new Dimension(600, 0));
+            updateAllToggleButtons();
+            listContainer.revalidate();
+            listContainer.repaint();
+        }
+
+        // Revalidate parent containers
+        Container parent = listContainer.getParent();
+        while (parent != null) {
+            parent.revalidate();
+            parent.repaint();
+            parent = parent.getParent();
         }
     }
 
@@ -476,13 +558,32 @@ public class QuizzerPanel {
         mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         mainPanel.setBackground(BACKGROUND_COLOR);
 
-        // Header
+        // Header with BorderLayout
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setBackground(BACKGROUND_COLOR);
+        headerPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        
+        // Title on the left
         JLabel titleLabel = new JLabel(subject + " - Identification Quiz");
         titleLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 24));
-        headerPanel.add(titleLabel, BorderLayout.NORTH);
-        headerPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        
+        // Toggle button on the right
+        JButton toggleListBtn = createButton.button(isListVisible ? "Hide List" : "Show List", null, Color.WHITE, null, false);
+        toggleListBtn.setBackground(PRIMARY_BUTTON_COLOR);
+        toggleListBtn.setPreferredSize(new Dimension(120, 40));
+        
+        // Add hover effect
+        new HoverButtonEffect(toggleListBtn, 
+            PRIMARY_BUTTON_COLOR,  // default background
+            PRIMARY_BUTTON_HOVER,  // hover background
+            PRIMARY_BUTTON_TEXT,   // default text
+            PRIMARY_BUTTON_TEXT    // hover text
+        );
+        
+        toggleListBtn.addActionListener(e -> toggleListVisibility(toggleListBtn));
+        
+        headerPanel.add(titleLabel, BorderLayout.WEST);
+        headerPanel.add(toggleListBtn, BorderLayout.EAST);
 
         // Questions container
         JPanel questionsPanel = new JPanel();
@@ -611,10 +712,7 @@ public class QuizzerPanel {
         closeButton.setBackground(Color.RED);
         closeButton.setForeground(Color.WHITE);
         closeButton.setFocusPainted(false);
-        closeButton.addActionListener(e -> {
-            cardLayout.show(quizViewPanel, "EMPTY_STATE");
-            quizViewPanel.remove(mainPanel);
-        });
+        closeButton.addActionListener(e -> closeQuiz(mainPanel));
 
         buttonPanel.add(submitButton);
         buttonPanel.add(closeButton);
@@ -743,13 +841,32 @@ public class QuizzerPanel {
         mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         mainPanel.setBackground(BACKGROUND_COLOR);
 
-        // Header
+        // Header with BorderLayout
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setBackground(BACKGROUND_COLOR);
         headerPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        
+        // Title on the left
         JLabel titleLabel = new JLabel(subject + " - Multiple Choice Quiz");
         titleLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 24));
-        headerPanel.add(titleLabel, BorderLayout.NORTH);
+        
+        // Toggle button on the right
+        JButton toggleListBtn = createButton.button(isListVisible ? "Hide List" : "Show List", null, Color.WHITE, null, false);
+        toggleListBtn.setBackground(PRIMARY_BUTTON_COLOR);
+        toggleListBtn.setPreferredSize(new Dimension(120, 40));
+        
+        // Add hover effect
+        new HoverButtonEffect(toggleListBtn, 
+            PRIMARY_BUTTON_COLOR,  // default background
+            PRIMARY_BUTTON_HOVER,  // hover background
+            PRIMARY_BUTTON_TEXT,   // default text
+            PRIMARY_BUTTON_TEXT    // hover text
+        );
+        
+        toggleListBtn.addActionListener(e -> toggleListVisibility(toggleListBtn));
+        
+        headerPanel.add(titleLabel, BorderLayout.WEST);
+        headerPanel.add(toggleListBtn, BorderLayout.EAST);
 
         // Questions container with vertical BoxLayout
         JPanel questionsPanel = new JPanel();
@@ -908,10 +1025,7 @@ public class QuizzerPanel {
         closeButton.setBackground(Color.RED);
         closeButton.setForeground(Color.WHITE);
         closeButton.setFocusPainted(false);
-        closeButton.addActionListener(e -> {
-            cardLayout.show(quizViewPanel, "EMPTY_STATE");
-            quizViewPanel.remove(mainPanel);
-        });
+        closeButton.addActionListener(e -> closeQuiz(mainPanel));
 
         buttonPanel.add(submitButton);
         buttonPanel.add(closeButton);
@@ -945,10 +1059,48 @@ public class QuizzerPanel {
 
     // Add a helper method to handle quiz closure
     private static void closeQuiz(JPanel quizPanel) {
+        // Reset list container if it's hidden
+        if (!isListVisible) {
+            isListVisible = true;
+            listContainer.setPreferredSize(new Dimension(600, 0));
+            
+            // Update all toggle buttons in the view
+            updateAllToggleButtons();
+            
+            // Revalidate parent containers
+            Container parent = listContainer.getParent();
+            while (parent != null) {
+                parent.revalidate();
+                parent.repaint();
+                parent = parent.getParent();
+            }
+        }
+
+        // Show empty state and remove quiz panel
         cardLayout.show(quizViewPanel, "EMPTY_STATE");
         quizViewPanel.remove(quizPanel);
         quizViewPanel.revalidate();
         quizViewPanel.repaint();
+    }
+
+    // Helper method to update all toggle buttons
+    private static void updateAllToggleButtons() {
+        // Update all components in the main panel
+        updateToggleButtonsInContainer(mainPanel);
+    }
+
+    private static void updateToggleButtonsInContainer(Container container) {
+        for (Component comp : container.getComponents()) {
+            if (comp instanceof JButton) {
+                JButton btn = (JButton) comp;
+                if (btn.getText().equals("Show List") || btn.getText().equals("Hide List")) {
+                    btn.setText("Hide List");
+                }
+            }
+            if (comp instanceof Container) {
+                updateToggleButtonsInContainer((Container) comp);
+            }
+        }
     }
 
     private static void showQuizOverview(List<FlashCard> flashcards, String subject, int score,
