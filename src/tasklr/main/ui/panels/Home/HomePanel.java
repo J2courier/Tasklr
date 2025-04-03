@@ -44,6 +44,8 @@ public class HomePanel {
     private static TaskCounterPanel totalQuizTakenPanel;
     private static TaskCounterPanel totalQuizRetakedPanel;
 
+    private static JLabel welcomeLabel; // Add this field
+
     public static JPanel createOverview(String username) {            
         JPanel mainPanel = createPanel.panel(BACKGROUND_COLOR, new GridBagLayout(), new Dimension(400, 0));
 
@@ -205,8 +207,8 @@ public class HomePanel {
         // Add small gap between labels
         welcomePanel.add(Box.createVerticalStrut(5));
 
-        // Welcome label
-        JLabel welcomeLabel = new JLabel("WELCOME, " + username);
+        // Welcome label - modified to be accessible
+        welcomeLabel = new JLabel("WELCOME, " + username);
         welcomeLabel.setForeground(Color.WHITE);
         welcomeLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 24));
         welcomeLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -809,5 +811,11 @@ public class HomePanel {
         }
     }
 
+    // Add this new method to update the welcome message
+    public static void updateWelcomeMessage() {
+        if (welcomeLabel != null) {
+            welcomeLabel.setText("WELCOME, " + UserSession.getUsername());
+        }
+    }
 
 }

@@ -32,6 +32,12 @@ public class UserSession {
         return (instance != null) ? instance.username : "";
     }
 
+    public static void setUsername(String newUsername) {
+        if (instance != null) {
+            instance.username = newUsername;
+        }
+    }
+
     public String getSessionToken() {
         return sessionToken;
     }
