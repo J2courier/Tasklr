@@ -183,18 +183,19 @@ public class QuizzerPanel {
     }
 
     private static void toggleListVisibility(JButton toggleButton) {
+        isListVisible = !isListVisible;
+        int newWidth = isListVisible ? 600 : 0;
+        
         if (listContainer != null) {
-            isListVisible = !isListVisible;
-            String buttonText = isListVisible ? "Hide List" : "Show List";
-            int listWidth = isListVisible ? 600 : 0;
-            
-            // Update button text
-            toggleButton.setText(buttonText);
-            
-            // Update list container visibility
-            listContainer.setPreferredSize(new Dimension(listWidth, 0));
+            listContainer.setPreferredSize(new Dimension(newWidth, 0));
             listContainer.revalidate();
             listContainer.repaint();
+            
+            // Update the button text based on the new width
+            updateToggleButtonText(toggleButton, newWidth);
+            
+            // Update all toggle buttons
+            updateAllToggleButtons();
             
             // Revalidate parent containers
             Container parent = listContainer.getParent();
@@ -203,6 +204,14 @@ public class QuizzerPanel {
                 parent.repaint();
                 parent = parent.getParent();
             }
+        }
+    }
+
+    private static void updateToggleButtonText(JButton button, int listWidth) {
+        if (listWidth == 0) {
+            button.setText("Show List");
+        } else if (listWidth == 600) {
+            button.setText("Hide List");
         }
     }
 
@@ -582,31 +591,51 @@ public class QuizzerPanel {
         mainPanel.setBackground(BACKGROUND_COLOR);
 
         // Header with BorderLayout
-        JPanel headerPanel = new JPanel(new BorderLayout());
+        JPanel headerPanel = new JPanel(new BorderLayout(10, 0)); // Added gap between components
         headerPanel.setBackground(Color.WHITE);
         headerPanel.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0xE0E0E0)), // Only bottom border
-            BorderFactory.createEmptyBorder(20, 20, 20, 20)  // Padding
+            BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0xE0E0E0)),
+            BorderFactory.createEmptyBorder(20, 20, 20, 20)
         ));
 
+        // Left side: Title
         JLabel titleLabel = new JLabel(subject.toUpperCase() + " Identification Quiz");
         titleLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 24));
         headerPanel.add(titleLabel, BorderLayout.WEST);
 
+        // Right side: Control Panel (Timer and Toggle Button)
+        JPanel controlPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        controlPanel.setBackground(Color.WHITE);
+
         // Add timer panel
         JPanel timerPanel = createTimerPanel(timeDuration, () -> {
-            // Time's up action
             JOptionPane.showMessageDialog(
                 mainPanel,
                 "Time's up! Your quiz will be submitted automatically.",
                 "Time's Up",
                 JOptionPane.WARNING_MESSAGE
             );
-            // Add logic to submit quiz automatically
-            // This should trigger the same action as clicking the submit button
             submitQuiz();
         });
-        headerPanel.add(timerPanel, BorderLayout.EAST);
+
+        // Create toggle button
+        JButton toggleListBtn = createButton.button(isListVisible ? "Hide List" : "Show List", null, Color.WHITE, null, false);
+        toggleListBtn.setBackground(new Color(0x275CE2));
+        toggleListBtn.setPreferredSize(new Dimension(120, 40));
+        
+        // Add hover effect
+        new HoverButtonEffect(toggleListBtn, 
+            new Color(0x275CE2),  // default background
+            new Color(0x1E40AF),  // hover background
+            Color.WHITE,          // default text
+            Color.WHITE          // hover text
+        );
+        
+        toggleListBtn.addActionListener(e -> toggleListVisibility(toggleListBtn));
+
+        controlPanel.add(timerPanel);
+        controlPanel.add(toggleListBtn);
+        headerPanel.add(controlPanel, BorderLayout.EAST);
 
         mainPanel.add(headerPanel, BorderLayout.NORTH);
 
@@ -866,32 +895,51 @@ public class QuizzerPanel {
         mainPanel.setBackground(BACKGROUND_COLOR);
 
         // Header with BorderLayout
-        JPanel headerPanel = new JPanel(new BorderLayout());
+        JPanel headerPanel = new JPanel(new BorderLayout(10, 0)); // Added gap between components
         headerPanel.setBackground(Color.WHITE);
         headerPanel.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0xE0E0E0)), // Only bottom border
-            BorderFactory.createEmptyBorder(20, 20, 20, 20)  // Padding
+            BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0xE0E0E0)),
+            BorderFactory.createEmptyBorder(20, 20, 20, 20)
         ));
 
-        JLabel titleLabel = new JLabel("<html><span style='background-color: #FFEB3B'>" + 
-            subject.toUpperCase() + "</span> - Multiple Choice Quiz</html>");
+        // Left side: Title
+        JLabel titleLabel = new JLabel(subject.toUpperCase() + " Multiple Choice Quiz");
         titleLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 24));
         headerPanel.add(titleLabel, BorderLayout.WEST);
 
+        // Right side: Control Panel (Timer and Toggle Button)
+        JPanel controlPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        controlPanel.setBackground(Color.WHITE);
+
         // Add timer panel
         JPanel timerPanel = createTimerPanel(timeDuration, () -> {
-            // Time's up action
             JOptionPane.showMessageDialog(
                 mainPanel,
                 "Time's up! Your quiz will be submitted automatically.",
                 "Time's Up",
                 JOptionPane.WARNING_MESSAGE
             );
-            // Add logic to submit quiz automatically
-            // This should trigger the same action as clicking the submit button
             submitQuiz();
         });
-        headerPanel.add(timerPanel, BorderLayout.EAST);
+
+        // Create toggle button
+        JButton toggleListBtn = createButton.button(isListVisible ? "Hide List" : "Show List", null, Color.WHITE, null, false);
+        toggleListBtn.setBackground(new Color(0x275CE2));
+        toggleListBtn.setPreferredSize(new Dimension(120, 40));
+        
+        // Add hover effect
+        new HoverButtonEffect(toggleListBtn, 
+            new Color(0x275CE2),  // default background
+            new Color(0x1E40AF),  // hover background
+            Color.WHITE,          // default text
+            Color.WHITE          // hover text
+        );
+        
+        toggleListBtn.addActionListener(e -> toggleListVisibility(toggleListBtn));
+
+        controlPanel.add(timerPanel);
+        controlPanel.add(toggleListBtn);
+        headerPanel.add(controlPanel, BorderLayout.EAST);
 
         mainPanel.add(headerPanel, BorderLayout.NORTH);
 
@@ -1111,21 +1159,23 @@ public class QuizzerPanel {
     }
 
     // Helper method to update all toggle buttons
-    private static void updateAllToggleButtons() {
-        // Update all components in the main panel
-        updateToggleButtonsInContainer(mainPanel);
+    public static void updateAllToggleButtons() {
+        if (listContainer != null) {
+            int currentWidth = (int) listContainer.getPreferredSize().getWidth();
+            updateToggleButtonsInContainer(mainPanel, currentWidth);
+        }
     }
 
-    private static void updateToggleButtonsInContainer(Container container) {
+    private static void updateToggleButtonsInContainer(Container container, int listWidth) {
         for (Component comp : container.getComponents()) {
             if (comp instanceof JButton) {
                 JButton btn = (JButton) comp;
                 if (btn.getText().equals("Show List") || btn.getText().equals("Hide List")) {
-                    btn.setText("Hide List");
+                    updateToggleButtonText(btn, listWidth);
                 }
             }
             if (comp instanceof Container) {
-                updateToggleButtonsInContainer((Container) comp);
+                updateToggleButtonsInContainer((Container) comp, listWidth);
             }
         }
     }
