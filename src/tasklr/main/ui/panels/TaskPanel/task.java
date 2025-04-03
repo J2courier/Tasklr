@@ -23,7 +23,7 @@ public class task {
     private static final Color BACKGROUND_COLOR = new Color(0xFFFFFF);
     private static final Color TEXTFIELD_COLOR = new Color(0xFFFFFF);
     private static final Color LIST_CONTAINER_COLOR = new Color(0xFFFFFF);
-    private static final Color LIST_ITEM_COLOR = new Color(0xFBFBFC);
+    private static final Color LIST_ITEM_COLOR = new Color(0xFFFFFF);
     private static final Color LIST_ITEM_HOVER_BG = new Color(0xE8EAED);
     private static final Color LIST_ITEM_HOVER_BORDER = new Color(0x0082FC);
     private static final Color PRIMARY_BUTTON_COLOR = new Color(0x275CE2);
@@ -43,7 +43,7 @@ public class task {
         JPanel panel = createPanel.panel(BACKGROUND_COLOR, new GridBagLayout(), new Dimension(100, 100));
         panel.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0x6D6D6D)),
-            BorderFactory.createEmptyBorder(20, 20, 20, 20)  // Add 20px margin
+            BorderFactory.createEmptyBorder(20, 20, 0, 20)  // Add 20px margin
         ));
 
         // Create GridBagConstraints for layout control
@@ -79,10 +79,10 @@ public class task {
         contentGbc.gridy = 0;
         contentGbc.weightx = 0.6; // 60% of horizontal space
         contentGbc.weighty = 1.0;
-        contentGbc.insets = new Insets(0, 0, 0, 20); // Add right margin
+        contentGbc.insets = new Insets(0, 0, 0, 0); // Add right margin
         JPanel listContainer = createListContainer();
         // Set preferred size for list container
-        listContainer.setPreferredSize(new Dimension(600, 0));
+        listContainer.setPreferredSize(new Dimension(300, 0));
         contentPanel.add(listContainer, contentGbc);
 
         // Add input panel (right side)
@@ -172,7 +172,6 @@ public class task {
                 // Refresh all necessary panels
                 refreshTaskContainer(); // Original refresh
                 tasklr.main.ui.panels.Home.HomePanel.refreshTasksList(); // Home panel refresh
-                tasklr.main.ui.panels.overveiw.overview.refreshTaskGraph(); // Overview panel refresh
                 
                 // Show success message
                 Toast.success("Task added successfully!");
@@ -245,7 +244,7 @@ public class task {
         // Configure task container with BoxLayout (Y_AXIS)
         taskContainer = createPanel.panel(LIST_CONTAINER_COLOR, null, null);
         taskContainer.setLayout(new BoxLayout(taskContainer, BoxLayout.Y_AXIS));
-        taskContainer.setBorder(BorderFactory.createEmptyBorder(0, 10, 20, 20));
+        taskContainer.setBorder(BorderFactory.createEmptyBorder(0, 5, 20, 5));
 
         // Add initial tasks
         refreshTaskContainer();
@@ -275,7 +274,7 @@ public class task {
         
         // Inner panel for consistent padding and content positioning
         JPanel contentPanel = createPanel.panel(LIST_ITEM_COLOR, new BorderLayout(), null);
-        contentPanel.setBorder(BorderFactory.createEmptyBorder(5, 15, 5, 15));
+        contentPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         
         // Text panel using BorderLayout for north-south positioning
         JPanel textPanel = createPanel.panel(null, new BorderLayout(), null);

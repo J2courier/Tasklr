@@ -726,18 +726,47 @@ public class QuizzerPanel {
             }
 
             if (!allFieldsFilled) {
-                StringBuilder message = new StringBuilder("Please answer all questions before submitting.\n\nUnanswered questions:\n");
+                StringBuilder message = new StringBuilder("The following questions are unanswered:\n\n");
                 for (int questionNum : emptyQuestions) {
                     message.append("Question ").append(questionNum).append("\n");
                 }
+                message.append("\nDo you want to submit the quiz anyway?");
 
-                JOptionPane.showMessageDialog(
-                    mainPanel,
+                // Create custom JOptionPane
+                JOptionPane optionPane = new JOptionPane(
                     message.toString(),
-                    "Incomplete Quiz",
-                    JOptionPane.WARNING_MESSAGE
+                    JOptionPane.PLAIN_MESSAGE,  // Remove warning icon
+                    JOptionPane.YES_NO_OPTION
                 );
-                return;
+
+                // Get the buttons from the option pane
+                JDialog dialog = optionPane.createDialog(mainPanel, "Incomplete Quiz");
+                
+                // Find and modify the buttons
+                for (Component comp : optionPane.getComponents()) {
+                    if (comp instanceof JPanel) {
+                        for (Component btn : ((JPanel) comp).getComponents()) {
+                            if (btn instanceof JButton) {
+                                JButton button = (JButton) btn;
+                                button.setFocusable(false);
+                                button.setFont(new Font("Segoe UI Variable", Font.PLAIN, 14));
+                            }
+                        }
+                    }
+                }
+
+                // Center the dialog relative to the main panel
+                dialog.setLocationRelativeTo(mainPanel);
+                dialog.setVisible(true);
+
+                // Get the user's choice
+                Object selectedValue = optionPane.getValue();
+                
+                // If user closes the dialog or clicks No, return
+                if (selectedValue == null || 
+                    (Integer) selectedValue != JOptionPane.YES_OPTION) {
+                    return;
+                }
             }
 
             // Proceed with existing score calculation
@@ -745,16 +774,17 @@ public class QuizzerPanel {
                 String userAnswer = answerFields.get(i).getText().trim().toLowerCase();
                 String correctAnswer = questionOrder.get(i).term.toLowerCase();
 
-                if (userAnswer.equals(correctAnswer)) {
+                if (!userAnswer.isEmpty() && userAnswer.equals(correctAnswer)) {
                     score.incrementAndGet();
                 }
             }
 
-            // Show results
+            // Collect user answers (including empty ones)
             List<String> userAnswers = new ArrayList<>();
             for (JTextField field : answerFields) {
-                userAnswers.add(field.getText());
+                userAnswers.add(field.getText().trim());
             }
+
             showQuizResults(score.get(), flashcards.size(), mainPanel,
                 flashcards, subject, "Identification", setId, userAnswers);
         });
@@ -1048,21 +1078,50 @@ public class QuizzerPanel {
             }
 
             if (!allQuestionsAnswered) {
-                StringBuilder message = new StringBuilder("Please answer all questions before submitting.\n\nUnanswered questions:\n");
+                StringBuilder message = new StringBuilder("The following questions are unanswered:\n\n");
                 for (int questionNum : unansweredQuestions) {
                     message.append("Question ").append(questionNum).append("\n");
                 }
+                message.append("\nDo you want to submit the quiz anyway?");
 
-                JOptionPane.showMessageDialog(
-                    mainPanel,
+                // Create custom JOptionPane
+                JOptionPane optionPane = new JOptionPane(
                     message.toString(),
-                    "Incomplete Quiz",
-                    JOptionPane.WARNING_MESSAGE
+                    JOptionPane.PLAIN_MESSAGE,  // Remove warning icon
+                    JOptionPane.YES_NO_OPTION
                 );
-                return;
+
+                // Get the buttons from the option pane
+                JDialog dialog = optionPane.createDialog(mainPanel, "Incomplete Quiz");
+                
+                // Find and modify the buttons
+                for (Component comp : optionPane.getComponents()) {
+                    if (comp instanceof JPanel) {
+                        for (Component btn : ((JPanel) comp).getComponents()) {
+                            if (btn instanceof JButton) {
+                                JButton button = (JButton) btn;
+                                button.setFocusable(false);
+                                button.setFont(new Font("Segoe UI Variable", Font.PLAIN, 14));
+                            }
+                        }
+                    }
+                }
+
+                // Center the dialog relative to the main panel
+                dialog.setLocationRelativeTo(mainPanel);
+                dialog.setVisible(true);
+
+                // Get the user's choice
+                Object selectedValue = optionPane.getValue();
+                
+                // If user closes the dialog or clicks No, return
+                if (selectedValue == null || 
+                    (Integer) selectedValue != JOptionPane.YES_OPTION) {
+                    return;
+                }
             }
 
-            // Proceed with existing score calculation
+            // Proceed with score calculation
             for (int i = 0; i < answerGroups.size(); i++) {
                 ButtonGroup group = answerGroups.get(i);
                 String correctAnswer = questionOrder.get(i).term;

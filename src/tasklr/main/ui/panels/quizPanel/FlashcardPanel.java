@@ -1,3 +1,4 @@
+
 package tasklr.main.ui.panels.quizPanel;
 
 
@@ -48,7 +49,10 @@ public class FlashcardPanel {
 
     public static JPanel createFlashcardPanel() {
         JPanel panel = createPanel.panel(BACKGROUND_COLOR, new BorderLayout(), new Dimension(100, 100));
-        Border panelBorder = BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0x6D6D6D));
+        Border panelBorder = BorderFactory.createCompoundBorder(
+            BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0x6D6D6D)),
+            BorderFactory.createEmptyBorder(20, 20, 20, 20)  // Add 20px padding on all sides
+        );
         panel.setBorder(panelBorder);
 
         JPanel contentPanel = createPanel.panel(BACKGROUND_COLOR, new BorderLayout(), null);
@@ -122,9 +126,14 @@ public class FlashcardPanel {
         subjectLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 16));
         gbc.insets = new Insets(0, 0, 5, 0);
         contentPanel.add(subjectLabel, gbc);
-        
+
         JTextField subjectField = new JTextField();
         subjectField.setPreferredSize(new Dimension(0, 40));
+        // Create bottom-only border with padding
+        subjectField.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0x575757)), // Only bottom border
+            BorderFactory.createEmptyBorder(5, 0, 5, 0)  // Top, left, bottom, right padding
+        ));
         gbc.insets = new Insets(0, 0, 20, 0);
         contentPanel.add(subjectField, gbc);
         
@@ -138,7 +147,7 @@ public class FlashcardPanel {
         descriptionArea.setLineWrap(true);
         descriptionArea.setWrapStyleWord(true);
         JScrollPane descriptionScroll = new JScrollPane(descriptionArea);
-        descriptionScroll.setPreferredSize(new Dimension(0, 100));
+        descriptionScroll.setPreferredSize(new Dimension(0, 300));
         gbc.insets = new Insets(0, 0, 20, 0);
         contentPanel.add(descriptionScroll, gbc);
         
@@ -219,10 +228,15 @@ public class FlashcardPanel {
         // Term section
         JLabel termLabel = new JLabel("Term");
         termLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 16));
-        
+
         JTextField termField = new JTextField();
         termField.setPreferredSize(new Dimension(0, 40));
-        
+        // Create bottom-only border with padding
+        termField.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0x575757)), // Only bottom border
+            BorderFactory.createEmptyBorder(5, 0, 5, 0)  // Top, left, bottom, right padding
+        ));
+
         // Definition section
         JLabel definitionLabel = new JLabel("Definition");
         definitionLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 16));
@@ -903,32 +917,47 @@ public class FlashcardPanel {
         }
 
         // Create card display panel
-        JPanel cardDisplay = createPanel.panel(new Color(0xF5F5F5), new BorderLayout(), null);
+        JPanel cardDisplay = createPanel.panel(new Color(0xF5F5F5), new GridBagLayout(), new Dimension(600, 400));
         cardDisplay.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(new Color(0xE0E0E0), 1),
             BorderFactory.createEmptyBorder(30, 30, 30, 30)
         ));
 
+        // Center the card display in the view
+        JPanel centeringPanel = createPanel.panel(Color.WHITE, new GridBagLayout(), null);
+        centeringPanel.add(cardDisplay);
+
         // Add current card content
         Map<String, String> currentCard = flashcardsList.get(currentCardIndex);
         
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.weightx = 1.0;
+        
+        // Term Label at the top
         JLabel termLabel = new JLabel(currentCard.get("term"), SwingConstants.CENTER);
         termLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 24));
+        gbc.weighty = 0.2;
+        gbc.gridy = 0;
+        cardDisplay.add(termLabel, gbc);
         
+        // Definition in the center
         JTextArea definitionArea = new JTextArea(currentCard.get("definition"));
         definitionArea.setFont(new Font("Segoe UI Variable", Font.PLAIN, 18));
         definitionArea.setLineWrap(true);
         definitionArea.setWrapStyleWord(true);
         definitionArea.setEditable(false);
         definitionArea.setBackground(cardDisplay.getBackground());
-        definitionArea.setAlignmentX(Component.CENTER_ALIGNMENT);
-        
-        // Center the content
-        JPanel contentPanel = createPanel.panel(cardDisplay.getBackground(), new BorderLayout(0, 20), null);
-        contentPanel.add(termLabel, BorderLayout.NORTH);
-        contentPanel.add(definitionArea, BorderLayout.CENTER);
-        
-        cardDisplay.add(contentPanel, BorderLayout.CENTER);
+        definitionArea.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 20));
+
+        // Add definition with more vertical weight to center it
+        gbc.weighty = 1.0;
+        gbc.gridy = 1;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.insets = new Insets(20, 0, 20, 0);
+        cardDisplay.add(definitionArea, gbc);
 
         // Navigation buttons
         JPanel navigationPanel = createPanel.panel(Color.WHITE, new FlowLayout(FlowLayout.CENTER, 20, 10), null);
@@ -952,7 +981,7 @@ public class FlashcardPanel {
         navigationPanel.add(cardCounter);
         navigationPanel.add(nextButton);
 
-        cardViewPanel.add(cardDisplay, BorderLayout.CENTER);
+        cardViewPanel.add(centeringPanel, BorderLayout.CENTER);
         cardViewPanel.add(navigationPanel, BorderLayout.SOUTH);
 
         // Add key listener for navigation

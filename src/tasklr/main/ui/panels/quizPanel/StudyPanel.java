@@ -2,7 +2,7 @@ package tasklr.main.ui.panels.quizPanel;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import tasklr.utilities.createButton;
+
 import tasklr.utilities.*;
 import java.awt.*;
 
@@ -14,7 +14,10 @@ public class StudyPanel {
 
     public static JPanel createStudyPanel() {
         JPanel mainPanel = createPanel.panel(new Color(0xFFFFFF), new BorderLayout(), new Dimension(100, 100));
-        Border mainBorder = BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0x6D6D6D));
+        Border mainBorder = BorderFactory.createCompoundBorder(
+        BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0x6D6D6D)),
+        BorderFactory.createEmptyBorder(20, 20, 0, 20)  // Add 20px padding on all sides
+    );
         mainPanel.setBorder(mainBorder);
 
         // Create navigation panel
