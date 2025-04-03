@@ -467,7 +467,7 @@ public class QuizzerPanel {
         return 0;
     }
 
-    private static void startIdentificationQuiz(int setId, String subject, int numberOfItems, int timeDuration) {
+    public static void startIdentificationQuiz(int setId, String subject, int numberOfItems, int timeDuration) {
         List<FlashCard> flashcards = fetchFlashcardsForSet(setId);
 
         if (flashcards.isEmpty()) {
@@ -834,7 +834,7 @@ public class QuizzerPanel {
         }
     }
 
-    private static void startMultipleChoiceQuiz(int setId, String subject, int numberOfItems, int timeDuration) {
+    public static void startMultipleChoiceQuiz(int setId, String subject, int numberOfItems, int timeDuration) {
         List<FlashCard> flashcards = fetchFlashcardsForSet(setId);
 
         if (flashcards.isEmpty()) {

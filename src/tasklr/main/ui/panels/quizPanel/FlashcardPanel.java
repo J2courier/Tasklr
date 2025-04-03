@@ -468,7 +468,7 @@ public class FlashcardPanel {
         // Edit Sets menu item with icon
         JMenuItem editSetsItem = new JMenuItem();
         try {
-            ImageIcon editSetsIcon = new ImageIcon("C:\\Users\\ADMIN\\Desktop\\Tasklr\\resource\\icons\\editIcon.png");
+            ImageIcon editSetsIcon = new ImageIcon("C:\\Users\\ADMIN\\Desktop\\Tasklr\\resource\\icons\\EditSet.png");
             Image scaledEditSetsImage = editSetsIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
             editSetsItem.setIcon(new ImageIcon(scaledEditSetsImage));
         } catch (Exception e) {
@@ -487,9 +487,21 @@ public class FlashcardPanel {
         }
         deleteItem.setText("Delete");
 
-        // Add items to popup menu
+        // Add quiz menu item with icon
+        JMenuItem startQuizItem = new JMenuItem();
+        try {
+            ImageIcon quizIcon = new ImageIcon("C:\\Users\\ADMIN\\Desktop\\Tasklr\\resource\\icons\\Quiz.png");
+            Image scaledQuizImage = quizIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
+            startQuizItem.setIcon(new ImageIcon(scaledQuizImage));
+        } catch (Exception e) {
+            System.err.println("Failed to load quiz icon: " + e.getMessage());
+        }
+        startQuizItem.setText("Start Quiz");
+
+        // Add items to popup menu (update the existing menu items)
         popupMenu.add(editItem);
         popupMenu.add(editSetsItem);
+        popupMenu.add(startQuizItem);  // Add the new quiz item
         popupMenu.add(deleteItem);
 
         // Add action listeners
@@ -592,6 +604,9 @@ public class FlashcardPanel {
                 }
             }
         });
+
+        // Add action listeners (add this with the existing listeners)
+        startQuizItem.addActionListener(e -> showQuizTypeDialog(setId, subject));
 
         buttonPanel.add(moreBtn);
         
@@ -1355,5 +1370,96 @@ public class FlashcardPanel {
                 parent = parent.getParent();
             }
         }
+    }
+
+    private static void showQuizTypeDialog(int setId, String subject) {
+        // First, get the total number of flashcards
+        int totalFlashcards = getTotalFlashcards(setId);
+        if (totalFlashcards == 0) {
+            Toast.error("No flashcards found in this set!");
+            return;
+        }
+
+        // Create dialog components
+        JPanel panel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridwidth = 2;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.insets = new Insets(5, 5, 5, 5);
+
+        // Quiz type selection
+        JLabel typeLabel = new JLabel("Quiz Type:");
+        String[] quizTypes = {"Multiple Choice", "Identification"};
+        JComboBox<String> quizTypeCombo = new JComboBox<>(quizTypes);
+
+        // Number of items selection
+        JLabel itemsLabel = new JLabel("Number of Items:");
+        SpinnerNumberModel spinnerModel = new SpinnerNumberModel(
+            Math.min(10, totalFlashcards), // initial value
+            1,                            // minimum value
+            totalFlashcards,              // maximum value
+            1                            // step
+        );
+        JSpinner itemsSpinner = new JSpinner(spinnerModel);
+
+        // Time duration selection
+        JLabel timeLabel = new JLabel("Time Duration (minutes):");
+        Integer[] timeDurations = {5, 10, 15, 20, 30, 45, 60};
+        JComboBox<Integer> timeCombo = new JComboBox<>(timeDurations);
+        timeCombo.setSelectedItem(30); // Default 30 minutes
+
+        // Add components to panel
+        gbc.gridy = 0;
+        panel.add(typeLabel, gbc);
+        gbc.gridy = 1;
+        panel.add(quizTypeCombo, gbc);
+        gbc.gridy = 2;
+        panel.add(itemsLabel, gbc);
+        gbc.gridy = 3;
+        panel.add(itemsSpinner, gbc);
+        gbc.gridy = 4;
+        panel.add(timeLabel, gbc);
+        gbc.gridy = 5;
+        panel.add(timeCombo, gbc);
+
+        int result = JOptionPane.showConfirmDialog(
+            null,
+            panel,
+            "Quiz Settings",
+            JOptionPane.OK_CANCEL_OPTION,
+            JOptionPane.PLAIN_MESSAGE
+        );
+
+        if (result == JOptionPane.OK_OPTION) {
+            String selectedType = (String) quizTypeCombo.getSelectedItem();
+            int numberOfItems = (Integer) itemsSpinner.getValue();
+            int timeDuration = (Integer) timeCombo.getSelectedItem();
+
+            // Switch to QuizzerPanel and start the quiz
+            StudyPanel.showQuizzer();
+            if ("Identification".equals(selectedType)) {
+                QuizzerPanel.startIdentificationQuiz(setId, subject, numberOfItems, timeDuration);
+            } else {
+                QuizzerPanel.startMultipleChoiceQuiz(setId, subject, numberOfItems, timeDuration);
+            }
+        }
+    }
+
+    private static int getTotalFlashcards(int setId) {
+        try (Connection conn = DatabaseManager.getConnection()) {
+            String query = "SELECT COUNT(*) FROM flashcards WHERE set_id = ?";
+            try (PreparedStatement stmt = conn.prepareStatement(query)) {
+                stmt.setInt(1, setId);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    if (rs.next()) {
+                        return rs.getInt(1);
+                    }
+                }
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            Toast.error("Error counting flashcards: " + ex.getMessage());
+        }
+        return 0;
     }
 }
