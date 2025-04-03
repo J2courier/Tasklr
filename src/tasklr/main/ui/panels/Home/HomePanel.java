@@ -12,7 +12,6 @@ import tasklr.utilities.*;
 import tasklr.authentication.UserSession;
 import java.sql.*;
 import tasklr.main.ui.panels.quizPanel.QuizzerPanel;
-import tasklr.utilities.Toast;
 
 public class HomePanel {
     private static final Color PRIMARY_COLOR = new Color(0x275CE2);    // Primary blue
@@ -23,9 +22,9 @@ public class HomePanel {
     private static final Color BORDER_COLOR = new Color(0xE0E0E0);     // Border gray
     private static final Color CLOSE_COLOR = new Color(0x404040);      // White background
     private static final Color TASK_DONE_COLOR = new Color(0x34D399);  // Green for completed tasks
-    private static final Color TASK_PENDING_COLOR = new Color(0xF87171); // Red for pending tasks
+    private static final Color TASK_PENDING_COLOR = new Color(0xFF0000); // Red for pending tasks
     private static final Color DROP_COLOR = new Color(0xFB2C36);
-    private static final Color COMPLETED_COLOR = new Color(0x59F070);
+    private static final Color COMPLETED_COLOR = new Color(0x17BD0F);
     private static final int WELCOME_HEADER_HEIGHT = 100; // Adjust this value to your preferred height
     private static JPanel tasksContainer;
     private static JPanel tasksWrapper;
@@ -360,7 +359,7 @@ public class HomePanel {
 
         // Left side - Title
         JLabel remainingTaskLabel = new JLabel("Remaining Tasks");
-        remainingTaskLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 16));
+        remainingTaskLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 20)); // Modified font size
         remainingTaskLabel.setForeground(TEXT_DARK);
         
         // Right side - Refresh button
@@ -448,13 +447,28 @@ public class HomePanel {
                 JPanel taskItemPanel = createTaskItemPanel(title, status, dueDate);
                 tasksWrapper.add(taskItemPanel);
                 tasksWrapper.add(Box.createRigidArea(new Dimension(0, 10)));
+
             }
 
             if (!hasItems) {
+                // Create a wrapper panel for centering
+                JPanel centeringPanel = new JPanel(new GridBagLayout());
+                centeringPanel.setBackground(BACKGROUND_COLOR);
+                
+                // Create the "No tasks found" label
                 JLabel noTasksLabel = new JLabel("No tasks found");
                 noTasksLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
                 noTasksLabel.setForeground(TEXT_DARK);
-                tasksWrapper.add(noTasksLabel);
+                noTasksLabel.setHorizontalAlignment(SwingConstants.CENTER);
+                
+                // Add the label to the centering panel
+                centeringPanel.add(noTasksLabel);
+                
+                // Add the centering panel to tasksWrapper
+                tasksWrapper.add(centeringPanel);
+                
+                // Make the centering panel take up all available vertical space
+                tasksWrapper.add(Box.createVerticalGlue());
             }
 
             tasksWrapper.revalidate();
@@ -470,11 +484,11 @@ public class HomePanel {
     }
 
     private static JPanel createTaskItemPanel(String title, String status, java.sql.Date dueDate) {
-        JPanel taskPanel = createPanel.panel(Color.WHITE, new BorderLayout(), null);
+        JPanel taskPanel = createPanel.panel(Color.WHITE, new BorderLayout(2, 0), null);
         taskPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 70));
         taskPanel.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(0xE5E7EB), 1),
-            BorderFactory.createEmptyBorder(10, 15, 10, 15)
+            BorderFactory.createLineBorder(BORDER_COLOR, 1),         // Add 1px border
+            BorderFactory.createEmptyBorder(10, 25, 10, 25)         // Keep existing padding
         ));
 
         // Content panel (left side)
@@ -485,20 +499,21 @@ public class HomePanel {
         titleLabel.setFont(new Font("Segoe UI Variable", Font.PLAIN, 24));
         contentPanel.add(titleLabel, BorderLayout.NORTH);
 
-        // Add due date if exists
+        // Add due date if exists with red color
         JLabel dateLabel;
         if (dueDate != null) {
             dateLabel = new JLabel("Due: " + dueDate.toString());
+            dateLabel.setForeground(new Color(0xFF0000)); // Red for tasks with due date
         } else {
             dateLabel = new JLabel("Due: None");
+            dateLabel.setForeground(new Color(0x17BD0F)); // Green for tasks without due date
         }
         dateLabel.setFont(new Font("Segoe UI Variable", Font.PLAIN, 12));
-        dateLabel.setForeground(new Color(0x6D6D6D));
         contentPanel.add(dateLabel, BorderLayout.SOUTH);
 
         // Status label (right side)
-        JLabel statusLabel = new JLabel(status);
-        statusLabel.setFont(new Font("Segoe UI Variable", Font.PLAIN, 12));
+        JLabel statusLabel = new JLabel(status.toUpperCase());
+        statusLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 20));
         statusLabel.setForeground(status.equals("completed") ? TASK_DONE_COLOR : TASK_PENDING_COLOR);
         
         JPanel rightPanel = createPanel.panel(Color.WHITE, new FlowLayout(FlowLayout.RIGHT), null);
@@ -693,7 +708,7 @@ public class HomePanel {
         ));
 
         JLabel completedTaskLabel = new JLabel("Completed Tasks");
-        completedTaskLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 16));
+        completedTaskLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 20)); // Modified font size
         completedTaskLabel.setForeground(TEXT_DARK);
         headerPanel.add(completedTaskLabel, BorderLayout.WEST);
 
@@ -747,22 +762,25 @@ public class HomePanel {
                 String title = rs.getString("title");
 
                 // Create task item panel with fixed dimensions
-                JPanel taskItemPanel = new JPanel(new BorderLayout(10, 0));
+                JPanel taskItemPanel = new JPanel(new BorderLayout(2, 0));
                 taskItemPanel.setBackground(CARD_COLOR);
-                taskItemPanel.setBorder(BorderFactory.createCompoundBorder(
-                    BorderFactory.createLineBorder(BORDER_COLOR, 1),
-                    BorderFactory.createEmptyBorder(15, 15, 15, 15)
-                ));
-                
+                taskItemPanel.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));  // Only padding, no line border
+
                 // Set both preferred and maximum size
-                taskItemPanel.setPreferredSize(new Dimension(CONTAINER_WIDTH - 40, 70));
-                taskItemPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 70));
-                taskItemPanel.setMinimumSize(new Dimension(CONTAINER_WIDTH - 40, 70));
+                taskItemPanel.setPreferredSize(new Dimension(CONTAINER_WIDTH - 40, 80));
+                taskItemPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 80));
+                taskItemPanel.setMinimumSize(new Dimension(CONTAINER_WIDTH - 40, 80));
 
                 JLabel titleLabel = new JLabel(title);
-                titleLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+                titleLabel.setFont(new Font("Segoe UI", Font.PLAIN, 18));
                 titleLabel.setForeground(TEXT_DARK);
                 taskItemPanel.add(titleLabel, BorderLayout.CENTER);
+
+                // Add hover effect
+                new HoverPanelEffect(taskItemPanel, 
+                    null,                    // default background
+                    new Color(0xF5F5F5)           // hover background
+                );
 
                 // Wrap taskItemPanel in another panel to maintain width
                 JPanel wrapperPanel = new JPanel();
