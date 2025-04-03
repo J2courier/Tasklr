@@ -51,4 +51,11 @@ the database I have in this project is named in "tasklrdb" with tables of:
     - FOREIGN KEY (user_id) REFERENCES users(id)
     - FOREIGN KEY (set_id) REFERENCES flashcard_sets(id)
     - UNIQUE KEY unique_user_set (user_id, set_id)
-
+- user_backup_info
+    - id
+    - user_id
+    - address
+    - contact_number
+    - birthday
+    - created_at
+    - FOREIGN KEY (user_id) REFERENCES users(id)
