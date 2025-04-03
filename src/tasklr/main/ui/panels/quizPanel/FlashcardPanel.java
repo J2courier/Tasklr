@@ -144,7 +144,7 @@ public class FlashcardPanel {
         
         // Create Set Button
         JButton createSetBtn = createButton.button("Create Set", null, Color.WHITE, null, false);
-        createSetBtn.setBackground(new Color(0x0065D9));
+        createSetBtn.setBackground(new Color(0x17BD0F));
         createSetBtn.setPreferredSize(new Dimension(100, 40));
         createSetBtn.addActionListener(e -> {
             String subject = subjectField.getText().trim();
@@ -193,13 +193,13 @@ public class FlashcardPanel {
         termsInputTitleLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 16));
         
         // Create Save button in header
-        JButton saveBtn = createButton.button("Save", null, Color.WHITE, null, false);
-        saveBtn.setBackground(new Color(0x34D399));  // Green color
+        JButton saveBtn = createButton.button("SAVE", null, Color.WHITE, null, false);
+        // saveBtn.setBackground(new Color(0x17BD0F));  // Green color
         saveBtn.setPreferredSize(new Dimension(130, 40));
         
         // Add hover effect for the save button
         new HoverButtonEffect(saveBtn, 
-            new Color(0x34D399),  // default background (green)
+            new Color(0x17BD0F),  // default background (green)
             new Color(0x10B981),  // hover background (darker green)
             Color.WHITE,          // default text
             Color.WHITE          // hover text
