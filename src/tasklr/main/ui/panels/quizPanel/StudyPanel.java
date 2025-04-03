@@ -40,26 +40,22 @@ public class StudyPanel {
         JPanel navPanel = createPanel.panel(PRIMARY_COLOR, new BorderLayout(), new Dimension(0, HEADER_HEIGHT));
         navPanel.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 20));
 
-        // Left side of header with title
-        JPanel titlePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        titlePanel.setOpaque(false);  // Make transparent to show header background
-        
-        // Update navLabel style to match other headers
-        navLabel = new JLabel("FLASHCARDS");
-        navLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 24));
-        navLabel.setForeground(Color.WHITE);  // Change text color to white
-        titlePanel.add(navLabel);
+        // Left side of header with navigation buttons
+        JPanel navButtonsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 15));
+        navButtonsPanel.setOpaque(false);  // Make transparent to show header background
 
-        // Right side of header with buttons
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 15));
-        buttonPanel.setOpaque(false);  // Make transparent to show header background
-
-        // Update button styles
-        JButton flashcardBtn = createButton.button("Flashcards", PRIMARY_COLOR, Color.WHITE, null, false);
-        flashcardBtn.setPreferredSize(new Dimension(120, 40));
+        // Create navigation buttons with updated styles
+        JButton flashcardBtn = createButton.button("FLASHCARDS", PRIMARY_COLOR, Color.WHITE, null, false);
+        flashcardBtn.setFont(new Font("Segoe UI Variable", Font.BOLD, 24));
+        flashcardBtn.setPreferredSize(new Dimension(180, 40));
+        flashcardBtn.setBorderPainted(false);
+        flashcardBtn.setFocusPainted(false);
         
-        JButton quizzerBtn = createButton.button("Take a Quiz", PRIMARY_COLOR, Color.WHITE, null, false);
-        quizzerBtn.setPreferredSize(new Dimension(120, 40));
+        JButton quizzerBtn = createButton.button("QUIZZER", PRIMARY_COLOR, Color.WHITE, null, false);
+        quizzerBtn.setFont(new Font("Segoe UI Variable", Font.BOLD, 24));
+        quizzerBtn.setPreferredSize(new Dimension(180, 40));
+        quizzerBtn.setBorderPainted(false);
+        quizzerBtn.setFocusPainted(false);
 
         // Add hover effects to buttons
         new HoverButtonEffect(flashcardBtn, 
@@ -78,40 +74,37 @@ public class StudyPanel {
 
         flashcardBtn.addActionListener(e -> {
             cardLayout.show(cardPanel, "flashcard");
-            navLabel.setText("FLASHCARDS");
+            // Update button styles to show active state
+            flashcardBtn.setBackground(new Color(0x153C9B));
+            quizzerBtn.setBackground(PRIMARY_COLOR);
         });
 
         quizzerBtn.addActionListener(e -> {
             cardLayout.show(cardPanel, "quizzer");
-            navLabel.setText("QUIZZER");
+            // Update button styles to show active state
+            quizzerBtn.setBackground(new Color(0x153C9B));
+            flashcardBtn.setBackground(PRIMARY_COLOR);
         });
 
-        buttonPanel.add(flashcardBtn);
-        buttonPanel.add(quizzerBtn);
+        navButtonsPanel.add(flashcardBtn);
+        navButtonsPanel.add(quizzerBtn);
 
         // Add components to navPanel
-        navPanel.add(titlePanel, BorderLayout.WEST);
-        navPanel.add(buttonPanel, BorderLayout.EAST);
+        navPanel.add(navButtonsPanel, BorderLayout.WEST);
 
         return navPanel;
     }
 
-    // Add these new static methods for external control
+    // Update the static methods to handle button states instead of navLabel
     public static void showFlashcardCreation() {
         if (cardPanel != null && cardLayout != null) {
             cardLayout.show(cardPanel, "flashcard");
-            if (navLabel != null) {
-                navLabel.setText("Flashcards");
-            }
         }
     }
 
     public static void showQuizzer() {
         if (cardPanel != null && cardLayout != null) {
             cardLayout.show(cardPanel, "quizzer");
-            if (navLabel != null) {
-                navLabel.setText("Quizzer");
-            }
         }
     }
 }

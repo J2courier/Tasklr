@@ -18,7 +18,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.Enumeration;
 import tasklr.main.ui.components.TaskCounterPanel;
 import tasklr.main.ui.panels.Home.HomePanel;
-import tasklr.utilities.Toast;
 
 public class QuizzerPanel {
     private static final String url = "jdbc:mysql://localhost:3306/tasklrdb";
@@ -376,9 +375,32 @@ public class QuizzerPanel {
         itemsSection.add(itemsLabel);
         itemsSection.add(spinnerPanel);
 
+        // Time duration section
+        JPanel timeSection = new JPanel();
+        timeSection.setLayout(new BoxLayout(timeSection, BoxLayout.Y_AXIS));
+        timeSection.setAlignmentX(Component.LEFT_ALIGNMENT);
+        timeSection.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
+
+        JLabel timeLabel = new JLabel("Time Duration (minutes):");
+        timeLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JPanel timeComboPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 5));
+        Integer[] timeOptions = {5, 10, 15, 20, 25, 30, 40, 45, 50, 55, 60};
+        JComboBox<Integer> timeCombo = new JComboBox<>(timeOptions);
+        timeCombo.setPreferredSize(new Dimension(230, 30)); // Match width of other components
+        timeComboPanel.add(timeCombo);
+        timeComboPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        timeSection.add(timeLabel);
+        timeSection.add(timeComboPanel);
+
+        // Add time section to content panel
+        contentPanel.add(timeSection);
+
         // Add all sections to content panel
         contentPanel.add(quizTypeSection);
         contentPanel.add(itemsSection);
+        contentPanel.add(timeSection);
 
         // Add all panels to dialog panel
         dialogPanel.add(titlePanel, BorderLayout.NORTH);
@@ -402,11 +424,12 @@ public class QuizzerPanel {
 
             String selectedType = (String) quizTypeCombo.getSelectedItem();
             int numberOfItems = (Integer) itemsSpinner.getValue();
+            int timeDuration = (Integer) timeCombo.getSelectedItem();
 
             if ("Identification".equals(selectedType)) {
-                startIdentificationQuiz(setId, subject, numberOfItems);
+                startIdentificationQuiz(setId, subject, numberOfItems, timeDuration);
             } else {
-                startMultipleChoiceQuiz(setId, subject, numberOfItems);
+                startMultipleChoiceQuiz(setId, subject, numberOfItems, timeDuration);
             }
         } else {
             // Show list container when dialog is cancelled
@@ -444,7 +467,7 @@ public class QuizzerPanel {
         return 0;
     }
 
-    private static void startIdentificationQuiz(int setId, String subject, int numberOfItems) {
+    private static void startIdentificationQuiz(int setId, String subject, int numberOfItems, int timeDuration) {
         List<FlashCard> flashcards = fetchFlashcardsForSet(setId);
 
         if (flashcards.isEmpty()) {
@@ -456,7 +479,7 @@ public class QuizzerPanel {
         Collections.shuffle(flashcards);
         flashcards = flashcards.subList(0, Math.min(numberOfItems, flashcards.size()));
 
-        JPanel quizPanel = createIdentificationQuizPanel(flashcards, subject, setId);
+        JPanel quizPanel = createIdentificationQuizPanel(flashcards, subject, setId, timeDuration);
         quizViewPanel.add(quizPanel, "QUIZ_" + setId);
         cardLayout.show(quizViewPanel, "QUIZ_" + setId);
     }
@@ -549,7 +572,7 @@ public class QuizzerPanel {
         return questionPanel;
     }
 
-    private static JPanel createIdentificationQuizPanel(List<FlashCard> flashcards, String subject, int setId) {
+    private static JPanel createIdentificationQuizPanel(List<FlashCard> flashcards, String subject, int setId, int timeDuration) {
         // Randomize flashcards
         Collections.shuffle(flashcards);
 
@@ -560,30 +583,32 @@ public class QuizzerPanel {
 
         // Header with BorderLayout
         JPanel headerPanel = new JPanel(new BorderLayout());
-        headerPanel.setBackground(BACKGROUND_COLOR);
-        headerPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        
-        // Title on the left
-        JLabel titleLabel = new JLabel(subject + " - Identification Quiz");
+        headerPanel.setBackground(Color.WHITE);
+        headerPanel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0xE0E0E0)), // Only bottom border
+            BorderFactory.createEmptyBorder(20, 20, 20, 20)  // Padding
+        ));
+
+        JLabel titleLabel = new JLabel(subject.toUpperCase() + " Identification Quiz");
         titleLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 24));
-        
-        // Toggle button on the right
-        JButton toggleListBtn = createButton.button(isListVisible ? "Hide List" : "Show List", null, Color.WHITE, null, false);
-        toggleListBtn.setBackground(PRIMARY_BUTTON_COLOR);
-        toggleListBtn.setPreferredSize(new Dimension(120, 40));
-        
-        // Add hover effect
-        new HoverButtonEffect(toggleListBtn, 
-            PRIMARY_BUTTON_COLOR,  // default background
-            PRIMARY_BUTTON_HOVER,  // hover background
-            PRIMARY_BUTTON_TEXT,   // default text
-            PRIMARY_BUTTON_TEXT    // hover text
-        );
-        
-        toggleListBtn.addActionListener(e -> toggleListVisibility(toggleListBtn));
-        
         headerPanel.add(titleLabel, BorderLayout.WEST);
-        headerPanel.add(toggleListBtn, BorderLayout.EAST);
+
+        // Add timer panel
+        JPanel timerPanel = createTimerPanel(timeDuration, () -> {
+            // Time's up action
+            JOptionPane.showMessageDialog(
+                mainPanel,
+                "Time's up! Your quiz will be submitted automatically.",
+                "Time's Up",
+                JOptionPane.WARNING_MESSAGE
+            );
+            // Add logic to submit quiz automatically
+            // This should trigger the same action as clicking the submit button
+            submitQuiz();
+        });
+        headerPanel.add(timerPanel, BorderLayout.EAST);
+
+        mainPanel.add(headerPanel, BorderLayout.NORTH);
 
         // Questions container
         JPanel questionsPanel = new JPanel();
@@ -607,18 +632,16 @@ public class QuizzerPanel {
             // Create question panel with GridBagLayout
             JPanel questionPanel = new JPanel(new GridBagLayout());
             questionPanel.setBackground(BACKGROUND_COLOR);
-            questionPanel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(0xE0E0E0)),
-                BorderFactory.createEmptyBorder(15, 15, 15, 15)
-            ));
-
+            questionPanel.setBorder( // Outer border
+                BorderFactory.createEmptyBorder(15, 15, 15, 15)  // Inner padding
+            );
             GridBagConstraints gbc = new GridBagConstraints();
             gbc.fill = GridBagConstraints.HORIZONTAL;
             gbc.insets = new Insets(5, 5, 5, 5);
 
             // Question label (row 1)
             JTextArea questionLabel = new JTextArea((i + 1) + ". " + card.definition);
-            questionLabel.setFont(new Font("Segoe UI Variable", Font.PLAIN, 14));
+            questionLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 18)); // Changed to BOLD
             questionLabel.setBackground(BACKGROUND_COLOR);
             questionLabel.setEditable(false);
             questionLabel.setWrapStyleWord(true);
@@ -634,9 +657,10 @@ public class QuizzerPanel {
             // Answer field (row 2)
             JTextField answerField = new JTextField();
             answerField.setFont(new Font("Segoe UI Variable", Font.PLAIN, 14));
+            // Create bottom-only border with padding
             answerField.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(0xE0E0E0)),
-                BorderFactory.createEmptyBorder(5, 10, 5, 10)
+                BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0x575757)), // Only bottom border
+                BorderFactory.createEmptyBorder(5, 0, 5, 0)  // Top, left, bottom, right padding
             ));
             answerField.setPreferredSize(new Dimension(0, 35));
             answerFields.add(answerField);
@@ -810,7 +834,7 @@ public class QuizzerPanel {
         }
     }
 
-    private static void startMultipleChoiceQuiz(int setId, String subject, int numberOfItems) {
+    private static void startMultipleChoiceQuiz(int setId, String subject, int numberOfItems, int timeDuration) {
         List<FlashCard> flashcards = fetchFlashcardsForSet(setId);
 
         if (flashcards.isEmpty()) {
@@ -827,12 +851,12 @@ public class QuizzerPanel {
         Collections.shuffle(flashcards);
         flashcards = flashcards.subList(0, Math.min(numberOfItems, flashcards.size()));
 
-        JPanel quizPanel = createMultipleChoiceQuizPanel(flashcards, subject, setId);
+        JPanel quizPanel = createMultipleChoiceQuizPanel(flashcards, subject, setId, timeDuration);
         quizViewPanel.add(quizPanel, "QUIZ_" + setId);
         cardLayout.show(quizViewPanel, "QUIZ_" + setId);
     }
 
-    private static JPanel createMultipleChoiceQuizPanel(List<FlashCard> flashcards, String subject, int setId) {
+    private static JPanel createMultipleChoiceQuizPanel(List<FlashCard> flashcards, String subject, int setId, int timeDuration) {
         // Randomize flashcards
         Collections.shuffle(flashcards);
 
@@ -843,30 +867,33 @@ public class QuizzerPanel {
 
         // Header with BorderLayout
         JPanel headerPanel = new JPanel(new BorderLayout());
-        headerPanel.setBackground(BACKGROUND_COLOR);
-        headerPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        
-        // Title on the left
-        JLabel titleLabel = new JLabel(subject + " - Multiple Choice Quiz");
+        headerPanel.setBackground(Color.WHITE);
+        headerPanel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0xE0E0E0)), // Only bottom border
+            BorderFactory.createEmptyBorder(20, 20, 20, 20)  // Padding
+        ));
+
+        JLabel titleLabel = new JLabel("<html><span style='background-color: #FFEB3B'>" + 
+            subject.toUpperCase() + "</span> - Multiple Choice Quiz</html>");
         titleLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 24));
-        
-        // Toggle button on the right
-        JButton toggleListBtn = createButton.button(isListVisible ? "Hide List" : "Show List", null, Color.WHITE, null, false);
-        toggleListBtn.setBackground(PRIMARY_BUTTON_COLOR);
-        toggleListBtn.setPreferredSize(new Dimension(120, 40));
-        
-        // Add hover effect
-        new HoverButtonEffect(toggleListBtn, 
-            PRIMARY_BUTTON_COLOR,  // default background
-            PRIMARY_BUTTON_HOVER,  // hover background
-            PRIMARY_BUTTON_TEXT,   // default text
-            PRIMARY_BUTTON_TEXT    // hover text
-        );
-        
-        toggleListBtn.addActionListener(e -> toggleListVisibility(toggleListBtn));
-        
         headerPanel.add(titleLabel, BorderLayout.WEST);
-        headerPanel.add(toggleListBtn, BorderLayout.EAST);
+
+        // Add timer panel
+        JPanel timerPanel = createTimerPanel(timeDuration, () -> {
+            // Time's up action
+            JOptionPane.showMessageDialog(
+                mainPanel,
+                "Time's up! Your quiz will be submitted automatically.",
+                "Time's Up",
+                JOptionPane.WARNING_MESSAGE
+            );
+            // Add logic to submit quiz automatically
+            // This should trigger the same action as clicking the submit button
+            submitQuiz();
+        });
+        headerPanel.add(timerPanel, BorderLayout.EAST);
+
+        mainPanel.add(headerPanel, BorderLayout.NORTH);
 
         // Questions container with vertical BoxLayout
         JPanel questionsPanel = new JPanel();
@@ -891,8 +918,8 @@ public class QuizzerPanel {
             JPanel questionPanel = new JPanel(new GridBagLayout());
             questionPanel.setBackground(BACKGROUND_COLOR);
             questionPanel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(0xE0E0E0)),
-                BorderFactory.createEmptyBorder(15, 15, 15, 15)
+                BorderFactory.createLineBorder(new Color(0xE0E0E0), 1),  // Outer border
+                BorderFactory.createEmptyBorder(15, 15, 15, 15)  // Inner padding
             ));
 
             GridBagConstraints gbc = new GridBagConstraints();
@@ -901,7 +928,7 @@ public class QuizzerPanel {
 
             // Question label (row 1, spans both columns)
             JTextArea questionLabel = new JTextArea((i + 1) + ". " + currentCard.definition);
-            questionLabel.setFont(new Font("Segoe UI Variable", Font.PLAIN, 14));
+            questionLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 14)); // Changed to BOLD
             questionLabel.setBackground(BACKGROUND_COLOR);
             questionLabel.setEditable(false);
             questionLabel.setWrapStyleWord(true);
@@ -1219,9 +1246,9 @@ public class QuizzerPanel {
         retakeButton.addActionListener(e -> {
             closeQuiz(overviewPanel);
             if ("Identification".equals(quizType)) {
-                startIdentificationQuiz(setId, subject, total);
+                startIdentificationQuiz(setId, subject, total, 30); // Adding default 30 minutes for retake
             } else {
-                startMultipleChoiceQuiz(setId, subject, total);
+                startMultipleChoiceQuiz(setId, subject, total, 30); // Adding default 30 minutes for retake
             }
             updateHomeStatistics();
         });
@@ -1289,6 +1316,58 @@ public class QuizzerPanel {
                 Toast.error("Error updating quiz statistics: " + ex.getMessage());
             }
         }
+    }
+
+    // Helper method to create timer panel
+    private static JPanel createTimerPanel(int minutes, Runnable onTimeUp) {
+        JPanel timerPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        timerPanel.setBackground(Color.WHITE);
+        
+        JLabel timerLabel = new JLabel(String.format("%02d:00", minutes));
+        timerLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 18));
+        timerLabel.setForeground(new Color(0x275CE2));
+        
+        Timer timer = new Timer(1000, e -> {
+            String[] parts = timerLabel.getText().split(":");
+            int mins = Integer.parseInt(parts[0]);
+            int secs = Integer.parseInt(parts[1]);
+            
+            if (mins == 0 && secs == 0) {
+                ((Timer)e.getSource()).stop();
+                onTimeUp.run();
+                return;
+            }
+            
+            if (secs == 0) {
+                mins--;
+                secs = 59;
+            } else {
+                secs--;
+            }
+            
+            // Change color to red when less than 1 minute remains
+            if (mins == 0 && secs <= 59) {
+                timerLabel.setForeground(Color.RED);
+            }
+            
+            timerLabel.setText(String.format("%02d:%02d", mins, secs));
+        });
+        
+        timer.start();
+        timerPanel.add(new JLabel("Time Remaining: "));
+        timerPanel.add(timerLabel);
+        
+        return timerPanel;
+    }
+
+    // Add this method to handle quiz submission
+    private static void submitQuiz() {
+        // Add your quiz submission logic here
+        // This should include:
+        // 1. Calculating the score
+        // 2. Showing results
+        // 3. Updating statistics
+        // 4. Any other necessary cleanup
     }
 }
 
