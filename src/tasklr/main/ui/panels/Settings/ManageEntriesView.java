@@ -67,12 +67,8 @@ public class ManageEntriesView {
         gbc.gridy = 1;
         sectionsPanel.add(createSection("Flashcard Sets", "Manage your flashcard sets. Delete multiple flashcard sets at once."), gbc);
         
-        // Flashcards section
-        gbc.gridy = 2;
-        sectionsPanel.add(createSection("Flashcards", "Manage individual flashcards. Delete multiple individual flashcards at once."), gbc);
-        
         // Add spacer panel
-        gbc.gridy = 3;
+        gbc.gridy = 2;
         gbc.weighty = 1.0; // Make the spacer expand vertically
         gbc.fill = GridBagConstraints.BOTH;
         JPanel spacerPanel = new JPanel();
