@@ -49,11 +49,6 @@ public class FlashcardPanel {
 
     public static JPanel createFlashcardPanel() {
         JPanel panel = createPanel.panel(BACKGROUND_COLOR, new BorderLayout(), new Dimension(100, 100));
-        Border panelBorder = BorderFactory.createCompoundBorder(
-            BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0x6D6D6D)),
-            BorderFactory.createEmptyBorder(20, 20, 20, 20)  // Add 20px padding on all sides
-        );
-        panel.setBorder(panelBorder);
 
         JPanel contentPanel = createPanel.panel(BACKGROUND_COLOR, new BorderLayout(), null);
         

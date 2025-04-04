@@ -515,7 +515,7 @@ public class HomePanel {
 
         // Status label (right side)
         JLabel statusLabel = new JLabel(status.toUpperCase());
-        statusLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 20));
+        statusLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 16 ));
         statusLabel.setForeground(status.equals("completed") ? TASK_DONE_COLOR : TASK_PENDING_COLOR);
         
         JPanel rightPanel = createPanel.panel(Color.WHITE, new FlowLayout(FlowLayout.RIGHT), null);
