@@ -2,7 +2,7 @@ package tasklr.main.ui.panels.Settings;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionListener;
+import tasklr.utilities.HoverButtonEffect;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
@@ -13,6 +13,7 @@ import tasklr.utilities.DatabaseManager;
 import tasklr.utilities.createPanel;
 import tasklr.authentication.UserSession;
 import tasklr.main.ui.panels.Home.HomePanel;
+import tasklr.authentication.*;
 
 public class ManageAccountView {
     private static final Color BACKGROUND_COLOR = new Color(0xf1f3f6);
@@ -26,12 +27,28 @@ public class ManageAccountView {
         headerPanel.setPreferredSize(new Dimension(600, 80)); // Set header height
         
         // Back button
-        JButton backButton = new JButton("←");
+        JButton backButton = new JButton();
+        try {
+            ImageIcon backIcon = new ImageIcon("C:/Users/ADMIN/Desktop/Tasklr/resource/icons/BackArrow.png");
+            Image scaledImage = backIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
+            backButton.setIcon(new ImageIcon(scaledImage));
+        } catch (Exception e) {
+            backButton.setText("←"); // Fallback to text arrow if image fails to load
+            System.err.println("Failed to load back arrow icon: " + e.getMessage());
+        }
         backButton.setFont(new Font("Segoe UI Variable", Font.BOLD, 16));
         backButton.setFocusPainted(false);
         backButton.setBorderPainted(false);
         backButton.setContentAreaFilled(false);
         backButton.addActionListener(e -> SettingsPanel.showMainView());
+
+        // Add hover effect
+        new HoverButtonEffect(backButton, 
+            Color.WHITE,           // default background
+            new Color(0xF5F5F5),   // hover background
+            Color.BLACK,           // default text
+            Color.BLACK            // hover text
+        );
         
         JLabel titleLabel = new JLabel("Manage Account");
         titleLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 24));
@@ -42,64 +59,109 @@ public class ManageAccountView {
         // Main content
         JPanel contentPanel = createPanel.panel(Color.WHITE, new BorderLayout(), null);
         contentPanel.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
-        contentPanel.setPreferredSize(new Dimension(600, 600)); // Set content panel size
         
-        // Create a wrapper panel for the form
-        JPanel formWrapper = new JPanel(new BorderLayout());
-        formWrapper.setBackground(Color.WHITE);
-        formWrapper.setPreferredSize(new Dimension(600, 500)); // Set form wrapper size
-        
-        // Add your account management components here
+        // Create main form panel with GridBagLayout
         JPanel formPanel = new JPanel(new GridBagLayout());
         formPanel.setBackground(Color.WHITE);
-        formPanel.setPreferredSize(new Dimension(600, 450)); // Set form panel size
         
         GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
         gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1.0;
-        gbc.insets = new Insets(0, 0, 15, 0);
+        gbc.insets = new Insets(0, 0, 0, 0);
         
-        // Add sections
+        // Add Username section
         formPanel.add(createFormSection("Username", "Change your username"), gbc);
+        
+        // Add space
+        gbc.gridy++;
+        gbc.insets = new Insets(15, 0, 15, 0);
+        formPanel.add(Box.createVerticalStrut(1), gbc);
+        
+        // Add Password section
+        gbc.gridy++;
+        gbc.insets = new Insets(0, 0, 0, 0);
         formPanel.add(createFormSection("Password", "Change your password"), gbc);
+        
+        // Add space
+        gbc.gridy++;
+        gbc.insets = new Insets(15, 0, 15, 0);
+        formPanel.add(Box.createVerticalStrut(1), gbc);
+        
+        // Add Backup section
+        gbc.gridy++;
+        gbc.insets = new Insets(0, 0, 0, 0);
         formPanel.add(createFormSection("Backup Password", "Configure backup password"), gbc);
         
-        // Delete Account section
-        JPanel deleteSection = new JPanel(new BorderLayout());
+        // Add space
+        gbc.gridy++;
+        gbc.insets = new Insets(15, 0, 15, 0);
+        formPanel.add(Box.createVerticalStrut(1), gbc);
+        
+        // Add Delete section
+        gbc.gridy++;
+        gbc.insets = new Insets(0, 0, 0, 0);
+        
+        // Create Delete Account section
+        JPanel deleteSection = new JPanel();
+        deleteSection.setLayout(new BoxLayout(deleteSection, BoxLayout.Y_AXIS));
         deleteSection.setBackground(Color.WHITE);
-        deleteSection.setPreferredSize(new Dimension(600, 100)); // Set delete section size
         deleteSection.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(new Color(0xFFCDD2), 1),
-            BorderFactory.createEmptyBorder(15, 15, 15, 15)
+            BorderFactory.createEmptyBorder(25, 25, 25, 25)
         ));
-        
+
+        // Delete Account Label
         JLabel deleteLabel = new JLabel("Delete Account");
         deleteLabel.setForeground(new Color(0xD32F2F));
         deleteLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 16));
-        
+        deleteLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        // Warning Label
+        JLabel warningLabel = new JLabel("This action can't be undone.");
+        warningLabel.setForeground(Color.GRAY);
+        warningLabel.setFont(new Font("Segoe UI Variable", Font.PLAIN, 14));
+        warningLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        // Delete Button
         JButton deleteButton = new JButton("Delete Account");
+        deleteButton.setPreferredSize(new Dimension(0, 35));
+        deleteButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, 35));
         deleteButton.setBackground(new Color(0xD32F2F));
         deleteButton.setForeground(Color.WHITE);
         deleteButton.setFocusPainted(false);
+        deleteButton.setBorderPainted(false);
+        deleteButton.setFont(new Font("Segoe UI Variable", Font.PLAIN, 14));
+        deleteButton.setAlignmentX(Component.LEFT_ALIGNMENT);
         deleteButton.addActionListener(e -> handleDeleteAccount());
+
+        // Add components to delete section
+        deleteSection.add(deleteLabel);
+        deleteSection.add(Box.createVerticalStrut(8));
+        deleteSection.add(warningLabel);
+        deleteSection.add(Box.createVerticalStrut(15));
+        deleteSection.add(deleteButton);
         
-        deleteSection.add(deleteLabel, BorderLayout.NORTH);
-        deleteSection.add(new JLabel("This action cannot be undone."), BorderLayout.CENTER);
-        deleteSection.add(deleteButton, BorderLayout.SOUTH);
-        
-        gbc.insets = new Insets(30, 0, 0, 0);
         formPanel.add(deleteSection, gbc);
         
-        formWrapper.add(formPanel, BorderLayout.NORTH);
+        // Add spacer panel after delete section
+        gbc.gridy++;
+        JPanel spacerPanel = new JPanel();
+        spacerPanel.setPreferredSize(new Dimension(0, 200));
+        spacerPanel.setBackground(Color.WHITE);
+        formPanel.add(spacerPanel, gbc);
         
-        JScrollPane scrollPane = new JScrollPane(formWrapper);
+        // Add scroll pane
+        JScrollPane scrollPane = new JScrollPane(formPanel);
         scrollPane.setBorder(null);
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
         scrollPane.setBackground(Color.WHITE);
         
         contentPanel.add(scrollPane, BorderLayout.CENTER);
         
+        // Add panels to main panel
         panel.add(headerPanel, BorderLayout.NORTH);
         panel.add(contentPanel, BorderLayout.CENTER);
         
@@ -190,41 +252,58 @@ public class ManageAccountView {
     }
 
     private static JPanel createFormSection(String title, String description) {
-        JPanel panel = new JPanel(new BorderLayout(0, 10));
+        JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(Color.WHITE);
+        // Add a compound border: Line border + Empty border for padding
         panel.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(0xE0E0E0), 1),
-            BorderFactory.createEmptyBorder(15, 15, 15, 15)
+            BorderFactory.createLineBorder(new Color(0xE0E0E0), 1), // Light gray border
+            BorderFactory.createEmptyBorder(25, 25, 25, 25) // Increased padding
         ));
-        
-        panel.setPreferredSize(new Dimension(600, 90));
+        panel.setPreferredSize(new Dimension(600, 150)); // Increased height from 80 to 100
         
         JLabel titleLabel = new JLabel(title);
         titleLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 16));
         
-        // Change button text based on section
-        String buttonText = title.equals("Backup Password") ? "Backup" : "Edit";
-        JButton editButton = new JButton(buttonText);
-        editButton.setBackground(new Color(0x0065D9));
-        editButton.setForeground(Color.WHITE);
-        editButton.setFocusPainted(false);
+        // Create button with consistent size
+        JButton actionButton = new JButton();
+        actionButton.setBackground(new Color(0x0065D9));
+        actionButton.setForeground(Color.WHITE);
+        actionButton.setFocusPainted(false);
+        actionButton.setBorderPainted(false);
+        actionButton.setPreferredSize(new Dimension(80, 35));
+        actionButton.setText(title.equals("Backup Password") ? "Backup" : "Edit");
+        
+        // Add hover effect
+        actionButton.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                actionButton.setBackground(new Color(0x0052AE)); // Darker blue on hover
+                actionButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            }
+            
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                actionButton.setBackground(new Color(0x0065D9)); // Return to original color
+                actionButton.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+            }
+        });
         
         // Add specific action listeners based on section
         if (title.equals("Username")) {
-            editButton.addActionListener(e -> handleUsernameEdit());
+            actionButton.addActionListener(e -> handleUsernameEdit());
         } else if (title.equals("Password")) {
-            editButton.addActionListener(e -> handlePasswordEdit());
+            actionButton.addActionListener(e -> handlePasswordEdit());
         } else if (title.equals("Backup Password")) {
-            editButton.addActionListener(e -> handleBackupSetup());
+            actionButton.addActionListener(e -> handleBackupSetup());
         }
         
-        JPanel headerPanel = new JPanel(new BorderLayout());
+        JPanel headerPanel = new JPanel(new BorderLayout(10, 0)); // Add horizontal gap between title and button
         headerPanel.setBackground(Color.WHITE);
         headerPanel.add(titleLabel, BorderLayout.WEST);
-        headerPanel.add(editButton, BorderLayout.EAST);
+        headerPanel.add(actionButton, BorderLayout.EAST);
         
         JLabel descLabel = new JLabel(description);
         descLabel.setForeground(Color.GRAY);
+        descLabel.setFont(new Font("Segoe UI Variable", Font.PLAIN, 14));
+        descLabel.setBorder(BorderFactory.createEmptyBorder(8, 0, 0, 0)); // Increased top padding for description
         
         panel.add(headerPanel, BorderLayout.NORTH);
         panel.add(descLabel, BorderLayout.CENTER);
@@ -233,20 +312,156 @@ public class ManageAccountView {
     }
     
     private static void handleDeleteAccount() {
-        int result = JOptionPane.showConfirmDialog(
+        // Create verification panel
+        JPanel verificationPanel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.insets = new Insets(5, 5, 5, 5);
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+
+        JTextField usernameField = new JTextField();
+        JPasswordField passwordField = new JPasswordField();
+
+        verificationPanel.add(new JLabel("Please verify your identity to delete your account:"), gbc);
+        verificationPanel.add(new JLabel("Username:"), gbc);
+        verificationPanel.add(usernameField, gbc);
+        verificationPanel.add(new JLabel("Password:"), gbc);
+        verificationPanel.add(passwordField, gbc);
+        verificationPanel.add(new JLabel("This action cannot be undone!"), gbc);
+
+        // Show verification dialog
+        int verificationResult = JOptionPane.showConfirmDialog(
             null,
-            "Are you sure you want to delete your account? This action cannot be undone.",
-            "Confirm Account Deletion",
-            JOptionPane.YES_NO_OPTION,
+            verificationPanel,
+            "Verify Identity",
+            JOptionPane.OK_CANCEL_OPTION,
             JOptionPane.WARNING_MESSAGE
         );
-        
-        if (result == JOptionPane.YES_OPTION) {
+
+        if (verificationResult != JOptionPane.OK_OPTION) {
+            return;
+        }
+
+        String enteredUsername = usernameField.getText().trim();
+        String enteredPassword = new String(passwordField.getPassword()).trim();
+
+        // Verify credentials
+        try {
+            String hashedPassword = hashPassword(enteredPassword);
+            String verifyQuery = "SELECT id FROM users WHERE username = ? AND password = ? AND id = ?";
+            ResultSet rs = DatabaseManager.executeQuery(
+                verifyQuery, 
+                enteredUsername, 
+                hashedPassword, 
+                UserSession.getUserId()
+            );
+
+            if (!rs.next()) {
+                JOptionPane.showMessageDialog(
+                    null,
+                    "Invalid credentials. Please try again.",
+                    "Verification Failed",
+                    JOptionPane.ERROR_MESSAGE
+                );
+                return;
+            }
+
+            // Final confirmation
+            int confirmResult = JOptionPane.showConfirmDialog(
+                null,
+                "Are you absolutely sure you want to delete your account?\n" +
+                "This will permanently delete all your data including:\n" +
+                "- Tasks\n" +
+                "- Flashcards\n" +
+                "- Account settings\n\n" +
+                "This action CANNOT be undone!",
+                "Final Confirmation",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE
+            );
+
+            if (confirmResult == JOptionPane.YES_OPTION) {
+                try {
+                    Connection conn = DatabaseManager.getConnection();
+                    conn.setAutoCommit(false);
+
+                    try {
+                        // Delete user's data in correct order (respecting foreign keys)
+                        DatabaseManager.executeUpdate(
+                            "DELETE FROM flashcards WHERE set_id IN " +
+                            "(SELECT set_id FROM flashcard_sets WHERE user_id = ?)",
+                            UserSession.getUserId()
+                        );
+
+                        DatabaseManager.executeUpdate(
+                            "DELETE FROM flashcard_sets WHERE user_id = ?",
+                            UserSession.getUserId()
+                        );
+
+                        DatabaseManager.executeUpdate(
+                            "DELETE FROM tasks WHERE user_id = ?",
+                            UserSession.getUserId()
+                        );
+
+                        DatabaseManager.executeUpdate(
+                            "DELETE FROM user_backup_info WHERE user_id = ?",
+                            UserSession.getUserId()
+                        );
+
+                        DatabaseManager.executeUpdate(
+                            "DELETE FROM sessions WHERE user_id = ?",
+                            UserSession.getUserId()
+                        );
+
+                        DatabaseManager.executeUpdate(
+                            "DELETE FROM users WHERE id = ?",
+                            UserSession.getUserId()
+                        );
+
+                        conn.commit();
+
+                        // Clear session and exit to login screen
+                        UserSession.clearSession();
+                        JOptionPane.showMessageDialog(
+                            null,
+                            "Your account has been successfully deleted.",
+                            "Account Deleted",
+                            JOptionPane.INFORMATION_MESSAGE
+                        );
+
+                        // Close current window and show login screen
+                        Window window = SwingUtilities.getWindowAncestor(
+                            (Component) verificationPanel.getParent()
+                        );
+                        window.dispose();
+                        new Login().setVisible(true);
+
+                    } catch (SQLException ex) {
+                        conn.rollback();
+                        throw ex;
+                    } finally {
+                        conn.setAutoCommit(true);
+                        conn.close();
+                    }
+
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                    JOptionPane.showMessageDialog(
+                        null,
+                        "Error deleting account: " + ex.getMessage(),
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE
+                    );
+                }
+            }
+
+        } catch (SQLException ex) {
+            ex.printStackTrace();
             JOptionPane.showMessageDialog(
                 null,
-                "Account deletion functionality coming soon!",
-                "Not Implemented",
-                JOptionPane.INFORMATION_MESSAGE
+                "Error verifying credentials: " + ex.getMessage(),
+                "Error",
+                JOptionPane.ERROR_MESSAGE
             );
         }
     }
