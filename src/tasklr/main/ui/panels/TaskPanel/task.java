@@ -208,7 +208,7 @@ public class task {
         }
     }
 
-    private static void refreshTaskContainer() {
+    public static void refreshTaskContainer() {
         if (taskContainer == null) return;
         
         // Clear existing tasks

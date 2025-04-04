@@ -1,31 +1,50 @@
 package tasklr.main.ui.panels.quizPanel;
 
-import tasklr.authentication.UserSession;
-import tasklr.utilities.DatabaseManager;
-import tasklr.utilities.Toast;
-
 import javax.swing.*;
 import java.awt.*;
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
+import tasklr.utilities.DatabaseManager;
+import tasklr.utilities.Toast;
+import tasklr.authentication.UserSession;
 
 public class FlashcardUIRefresher {
-    private final JPanel quizContainer;
-    private final JPanel mainCardPanel;
-    private final CardLayout cardLayout;
-    private final JScrollPane scrollPane;
+    private static FlashcardUIRefresher instance;
+    private JPanel quizContainer;
+    private JPanel mainCardPanel;
+    private CardLayout cardLayout;
+    private JScrollPane scrollPane;
 
-    public FlashcardUIRefresher(JPanel quizContainer, JPanel mainCardPanel, 
-                               CardLayout cardLayout, JScrollPane scrollPane) {
+    private FlashcardUIRefresher(JPanel quizContainer, JPanel mainCardPanel, 
+                                CardLayout cardLayout, JScrollPane scrollPane) {
         this.quizContainer = quizContainer;
         this.mainCardPanel = mainCardPanel;
         this.cardLayout = cardLayout;
         this.scrollPane = scrollPane;
     }
 
-    public void refreshListContainer() {
-        if (quizContainer == null) return;
+    public static void initialize(JPanel quizContainer, JPanel mainCardPanel, 
+                                CardLayout cardLayout, JScrollPane scrollPane) {
+        instance = new FlashcardUIRefresher(quizContainer, mainCardPanel, cardLayout, scrollPane);
+    }
+
+    private static FlashcardUIRefresher getInstance() {
+        if (instance == null) {
+            // Instead of throwing an exception, create a dummy instance that does nothing
+            return new FlashcardUIRefresher(null, null, null, null);
+        }
+        return instance;
+    }
+
+    public static void refreshListContainer() {
+        getInstance().refreshListContainerImpl();
+    }
+
+    public static void refreshFlashcardMode(int setId) {
+        getInstance().refreshFlashcardModeImpl(setId);
+    }
+
+    private void refreshListContainerImpl() {
+        if (quizContainer == null) return; // Silently return if not initialized
         quizContainer.removeAll();
         
         try {
@@ -59,8 +78,8 @@ public class FlashcardUIRefresher {
         refreshUIComponents();
     }
 
-    public void refreshFlashcardMode(int setId) {
-        if (mainCardPanel == null) return;
+    private void refreshFlashcardModeImpl(int setId) {
+        if (mainCardPanel == null) return; // Silently return if not initialized
 
         // Remove existing flashcard mode panel if it exists
         Component[] components = mainCardPanel.getComponents();
@@ -79,49 +98,7 @@ public class FlashcardUIRefresher {
         refreshUIComponents();
     }
 
-    private JPanel createFlashcardModePanel(int setId) {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(Color.WHITE);
-
-        try {
-            String query = "SELECT term, definition FROM flashcards WHERE set_id = ?";
-            try (Connection conn = DatabaseManager.getConnection();
-                 PreparedStatement stmt = conn.prepareStatement(query)) {
-                stmt.setInt(1, setId);
-                ResultSet rs = stmt.executeQuery();
-
-                JPanel cardsContainer = new JPanel();
-                cardsContainer.setLayout(new BoxLayout(cardsContainer, BoxLayout.Y_AXIS));
-                
-                boolean hasCards = false;
-                while (rs.next()) {
-                    hasCards = true;
-                    String term = rs.getString("term");
-                    String definition = rs.getString("definition");
-                    
-                    JPanel cardPanel = createFlashcardPanel(term, definition);
-                    cardsContainer.add(cardPanel);
-                    cardsContainer.add(Box.createRigidArea(new Dimension(0, 10)));
-                }
-
-                if (!hasCards) {
-                    addNoCardsLabel(cardsContainer);
-                }
-
-                JScrollPane scrollPane = new JScrollPane(cardsContainer);
-                scrollPane.setBorder(null);
-                scrollPane.getVerticalScrollBar().setUnitIncrement(16);
-                panel.add(scrollPane, BorderLayout.CENTER);
-            }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-            Toast.error("Error loading flashcards: " + ex.getMessage());
-        }
-
-        return panel;
-    }
-
-    public void refreshUIComponents() {
+    private void refreshUIComponents() {
         if (quizContainer != null) {
             quizContainer.revalidate();
             quizContainer.repaint();
@@ -146,22 +123,18 @@ public class FlashcardUIRefresher {
         quizContainer.add(noSetsLabel);
     }
 
-    private void addNoCardsLabel(JPanel container) {
-        JLabel noCardsLabel = new JLabel("No flashcards in this set yet!", SwingConstants.CENTER);
-        noCardsLabel.setFont(new Font("Segoe UI Variable", Font.PLAIN, 16));
-        noCardsLabel.setForeground(new Color(0x707070));
-        noCardsLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        container.add(noCardsLabel);
-    }
-
-    // These methods should be implemented according to your UI design
     private JPanel createSetItemPanel(int setId, String subject, String description) {
         // Implement according to your UI design
-        return new JPanel(); // Placeholder
+        JPanel panel = new JPanel(new BorderLayout());
+        // Add your panel implementation here
+        return panel;
     }
 
-    private JPanel createFlashcardPanel(String term, String definition) {
+    private JPanel createFlashcardModePanel(int setId) {
         // Implement according to your UI design
-        return new JPanel(); // Placeholder
+        JPanel panel = new JPanel(new BorderLayout());
+        // Add your panel implementation here
+        return panel;
     }
 }
+

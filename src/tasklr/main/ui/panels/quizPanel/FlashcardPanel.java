@@ -33,6 +33,16 @@ public class FlashcardPanel {
     private static int currentSetId = -1; // Track current set ID
     private static String currentSubject = ""; // Track current subject
     
+    // Add the getter method for currentSetId
+    public static int getCurrentSetId() {
+        return currentSetId;
+    }
+    
+    // Add the setter method for completeness
+    public static void setCurrentSetId(int setId) {
+        currentSetId = setId;
+    }
+    
     // Temporary storage for terms before set creation
     private static List<Map<String, String>> temporaryTerms = new ArrayList<>();
     
@@ -46,6 +56,12 @@ public class FlashcardPanel {
     private static List<JButton> toggleButtons = new ArrayList<>();
     private static boolean isListVisible = true;
     private static JButton setCreationToggleBtn; // Store reference to set creation panel's toggle button
+
+    // Add a static initialization method
+    public static void initializeUIRefresher(JPanel quizContainer, JPanel mainCardPanel, 
+                                           CardLayout cardLayout, JScrollPane scrollPane) {
+        FlashcardUIRefresher.initialize(quizContainer, mainCardPanel, cardLayout, scrollPane);
+    }
 
     public static JPanel createFlashcardPanel() {
         JPanel panel = createPanel.panel(BACKGROUND_COLOR, new BorderLayout(), new Dimension(100, 100));
@@ -69,6 +85,9 @@ public class FlashcardPanel {
         
         contentPanel.add(mainCardPanel, BorderLayout.CENTER);
         contentPanel.add(listContainer, BorderLayout.WEST);
+        
+        // Initialize FlashcardUIRefresher right after creating all necessary components
+        initializeUIRefresher(quizContainer, mainCardPanel, cardLayout, scrollPane);
         
         panel.add(contentPanel, BorderLayout.CENTER);
         
