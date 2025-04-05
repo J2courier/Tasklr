@@ -211,15 +211,29 @@ public class FlashcardPanel {
         // Create header panel
         JPanel headerPanel = createPanel.panel(Color.WHITE, new BorderLayout(), new Dimension(0, 60));
         headerPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        
+
         termsInputTitleLabel = new JLabel("ADD TERMS TO NEW SET");
         termsInputTitleLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 16));
-        
-        // Create Save button in header
+
+        // Create buttons panel for the header right side
+        JPanel headerButtonsPanel = createPanel.panel(Color.WHITE, new FlowLayout(FlowLayout.RIGHT, 10, 0), null);
+
+        // Create Cancel button
+        JButton cancelBtn = createButton.button("CANCEL", null, Color.WHITE, null, false);
+        cancelBtn.setPreferredSize(new Dimension(130, 40));
+
+        // Add hover effect for the cancel button
+        new HoverButtonEffect(cancelBtn, 
+            new Color(0xDC2626),  // default background (red)
+            new Color(0xB91C1C),  // hover background (darker red)
+            Color.WHITE,          // default text
+            Color.WHITE          // hover text
+        );
+
+        // Create Save button
         JButton saveBtn = createButton.button("SAVE", null, Color.WHITE, null, false);
-        // saveBtn.setBackground(new Color(0x17BD0F));  // Green color
         saveBtn.setPreferredSize(new Dimension(130, 40));
-        
+
         // Add hover effect for the save button
         new HoverButtonEffect(saveBtn, 
             new Color(0x17BD0F),  // default background (green)
@@ -227,10 +241,44 @@ public class FlashcardPanel {
             Color.WHITE,          // default text
             Color.WHITE          // hover text
         );
-        
+
+        // Add action listener for cancel button
+        cancelBtn.addActionListener(e -> {
+            // Clear any unsaved terms
+            if (!temporaryTerms.isEmpty()) {
+                int confirm = JOptionPane.showConfirmDialog(
+                    null,
+                    "You have unsaved terms. Are you sure you want to cancel?",
+                    "Confirm Cancel",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.WARNING_MESSAGE
+                );
+                if (confirm != JOptionPane.YES_OPTION) {
+                    return;
+                }
+                temporaryTerms.clear();
+            }
+            
+            // Reset the panel state
+            cardLayout.show(mainCardPanel, "setCreation");
+            currentSetId = -1; // Reset current set
+            currentSubject = ""; // Reset current subject
+        });
+
+        // Add action listener for save button (existing code)
+        saveBtn.addActionListener(e -> {
+            cardLayout.show(mainCardPanel, "setCreation");
+            currentSetId = -1; // Reset current set
+            currentSubject = ""; // Reset current subject
+        });
+
+        // Add buttons to the header buttons panel
+        headerButtonsPanel.add(cancelBtn);
+        headerButtonsPanel.add(saveBtn);
+
         // Add components to header
         headerPanel.add(termsInputTitleLabel, BorderLayout.WEST);
-        headerPanel.add(saveBtn, BorderLayout.EAST);
+        headerPanel.add(headerButtonsPanel, BorderLayout.EAST);
 
         // Create main content panel
         JPanel contentPanel = createPanel.panel(Color.WHITE, new GridBagLayout(), null);
@@ -283,12 +331,6 @@ public class FlashcardPanel {
                 definitionArea.setText("");
                 Toast.success("Term added successfully!");
             }
-        });
-        
-        saveBtn.addActionListener(e -> {
-            cardLayout.show(mainCardPanel, "setCreation");
-            currentSetId = -1; // Reset current set
-            currentSubject = ""; // Reset current subject
         });
         
         buttonPanel.add(addTermBtn);
@@ -502,7 +544,7 @@ public class FlashcardPanel {
         } catch (Exception e) {
             System.err.println("Failed to load edit sets icon: " + e.getMessage());
         }
-        editSetsItem.setText("Edit Sets");
+        editSetsItem.setText("Add More Terms");
         
         // Delete menu item with icon
         JMenuItem deleteItem = new JMenuItem();
@@ -539,23 +581,50 @@ public class FlashcardPanel {
 
         // Existing edit functionality remains the same
         editItem.addActionListener(e -> {
+            // Create input fields
             JTextField subjectField = new JTextField(subject);
             JTextArea descriptionArea = new JTextArea(description);
             descriptionArea.setLineWrap(true);
             descriptionArea.setWrapStyleWord(true);
+            descriptionArea.setRows(4); // Set preferred number of rows
             
-            JPanel editPanel = new JPanel(new GridLayout(4, 1, 5, 5));
-            editPanel.add(new JLabel("Subject:"));
+            // Create main edit panel with vertical BoxLayout
+            JPanel editPanel = new JPanel();
+            editPanel.setLayout(new BoxLayout(editPanel, BoxLayout.Y_AXIS));
+            editPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+            editPanel.setPreferredSize(new Dimension(400, 250)); // Set preferred size for the panel
+            
+            // Subject label
+            JLabel subLabel = new JLabel("Subject");
+            subLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 12));
+            subLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+            editPanel.add(subLabel);
+            
+            // Subject field
+            subjectField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
+            subjectField.setAlignmentX(Component.LEFT_ALIGNMENT);
             editPanel.add(subjectField);
-            editPanel.add(new JLabel("Description:"));
             
-            JScrollPane descScrollPane = new JScrollPane(descriptionArea);
-            descScrollPane.setPreferredSize(new Dimension(300, 100));
-            editPanel.add(descScrollPane);
-
+            // Add space between fields
+            editPanel.add(Box.createRigidArea(new Dimension(0, 15)));
+            
+            // Description label
+            JLabel descLabel = new JLabel("Description");
+            descLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 12));
+            descLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+            editPanel.add(descLabel);
+            
+            // Description text area with scroll pane
+            JScrollPane scrollPane = new JScrollPane(descriptionArea);
+            scrollPane.setMaximumSize(new Dimension(Integer.MAX_VALUE, 120));
+            scrollPane.setAlignmentX(Component.LEFT_ALIGNMENT);
+            scrollPane.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
+            editPanel.add(scrollPane);
+            
+            // Show dialog
             int result = JOptionPane.showConfirmDialog(null, editPanel, "Edit Set", 
                 JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
-                
+            
             if (result == JOptionPane.OK_OPTION) {
                 String newSubject = subjectField.getText().trim();
                 String newDescription = descriptionArea.getText().trim();

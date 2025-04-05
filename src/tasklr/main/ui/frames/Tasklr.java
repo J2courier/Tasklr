@@ -132,6 +132,7 @@ public class Tasklr extends JFrame {
                 setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
             }
         });
+
     }
         
     public static JPanel homePanel(String username) {
