@@ -52,7 +52,7 @@ public class HomePanel {
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.fill = GridBagConstraints.BOTH;
         gbc.weightx = 1;
-        gbc.insets = new Insets(20, 20, 20, 20);
+        gbc.insets = new Insets(10, 20, 10, 20);
 
         // Header Section
         gbc.gridy = 0;
@@ -339,12 +339,13 @@ public class HomePanel {
 
 
 
-    private static void styleCard(JPanel panel) {
-        panel.setBorder(BorderFactory.createCompoundBorder(
+    private static void styleCard(JPanel card) {
+        card.setPreferredSize(new Dimension(0, 150)); // Increased from default height
+        card.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(BORDER_COLOR, 1),
-            BorderFactory.createEmptyBorder(20, 20, 20, 20)
+            BorderFactory.createEmptyBorder(5, 20, 5, 20)
         ));
-        panel.setBackground(CARD_COLOR);
+        card.setBackground(CARD_COLOR);
     }
         
 

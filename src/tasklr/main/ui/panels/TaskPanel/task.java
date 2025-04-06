@@ -4,6 +4,9 @@ package tasklr.main.ui.panels.TaskPanel;
 import com.toedter.calendar.JDateChooser;
 import javax.swing.*;
 import javax.swing.border.Border;
+
+import org.w3c.dom.events.MouseEvent;
+
 import tasklr.utilities.Toast;
 import tasklr.authentication.UserSession;
 import tasklr.utilities.ComponentUtil;
@@ -13,7 +16,9 @@ import tasklr.utilities.createPanel;
 import tasklr.utilities.HoverButtonEffect;
 import tasklr.utilities.DatabaseManager;
 
+
 import java.awt.*;
+import java.awt.event.*;
 import java.util.List;
 import java.sql.*;
 
@@ -72,7 +77,7 @@ public class task {
         JPanel contentPanel = createPanel.panel(BACKGROUND_COLOR, new GridBagLayout(), null);
         GridBagConstraints contentGbc = new GridBagConstraints();
         contentGbc.fill = GridBagConstraints.BOTH;
-        contentGbc.insets = new Insets(20, 0, 0, 0); // Add top spacing
+        contentGbc.insets = new Insets(0, 0, 0, 0); // Add top spacing
 
         // Add list container (left side)
         contentGbc.gridx = 0;
@@ -96,8 +101,8 @@ public class task {
 
         // Add content panel to main panel
         gbc.gridy = 1;
-        gbc.weighty = 1.0; // Expand to fill remaining vertical space
-        gbc.insets = new Insets(20, 0, 0, 0); // Add top spacing between header and content
+        gbc.weighty = 1.0; 
+        gbc.insets = new Insets(1, 0, 0, 0); 
         panel.add(contentPanel, gbc);
 
         return panel;
@@ -143,7 +148,7 @@ public class task {
         // Date components
         JDateChooser dateChooser = new JDateChooser();
         dateChooser.setPreferredSize(new Dimension(640, 40));
-        dateChooser.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 10));
+        // dateChooser.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 10));
         dateChooser.setBackground(TEXTFIELD_COLOR);
 
         JPanel AddDueComponent = createPanel.panel(TEXTFIELD_COLOR, new BorderLayout(), new Dimension(700, 40));
@@ -244,7 +249,7 @@ public class task {
         // Configure task container with BoxLayout (Y_AXIS)
         taskContainer = createPanel.panel(LIST_CONTAINER_COLOR, null, null);
         taskContainer.setLayout(new BoxLayout(taskContainer, BoxLayout.Y_AXIS));
-        taskContainer.setBorder(BorderFactory.createEmptyBorder(0, 5, 20, 5));
+        taskContainer.setBorder(BorderFactory.createEmptyBorder(0, 0, 20, 5));
 
         // Add initial tasks
         refreshTaskContainer();
@@ -427,6 +432,17 @@ public class task {
         
         // Add hover effect
         new HoverPanelEffect(panel, LIST_ITEM_COLOR, LIST_ITEM_HOVER_BG);
+        
+        panel.addMouseListener(new MouseAdapter() {
+           //add another view panel to add additional information in the task 
+           //so that when it clicked it will give the user another option what to do in the task
+           //give a add button to add a descrpition on task that they want to do 
+           //the description that will be written in task will be in JCheckBox
+           //first resize list container, set the value of list visible to true
+           //then add a condition if list visible true set list container preferred size into 0 else list container preferred size 600
+           //then create a panel that will contain the JTextField the input will to added into checkbox
+           //add a task_desc table in the database to be the container of the data being input in the JTextField
+        });
 
         return panel;
     }
