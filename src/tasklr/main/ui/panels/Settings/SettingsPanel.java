@@ -113,13 +113,26 @@ public class SettingsPanel {
         );
         
         if (confirm == JOptionPane.YES_OPTION) {
-            UserSession.clearSession();
-            // Close current window and show login
-            JFrame currentFrame = (JFrame) SwingUtilities.getWindowAncestor(
-                SwingUtilities.getRoot(SwingUtilities.getRoot(new JPanel()))
-            );
-            currentFrame.dispose();
-            new Login().setVisible(true);
+            try {
+                // Clear the user session
+                UserSession.clearSession();
+                
+                // Find the current window using the cardPanel
+                Window window = SwingUtilities.getWindowAncestor(cardPanel);
+                if (window instanceof JFrame) {
+                    window.dispose();
+                    // Show login screen
+                    new Login().setVisible(true);
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(
+                    null,
+                    "Error during logout: " + ex.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE
+                );
+            }
         }
     }
 

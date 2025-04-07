@@ -241,7 +241,7 @@ public class task {
             Toast.error("Error fetching tasks: " + ex.getMessage());
         }
     }
-
+                
     private static JPanel createListContainer() {
         // Main panel with fixed width
         JPanel mainPanel = createPanel.panel(LIST_CONTAINER_COLOR, new BorderLayout(), new Dimension(300, 0));
