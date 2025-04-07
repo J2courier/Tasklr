@@ -67,7 +67,7 @@ public class AppearanceView {
         ));
         
         JLabel titleLabel = new JLabel("Theme");
-        titleLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 16));
+        titleLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 24));  // Changed from 16
         
         JPanel themeOptions = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         themeOptions.setBackground(Color.WHITE);
@@ -102,7 +102,7 @@ public class AppearanceView {
         ));
         
         JLabel titleLabel = new JLabel("Color Scheme");
-        titleLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 16));
+        titleLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 24));  // Changed from 16
         
         JComboBox<String> colorSchemes = new JComboBox<>(new String[]{
             "Default Blue",
@@ -126,7 +126,7 @@ public class AppearanceView {
         ));
         
         JLabel titleLabel = new JLabel("Font Settings");
-        titleLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 16));
+        titleLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 24));  // Changed from 16
         
         JPanel fontControls = new JPanel(new GridLayout(2, 2, 10, 10));
         fontControls.setBackground(Color.WHITE);

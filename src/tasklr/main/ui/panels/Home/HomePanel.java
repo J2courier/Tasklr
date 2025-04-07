@@ -247,7 +247,7 @@ public class HomePanel {
         ));
 
         JLabel remainingTaskLabel = new JLabel("Remaining Tasks");
-        remainingTaskLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 20));
+        remainingTaskLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 24));
         remainingTaskLabel.setForeground(TEXT_DARK);
         
         JButton refreshButton = new JButton();
@@ -561,7 +561,7 @@ public class HomePanel {
         ));
 
         JLabel completedTaskLabel = new JLabel("Completed Tasks");
-        completedTaskLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 20)); // Modified font size
+        completedTaskLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 24));  // Changed from 20
         completedTaskLabel.setForeground(TEXT_DARK);
         headerPanel.add(completedTaskLabel, BorderLayout.WEST);
 
@@ -596,8 +596,7 @@ public class HomePanel {
         recentTasksWrapper.removeAll();
         
         try {
-            String query = "SELECT title FROM tasks " + 
-                          "WHERE user_id = ? AND status = 'completed' ";
+            String query = "SELECT title FROM tasks " + "WHERE user_id = ? AND status = 'completed' ";
                           
             ResultSet rs = DatabaseManager.executeQuery(query, UserSession.getUserId());
 

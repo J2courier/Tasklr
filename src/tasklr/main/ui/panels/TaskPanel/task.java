@@ -113,18 +113,19 @@ public class task {
         JPanel inputPanel = createPanel.panel(BACKGROUND_COLOR, new GridBagLayout(), new Dimension(700, 0));
         
         JLabel AddTaskLbl = new JLabel("Add Task");
-        AddTaskLbl.setFont(new Font("Segoe UI Variable", Font.BOLD, 16));
+        AddTaskLbl.setFont(new Font("Segoe UI Variable", Font.BOLD, 24));  // Changed from 16
         AddTaskLbl.setForeground(TEXT_COLOR);
 
         // Title Label
         JLabel titleLabel = new JLabel("TITLE");
-        titleLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 14));
+        titleLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 24));  // Changed from 14
         titleLabel.setForeground(TEXT_COLOR);
 
         JTextField titleField = new JTextField(20);
         titleField.setPreferredSize(new Dimension(700, 40));
         titleField.setBackground(TEXTFIELD_COLOR);
         titleField.setForeground(TEXT_COLOR);
+        titleField.setFont(new Font("Segoe UI Variable", Font.PLAIN, 20));  // Added font size
 
         JButton addTaskBtn = createButton.button("Add Task", PRIMARY_BUTTON_COLOR, PRIMARY_BUTTON_TEXT, null, false);
         addTaskBtn.setPreferredSize(new Dimension(70, 40));
@@ -249,7 +250,7 @@ public class task {
         // Configure task container with BoxLayout (Y_AXIS)
         taskContainer = createPanel.panel(LIST_CONTAINER_COLOR, null, null);
         taskContainer.setLayout(new BoxLayout(taskContainer, BoxLayout.Y_AXIS));
-        taskContainer.setBorder(BorderFactory.createEmptyBorder(0, 0, 20, 5));
+        taskContainer.setBorder(BorderFactory.createEmptyBorder(5, 0, 20, 5));
 
         // Add initial tasks
         refreshTaskContainer();
@@ -274,12 +275,12 @@ public class task {
 
     private static JPanel createTaskItemPanel(String title, java.sql.Date dueDate) {
         // Main panel with fixed height and flexible width
-        JPanel panel = createPanel.panel(LIST_ITEM_COLOR, new BorderLayout(), new Dimension(0, 80));
-        panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 80));
+        JPanel panel = createPanel.panel(LIST_ITEM_COLOR, new BorderLayout(), new Dimension(0, 100)); // Changed height to 100
+        panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 100)); // Changed height to match preferredSize
         
         // Inner panel for consistent padding and content positioning
         JPanel contentPanel = createPanel.panel(LIST_ITEM_COLOR, new BorderLayout(), null);
-        contentPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        contentPanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 00, 10)); // Adjusted padding
         
         // Text panel using BorderLayout for north-south positioning
         JPanel textPanel = createPanel.panel(null, new BorderLayout(), null);
@@ -287,7 +288,7 @@ public class task {
         
         // Task title label at the top (NORTH)
         JLabel titleLabel = new JLabel(title);
-        titleLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 14));
+        titleLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 20));
         titleLabel.setForeground(TEXT_COLOR);
         
         // Due date label at the bottom (SOUTH)

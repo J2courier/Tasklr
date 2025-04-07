@@ -42,7 +42,7 @@ public class ComponentFactory {
     private static JPanel createTitlePanel(String title) {
         JPanel titlePanel = new JPanel(new BorderLayout());
         JLabel titleLabel = new JLabel(title);
-        titleLabel.setFont(BaseComponent.TITLE_FONT);
+        titleLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 24));  // Changed from BaseComponent.TITLE_FONT
         titleLabel.setBorder(BorderFactory.createEmptyBorder(0, 15, 0, 0));
         titlePanel.add(titleLabel, BorderLayout.CENTER);
         return titlePanel;

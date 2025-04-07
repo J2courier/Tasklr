@@ -155,8 +155,8 @@ public class QuizzerPanel {
 
     private static JPanel createListContainer() {
         // Main container with fixed width
-        listContainer = createPanel.panel(LIST_CONTAINER_COLOR, new BorderLayout(), new Dimension(600, 0));
-        // mainPanel.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 1, LIST_ITEM_HOVER_BORDER));
+        listContainer = createPanel.panel(LIST_CONTAINER_COLOR, new BorderLayout(), new Dimension(700, 0));
+        
         // Configure quiz container
         quizContainer = createPanel.panel(LIST_CONTAINER_COLOR, null, null);
         quizContainer.setLayout(new BoxLayout(quizContainer, BoxLayout.Y_AXIS));
@@ -184,7 +184,7 @@ public class QuizzerPanel {
 
     private static void toggleListVisibility(JButton toggleButton) {
         isListVisible = !isListVisible;
-        int newWidth = isListVisible ? 600 : 0;
+        int newWidth = isListVisible ? 700 : 0;
         
         if (listContainer != null) {
             listContainer.setPreferredSize(new Dimension(newWidth, 0));
@@ -210,7 +210,7 @@ public class QuizzerPanel {
     private static void updateToggleButtonText(JButton button, int listWidth) {
         if (listWidth == 0) {
             button.setText("Show List");
-        } else if (listWidth == 600) {
+        } else if (listWidth == 700) {
             button.setText("Hide List");
         }
     }
@@ -335,7 +335,7 @@ public class QuizzerPanel {
         // Title panel at the top
         JPanel titlePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
         JLabel titleLabel = new JLabel("Select Quiz Type for " + subject);
-        titleLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 14));
+        titleLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 24));  // Changed from 14
         titlePanel.add(titleLabel);
 
         // Content panel for all inputs
@@ -443,7 +443,7 @@ public class QuizzerPanel {
         } else {
             // Show list container when dialog is cancelled
             isListVisible = true;
-            listContainer.setPreferredSize(new Dimension(600, 0));
+            listContainer.setPreferredSize(new Dimension(700, 0));
             updateAllToggleButtons();
             listContainer.revalidate();
             listContainer.repaint();
@@ -1196,7 +1196,7 @@ public class QuizzerPanel {
         // Reset list container if it's hidden
         if (!isListVisible) {
             isListVisible = true;
-            listContainer.setPreferredSize(new Dimension(600, 0));
+            listContainer.setPreferredSize(new Dimension(700, 0));
             
             // Update all toggle buttons in the view
             updateAllToggleButtons();

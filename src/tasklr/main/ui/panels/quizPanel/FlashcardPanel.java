@@ -426,7 +426,8 @@ public class FlashcardPanel {
     }
 
     public static JPanel createListContainer() {
-        JPanel mainPanel = createPanel.panel(LIST_CONTAINER_COLOR, new BorderLayout(), new Dimension(600, 0));
+        // Main container with fixed width
+        JPanel mainPanel = createPanel.panel(LIST_CONTAINER_COLOR, new BorderLayout(), new Dimension(700, 0));
         
         quizContainer = createPanel.panel(LIST_CONTAINER_COLOR, null, null);
         quizContainer.setLayout(new BoxLayout(quizContainer, BoxLayout.Y_AXIS));
@@ -480,9 +481,9 @@ public class FlashcardPanel {
     private static JPanel createSetItemPanel(int setId, String subject, String description) {
         // Main panel with fixed height and full width
         JPanel panel = createPanel.panel(LIST_ITEM_COLOR, new BorderLayout(), null);
-        panel.setPreferredSize(new Dimension(550, 80));
-        panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 80));
-        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        panel.setPreferredSize(new Dimension(550, 100));
+        panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 100));
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 10));
 
         // Content panel
         JPanel contentPanel = createPanel.panel(LIST_ITEM_COLOR, new BorderLayout(10, 0), null);
@@ -492,7 +493,7 @@ public class FlashcardPanel {
         
         // Subject label at the top
         JLabel subjectLabel = new JLabel(subject);
-        subjectLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 14));
+        subjectLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 18));
         subjectLabel.setForeground(TEXT_COLOR);
         
         // Description label at the bottom
@@ -1457,7 +1458,7 @@ public class FlashcardPanel {
         if (listContainer != null) {
             isListVisible = !isListVisible;
             String buttonText = isListVisible ? "Hide List" : "Show List";
-            int listWidth = isListVisible ? 600 : 0;
+            int listWidth = isListVisible ? 700 : 0;
             
             // Update both buttons if they exist
             if (setCreationToggleBtn != null) {

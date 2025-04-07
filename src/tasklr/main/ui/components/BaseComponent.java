@@ -5,8 +5,8 @@ import java.awt.*;
 
 public abstract class BaseComponent extends JPanel {
     protected static final Color DEFAULT_BACKGROUND = new Color(0xf1f3f6);
-    protected static final Font TITLE_FONT = new Font("Segoe UI Variable", Font.BOLD, 16);
-    protected static final Font COUNTER_FONT = new Font("Segoe UI Variable", Font.BOLD, 20);
+    protected static final Font TITLE_FONT = new Font("Segoe UI Variable", Font.BOLD, 24);
+    protected static final Font COUNTER_FONT = new Font("Segoe UI Variable", Font.BOLD, 24);
     
     protected BaseComponent() {
         setBackground(DEFAULT_BACKGROUND);
