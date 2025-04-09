@@ -940,7 +940,111 @@ public class FlashcardPanel {
         leftButtonsPanel.add(addMoreTermsBtn);
         leftButtonsPanel.add(viewToggleBtn);
         
+        // Right panel for search functionality
+        JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        rightPanel.setBackground(Color.WHITE);
+        
+        // Search input field
+        JTextField searchInput = new JTextField(20);
+        searchInput.setPreferredSize(new Dimension(200, 35));
+        searchInput.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(0xE0E0E0)),
+            BorderFactory.createEmptyBorder(5, 10, 5, 10)
+        ));
+        
+        // Clear search button (initially invisible)
+        JButton clearSearchBtn = createButton.button("Clear", null, Color.WHITE, null, false);
+        clearSearchBtn.setBackground(new Color(0xDC2626)); // Red color for clear action
+        clearSearchBtn.setPreferredSize(new Dimension(80, 35));
+        clearSearchBtn.setVisible(false); // Hidden by default
+        
+        // Add hover effect to clear button
+        new HoverButtonEffect(clearSearchBtn,
+            new Color(0xDC2626),  // default background
+            new Color(0xB91C1C),  // hover background
+            Color.WHITE,          // default text
+            Color.WHITE           // hover text
+        );
+        
+        // Search button
+        JButton searchBtn = createButton.button("Search", null, Color.WHITE, null, false);
+        searchBtn.setBackground(new Color(0x275CE2));
+        searchBtn.setPreferredSize(new Dimension(100, 35));
+        
+        // Clear search functionality
+        clearSearchBtn.addActionListener(e -> {
+            searchInput.setText(""); // Clear the search input
+            clearSearchBtn.setVisible(false); // Hide clear button
+            
+            // Reload all flashcards
+            try {
+                flashcardsList.clear();
+                String query = "SELECT term, definition FROM flashcards WHERE set_id = ?";
+                ResultSet rs = DatabaseManager.executeQuery(query, setId);
+                
+                while (rs.next()) {
+                    Map<String, String> card = new HashMap<>();
+                    card.put("term", rs.getString("term"));
+                    card.put("definition", rs.getString("definition"));
+                    flashcardsList.add(card);
+                }
+                
+                currentCardIndex = 0;
+                refreshFlashcardView(mainContainer, setId);
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                Toast.error("Error loading flashcards: " + ex.getMessage());
+            }
+        });
+        
+        // Modified search functionality
+        searchBtn.addActionListener(e -> {
+            String query = searchInput.getText().trim();
+            if (!query.isEmpty()) {
+                List<Map<String, Object>> searchResults = SearchManager.searchFlashcardsInSet(query, setId);
+                
+                if (searchResults.isEmpty()) {
+                    // Show no results message
+                    JLabel noResultsLabel = new JLabel("No flashcards match your search: '" + query + "'", SwingConstants.CENTER);
+                    noResultsLabel.setFont(new Font("Segoe UI Variable", Font.PLAIN, 16));
+                    noResultsLabel.setForeground(new Color(0x707070));
+                    
+                    // Clear and show message
+                    mainContainer.removeAll();
+                    mainContainer.add(headerPanel, BorderLayout.NORTH);
+                    mainContainer.add(noResultsLabel, BorderLayout.CENTER);
+                    mainContainer.revalidate();
+                    mainContainer.repaint();
+                    
+                    clearSearchBtn.setVisible(true); // Show clear button for no results too
+                } else {
+                    // Update with search results
+                    flashcardsList.clear();
+                    for (Map<String, Object> result : searchResults) {
+                        Map<String, String> card = new HashMap<>();
+                        card.put("term", (String) result.get("term"));
+                        card.put("definition", (String) result.get("definition"));
+                        flashcardsList.add(card);
+                    }
+                    currentCardIndex = 0;
+                    refreshFlashcardView(mainContainer, setId);
+                    
+                    clearSearchBtn.setVisible(true); // Show clear button when there are results
+                }
+            } else {
+                clearSearchBtn.setVisible(false); // Hide clear button for empty search
+                refreshFlashcardView(mainContainer, setId);
+            }
+        });
+        
+        // Add components to right panel
+        rightPanel.add(searchInput);
+        rightPanel.add(searchBtn);
+        rightPanel.add(clearSearchBtn);
+        
+        // Add panels to header
         headerPanel.add(leftButtonsPanel, BorderLayout.WEST);
+        headerPanel.add(rightPanel, BorderLayout.EAST);
         
         // Fetch flashcards data
         flashcardsList.clear();

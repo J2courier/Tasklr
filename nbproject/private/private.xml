@@ -2,13 +2,6 @@
 <project-private xmlns="http://www.netbeans.org/ns/project-private/1">
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
-        <group>
-            <file>file:/C:/Users/ADMIN/Desktop/Tasklr/src/tasklr/main/ui/frames/Tasklr.java</file>
-            <file>file:/C:/Users/ADMIN/Desktop/Tasklr/src/tasklr/authentication/Login.java</file>
-            <file>file:/C:/Users/ADMIN/Desktop/Tasklr/src/tasklr/authentication/LoginPanel.java</file>
-            <file>file:/C:/Users/ADMIN/Desktop/Tasklr/src/tasklr/utilities/DatabaseManager.java</file>
-            <file>file:/C:/Users/ADMIN/Desktop/Tasklr/src/tasklr/authentication/Signup.java</file>
-            <file>file:/C:/Users/ADMIN/Desktop/Tasklr/src/tasklr/authentication/UserSession.java</file>
-        </group>
+        <group/>
     </open-files>
 </project-private>
