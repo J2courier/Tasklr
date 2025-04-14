@@ -3,14 +3,17 @@ package tasklr.main.ui.frames;
 //utilties
 import javax.swing.*;
 import java.awt.*;
-
+import tasklr.authentication.Login;
+import tasklr.utilities.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import tasklr.main.ui.panels.Home.GettingStartedPanel;
 import tasklr.main.ui.panels.TaskPanel.TaskFetcher;
 import tasklr.main.ui.panels.TaskPanel.task;
 import tasklr.main.ui.panels.quizPanel.StudyPanel;
 import tasklr.main.ui.panels.Home.HomePanel;
-import tasklr.utilities.createPanel;
-import tasklr.authentication.Login;
 import tasklr.main.ui.panels.Settings.SettingsPanel;
+
 
 public class Tasklr extends JFrame {
     private String username;
@@ -29,10 +32,25 @@ public class Tasklr extends JFrame {
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         
         ImageIcon originalIcon = new ImageIcon("C:/Users/ADMIN/Desktop/Tasklr/resource/icons/AppLogo.png");
-        Image scaledImage = originalIcon.getImage().getScaledInstance(32, 32, Image.SCALE_SMOOTH); // Increased from default to 32x32
+        Image scaledImage = originalIcon.getImage().getScaledInstance(32, 32, Image.SCALE_SMOOTH);
         ImageIcon appIcon = new ImageIcon(scaledImage);
         setIconImage(appIcon.getImage());
         
+        // Initialize components
+        initializeComponents();
+        
+        // Add window listener to show getting started panel after frame is visible
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowOpened(WindowEvent e) {
+                SwingUtilities.invokeLater(() -> {
+                    GettingStartedPanel.showIfFirstTime(Tasklr.this, username);
+                });
+            }
+        });
+    }
+
+    private void initializeComponents() {
         // Initialize body panel with CardLayout
         body = createPanel.panel(new Color(0xFFFFFF), new CardLayout(), new Dimension(0, 0));
         cardLayout = (CardLayout) body.getLayout();
@@ -132,7 +150,6 @@ public class Tasklr extends JFrame {
                 setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
             }
         });
-
     }
         
     public static JPanel homePanel(String username) {

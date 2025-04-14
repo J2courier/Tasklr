@@ -5,6 +5,9 @@ import java.awt.*;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 import tasklr.main.ui.components.TaskCounterPanel;
 import tasklr.main.ui.panels.TaskPanel.TaskFetcher;
@@ -655,4 +658,116 @@ public class HomePanel {
         }
     }
 
+
+
+    private static boolean setupMandatoryBackupInfo(int userId) {
+        while (true) { // Keep showing dialog until valid input is provided
+            JTextField addressField = new JTextField();
+            JTextField contactField = new JTextField();
+            JTextField birthdayField = new JTextField();
+
+            JPanel backupPanel = new JPanel(new GridBagLayout());
+            GridBagConstraints gbc = new GridBagConstraints();
+            gbc.fill = GridBagConstraints.HORIZONTAL;
+            gbc.insets = new Insets(5, 5, 5, 5);
+            gbc.gridwidth = GridBagConstraints.REMAINDER;
+
+            // Add welcome message and explanation
+            JLabel welcomeLabel = new JLabel("Welcome to Tasklr!");
+            welcomeLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 16));
+            JLabel infoLabel = new JLabel("<html>To ensure account security and recovery, " +
+                "please set up your backup information.<br>This information will be used " +
+                "to verify your identity if you need to recover your account.</html>");
+            infoLabel.setFont(new Font("Segoe UI Variable", Font.PLAIN, 12));
+
+            backupPanel.add(welcomeLabel, gbc);
+            backupPanel.add(infoLabel, gbc);
+            backupPanel.add(Box.createVerticalStrut(15), gbc);
+
+            // Add input fields with descriptions
+            JLabel addressLabel = new JLabel("Address:");
+            addressLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 12));
+            backupPanel.add(addressLabel, gbc);
+            backupPanel.add(addressField, gbc);
+
+            JLabel contactLabel = new JLabel("Contact Number:");
+            contactLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 12));
+            backupPanel.add(contactLabel, gbc);
+            backupPanel.add(contactField, gbc);
+
+            JLabel birthdayLabel = new JLabel("Birthday (YYYY-MM-DD):");
+            birthdayLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 12));
+            backupPanel.add(birthdayLabel, gbc);
+            backupPanel.add(birthdayField, gbc);
+
+            // Create custom dialog
+            JDialog dialog = new JDialog((Frame)null, "Account Security Setup", true);
+            dialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+            dialog.addWindowListener(new WindowAdapter() {
+                @Override
+                public void windowClosing(WindowEvent e) {
+                    JOptionPane.showMessageDialog(dialog,
+                        "Backup information setup is required to complete registration.",
+                        "Required Setup",
+                        JOptionPane.WARNING_MESSAGE);
+                }
+            });
+
+            // Add continue button
+            JButton continueBtn = new JButton("Continue");
+            continueBtn.setBackground(new Color(0x0065D9));
+            continueBtn.setForeground(Color.WHITE);
+            continueBtn.setFocusPainted(false);
+            gbc.insets = new Insets(15, 5, 5, 5);
+            backupPanel.add(continueBtn, gbc);
+
+            dialog.add(backupPanel);
+            dialog.pack();
+            dialog.setLocationRelativeTo(null);
+
+            // Handle continue button click
+            AtomicBoolean success = new AtomicBoolean(false);
+            continueBtn.addActionListener(e -> {
+                String address = addressField.getText().trim();
+                String contact = contactField.getText().trim();
+                String birthday = birthdayField.getText().trim();
+
+                if (address.isEmpty() || contact.isEmpty() || birthday.isEmpty()) {
+                    JOptionPane.showMessageDialog(dialog,
+                        "All fields must be filled out",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                // Validate birthday format
+                if (!birthday.matches("\\d{4}-\\d{2}-\\d{2}")) {
+                    JOptionPane.showMessageDialog(dialog,
+                        "Birthday must be in YYYY-MM-DD format",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                try {
+                    String query = "INSERT INTO user_backup_info (user_id, address, contact_number, birthday) VALUES (?, ?, ?, ?)";
+                    DatabaseManager.executeUpdate(query, userId, address, contact, birthday);
+                    success.set(true);
+                    dialog.dispose();
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                    JOptionPane.showMessageDialog(dialog,
+                        "Error saving backup information: " + ex.getMessage(),
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
+                }
+            });
+
+            dialog.setVisible(true);
+
+            if (success.get()) {
+                return true;
+            }
+        }
+    }
 }

@@ -340,7 +340,8 @@ public class Signup extends JFrame {
         String hashedPassword = hashPassword(password);
         if (insertUser(username, hashedPassword)) {
             clearFields();
-            new Tasklr(username).setVisible(true);
+            Tasklr tasklr = new Tasklr(username);
+            tasklr.setVisible(true);
             dispose();
         }
     }
@@ -382,7 +383,7 @@ public class Signup extends JFrame {
             } catch (SQLException ex) {
                 conn.rollback();
                 // Check for duplicate entry error
-                if (ex.getErrorCode() == 1062) { // MySQL duplicate entry error code
+                if (ex.getErrorCode() == 1062) {
                     JOptionPane.showMessageDialog(this,
                         "Account Already Existing!",
                         "Registration Error",
@@ -391,22 +392,15 @@ public class Signup extends JFrame {
                     throw ex;
                 }
             }
+            return false;
         } catch (SQLException ex) {
             ex.printStackTrace();
-            // Check for connection error
-            if (ex.getErrorCode() == 0) { // Connection error
-                JOptionPane.showMessageDialog(this,
-                    "Database Connection Failed.",
-                    "Connection Error",
-                    JOptionPane.ERROR_MESSAGE);
-            } else {
-                JOptionPane.showMessageDialog(this,
-                    "Error inserting user: " + ex.getMessage(),
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE);
-            }
+            JOptionPane.showMessageDialog(this,
+                "Error during registration: " + ex.getMessage(),
+                "Registration Error",
+                JOptionPane.ERROR_MESSAGE);
+            return false;
         }
-        return false;
     }
 
     private int insertUserRecord(Connection conn, String username, String hashedPassword) throws SQLException {
