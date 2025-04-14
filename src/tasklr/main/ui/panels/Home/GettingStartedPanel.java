@@ -5,6 +5,9 @@ import java.awt.*;
 import java.awt.event.*;
 import java.sql.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import com.toedter.calendar.JDateChooser;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import tasklr.utilities.*;
 import tasklr.authentication.UserSession;
@@ -121,7 +124,10 @@ public class GettingStartedPanel extends JDialog {
         // Input fields
         JTextField addressField = new JTextField();
         JTextField contactField = new JTextField();
-        JTextField birthdayField = new JTextField();
+        JDateChooser birthdayChooser = new JDateChooser();
+        birthdayChooser.setPreferredSize(new Dimension(400, 30));
+        birthdayChooser.setFont(new Font("Segoe UI Variable", Font.PLAIN, 14));
+        birthdayChooser.setDateFormatString("yyyy-MM-dd");
         
         // Address
         JLabel addressLabel = new JLabel("Address:");
@@ -143,13 +149,13 @@ public class GettingStartedPanel extends JDialog {
         panel.add(contactField, gbc);
         
         // Birthday
-        JLabel birthdayLabel = new JLabel("Birthday (YYYY-MM-DD):");
+        JLabel birthdayLabel = new JLabel("Birthday:");
         birthdayLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 14));
         gbc.gridy = 6;
         panel.add(birthdayLabel, gbc);
         
         gbc.gridy = 7;
-        panel.add(birthdayField, gbc);
+        panel.add(birthdayChooser, gbc);
         
         // Finish button
         JButton finishButton = new JButton("Complete Setup");
@@ -161,7 +167,7 @@ public class GettingStartedPanel extends JDialog {
         finishButton.addActionListener(e -> {
             if (validateAndSaveBackupInfo(addressField.getText().trim(),
                                         contactField.getText().trim(),
-                                        birthdayField.getText().trim())) {
+                                        birthdayChooser)) {
                 dispose();
             }
         });
@@ -175,9 +181,9 @@ public class GettingStartedPanel extends JDialog {
         return panel;
     }
     
-    private boolean validateAndSaveBackupInfo(String address, String contact, String birthday) {
+    private boolean validateAndSaveBackupInfo(String address, String contact, JDateChooser birthdayChooser) {
         // Validate inputs
-        if (address.isEmpty() || contact.isEmpty() || birthday.isEmpty()) {
+        if (address.isEmpty() || contact.isEmpty() || birthdayChooser.getDate() == null) {
             JOptionPane.showMessageDialog(this,
                 "All fields must be filled out",
                 "Validation Error",
@@ -185,14 +191,9 @@ public class GettingStartedPanel extends JDialog {
             return false;
         }
         
-        // Validate birthday format
-        if (!birthday.matches("\\d{4}-\\d{2}-\\d{2}")) {
-            JOptionPane.showMessageDialog(this,
-                "Birthday must be in YYYY-MM-DD format",
-                "Validation Error",
-                JOptionPane.ERROR_MESSAGE);
-            return false;
-        }
+        // Format the date
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        String birthday = sdf.format(birthdayChooser.getDate());
         
         // Save to database
         try {
@@ -211,7 +212,6 @@ public class GettingStartedPanel extends JDialog {
             String checkQuery = "SELECT id FROM user_backup_info WHERE user_id = ?";
             ResultSet rs = DatabaseManager.executeQuery(checkQuery, UserSession.getUserId());
             if (!rs.next()) {
-                // No backup info found, show getting started panel
                 SwingUtilities.invokeLater(() -> {
                     GettingStartedPanel panel = new GettingStartedPanel(owner, username);
                     panel.setVisible(true);

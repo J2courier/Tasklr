@@ -7,7 +7,8 @@ public class TaskCounterPanel extends BaseComponent {
     private static final Color BORDER_COLOR = new Color(0x749AAD);
     private static final int PANEL_WIDTH = 200;
     private static final int PANEL_HEIGHT = 100;
-    
+    private static final Font TITLE_FONT = new Font("Segoe UI Variable", Font.BOLD, 18); 
+    private static final Font COUNTER_FONT = new Font("Segoe UI Variable", Font.BOLD, 24); 
     private final JLabel counterLabel;
     private final String title;
     private int count;

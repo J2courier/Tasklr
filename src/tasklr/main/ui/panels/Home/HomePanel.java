@@ -8,8 +8,10 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-
+import com.toedter.calendar.JDateChooser;
 import tasklr.main.ui.components.TaskCounterPanel;
+import java.util.Date;
+import java.text.SimpleDateFormat;
 import tasklr.main.ui.panels.TaskPanel.TaskFetcher;
 import tasklr.utilities.*;
 import tasklr.authentication.UserSession;
@@ -17,6 +19,14 @@ import java.sql.*;
 import tasklr.main.ui.panels.quizPanel.QuizzerPanel;
 
 public class HomePanel {
+    private static JPanel tasksContainer;
+    private static JPanel tasksWrapper;
+    private static JPanel recentTasksWrapper;
+    private static final int CONTAINER_WIDTH = 400;
+    private static final int REFRESH_INTERVAL = 5000;
+    private static JLabel welcomeLabel;
+    private static JScrollPane taskListContainer;
+    private static JScrollPane recentTaskListContainer;
     private static final Color PRIMARY_COLOR = new Color(0x275CE2);
     private static final Color SECONDARY_COLOR = new Color(0xE0E3E2);
     private static final Color BACKGROUND_COLOR = Color.WHITE;
@@ -29,25 +39,14 @@ public class HomePanel {
     private static final Color DROP_COLOR = new Color(0xFB2C36);
     private static final Color COMPLETED_COLOR = new Color(0x17BD0F);
     private static final int WELCOME_HEADER_HEIGHT = 100;
-    private static JPanel tasksContainer;
-    private static JPanel tasksWrapper;
-    private static JScrollPane taskListContainer;
-    private static final int REFRESH_INTERVAL = 5000;
-    private static UIRefreshManager refreshManager;
-    private static JPanel recentTasksWrapper;
-    private static JScrollPane recentTaskListContainer;
-    private static final int CONTAINER_WIDTH = 400;
-
     private static TaskCounterPanel pendingTasksPanel;
     private static TaskCounterPanel completedTasksPanel;
     private static TaskCounterPanel totalTasksPanel;
-    
     private static TaskCounterPanel totalFlashcardSetsPanel;
     private static TaskCounterPanel totalQuizTakenPanel;
     private static TaskCounterPanel totalQuizRetakedPanel;
-
-    private static JLabel welcomeLabel;
-
+    private static UIRefreshManager refreshManager;
+    
     public static JPanel createOverview(String username) {            
         JPanel mainPanel = createPanel.panel(BACKGROUND_COLOR, new GridBagLayout(), new Dimension(400, 0));
 
@@ -664,7 +663,8 @@ public class HomePanel {
         while (true) { // Keep showing dialog until valid input is provided
             JTextField addressField = new JTextField();
             JTextField contactField = new JTextField();
-            JTextField birthdayField = new JTextField();
+            JDateChooser birthdayChooser = new JDateChooser();
+            birthdayChooser.setDateFormatString("yyyy-MM-dd");
 
             JPanel backupPanel = new JPanel(new GridBagLayout());
             GridBagConstraints gbc = new GridBagConstraints();
@@ -695,10 +695,10 @@ public class HomePanel {
             backupPanel.add(contactLabel, gbc);
             backupPanel.add(contactField, gbc);
 
-            JLabel birthdayLabel = new JLabel("Birthday (YYYY-MM-DD):");
+            JLabel birthdayLabel = new JLabel("Birthday:");
             birthdayLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 12));
             backupPanel.add(birthdayLabel, gbc);
-            backupPanel.add(birthdayField, gbc);
+            backupPanel.add(birthdayChooser, gbc);
 
             // Create custom dialog
             JDialog dialog = new JDialog((Frame)null, "Account Security Setup", true);
@@ -730,9 +730,9 @@ public class HomePanel {
             continueBtn.addActionListener(e -> {
                 String address = addressField.getText().trim();
                 String contact = contactField.getText().trim();
-                String birthday = birthdayField.getText().trim();
+                Date birthDate = birthdayChooser.getDate();
 
-                if (address.isEmpty() || contact.isEmpty() || birthday.isEmpty()) {
+                if (address.isEmpty() || contact.isEmpty() || birthDate == null) {
                     JOptionPane.showMessageDialog(dialog,
                         "All fields must be filled out",
                         "Error",
@@ -740,14 +740,8 @@ public class HomePanel {
                     return;
                 }
 
-                // Validate birthday format
-                if (!birthday.matches("\\d{4}-\\d{2}-\\d{2}")) {
-                    JOptionPane.showMessageDialog(dialog,
-                        "Birthday must be in YYYY-MM-DD format",
-                        "Error",
-                        JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+                String birthday = sdf.format(birthDate);
 
                 try {
                     String query = "INSERT INTO user_backup_info (user_id, address, contact_number, birthday) VALUES (?, ?, ?, ?)";
