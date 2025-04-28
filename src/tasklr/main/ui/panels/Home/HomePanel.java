@@ -635,11 +635,18 @@ public class HomePanel {
             }
 
             if (!hasItems) {
-                JLabel noTasksLabel = new JLabel("No completed tasks");
+                JPanel centeringPanel = new JPanel(new GridBagLayout());
+                centeringPanel.setBackground(BACKGROUND_COLOR);
+                
+                JLabel noTasksLabel = new JLabel("No completed tasks yet!");
                 noTasksLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
                 noTasksLabel.setForeground(TEXT_DARK);
-                noTasksLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-                recentTasksWrapper.add(noTasksLabel);
+                noTasksLabel.setHorizontalAlignment(SwingConstants.CENTER);
+                
+                centeringPanel.add(noTasksLabel);
+                
+                recentTasksWrapper.add(centeringPanel);
+                recentTasksWrapper.add(Box.createVerticalGlue());
             }
 
             recentTasksWrapper.revalidate();

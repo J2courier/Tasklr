@@ -5,8 +5,6 @@ import com.toedter.calendar.JDateChooser;
 import javax.swing.*;
 import javax.swing.border.Border;
 
-import org.w3c.dom.events.MouseEvent;
-
 import tasklr.utilities.Toast;
 import tasklr.authentication.UserSession;
 import tasklr.utilities.ComponentUtil;
@@ -284,7 +282,6 @@ public class task {
         
         // Text panel using BorderLayout for north-south positioning
         JPanel textPanel = createPanel.panel(null, new BorderLayout(), null);
-       
         
         // Task title label at the top (NORTH)
         JLabel titleLabel = new JLabel(title);
@@ -435,14 +432,154 @@ public class task {
         new HoverPanelEffect(panel, LIST_ITEM_COLOR, LIST_ITEM_HOVER_BG);
         
         panel.addMouseListener(new MouseAdapter() {
-           //add another view panel to add additional information in the task 
-           //so that when it clicked it will give the user another option what to do in the task
-           //give a add button to add a descrpition on task that they want to do 
-           //the description that will be written in task will be in JCheckBox
-           //first resize list container, set the value of list visible to true
-           //then add a condition if list visible true set list container preferred size into 0 else list container preferred size 600
-           //then create a panel that will contain the JTextField the input will to added into checkbox
-           //add a task_desc table in the database to be the container of the data being input in the JTextField
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                // Create main description panel with BorderLayout
+                JPanel descriptionPanel = new JPanel(new BorderLayout());
+                descriptionPanel.setBackground(Color.WHITE);
+                descriptionPanel.setPreferredSize(new Dimension(600, 500));
+
+                // Header Panel (NORTH)
+                JPanel headerPanel = new JPanel(new BorderLayout());
+                headerPanel.setBackground(Color.WHITE);
+                headerPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 10, 20));
+                
+                // Store the existing description in a final reference
+                final String[] existingDescriptionRef = {""};
+                
+                try {
+                    String query = "SELECT description FROM tasks WHERE title = ? AND user_id = ?";
+                    ResultSet rs = DatabaseManager.executeQuery(query, title, UserSession.getUserId());
+                    if (rs.next()) {
+                        existingDescriptionRef[0] = rs.getString("description");
+                    }
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                    Toast.error("Error fetching description: " + ex.getMessage());
+                }
+
+                JLabel titleLabel = new JLabel(existingDescriptionRef[0] == null || existingDescriptionRef[0].isEmpty() ? 
+                                             "Add Description" : "Edit Description");
+                titleLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 24));
+                headerPanel.add(titleLabel, BorderLayout.WEST);
+                
+                descriptionPanel.add(headerPanel, BorderLayout.NORTH);
+
+                // Description Area (CENTER)
+                JPanel centerPanel = new JPanel(new BorderLayout());
+                centerPanel.setBackground(Color.WHITE);
+                centerPanel.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+                
+                JTextArea descriptionArea = new JTextArea();
+                descriptionArea.setLineWrap(true);
+                descriptionArea.setWrapStyleWord(true);
+                descriptionArea.setFont(new Font("Segoe UI Variable", Font.PLAIN, 16));
+                
+                // Set existing description if any
+                if (existingDescriptionRef[0] != null && !existingDescriptionRef[0].isEmpty()) {
+                    descriptionArea.setText(existingDescriptionRef[0]);
+                }
+                
+                JScrollPane scrollPane = new JScrollPane(descriptionArea);
+                scrollPane.setBorder(BorderFactory.createLineBorder(new Color(0xDDDDDD)));
+                
+                centerPanel.add(scrollPane, BorderLayout.CENTER);
+                descriptionPanel.add(centerPanel, BorderLayout.CENTER);
+
+                // Button Panel (SOUTH)
+                JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+                buttonPanel.setBackground(Color.WHITE);
+                buttonPanel.setBorder(BorderFactory.createEmptyBorder(10, 20, 20, 20));
+
+                // Close button
+                JButton closeButton = new JButton("Close");
+                closeButton.setPreferredSize(new Dimension(150, 40));
+                closeButton.setBackground(new Color(0xFF3B30));
+                closeButton.setForeground(Color.WHITE);
+                closeButton.setFocusPainted(false);
+                closeButton.setBorderPainted(false);
+                closeButton.setFont(new Font("Segoe UI Variable", Font.BOLD, 14));
+
+                // Save button (renamed from Add Description)
+                JButton saveButton = new JButton(existingDescriptionRef[0] == null || existingDescriptionRef[0].isEmpty() ? 
+                                               "Add Description" : "Save Changes");
+                saveButton.setPreferredSize(new Dimension(150, 40));
+                saveButton.setBackground(new Color(0x34C759));
+                saveButton.setForeground(Color.WHITE);
+                saveButton.setFocusPainted(false);
+                saveButton.setBorderPainted(false);
+                saveButton.setFont(new Font("Segoe UI Variable", Font.BOLD, 14));
+
+                JDialog dialog = new JDialog();
+                // Button actions
+                closeButton.addActionListener(event -> {
+                    String currentText = descriptionArea.getText().trim();
+                    if (!currentText.equals(existingDescriptionRef[0] != null ? existingDescriptionRef[0].trim() : "")) {
+                        int result = JOptionPane.showConfirmDialog(
+                            dialog,
+                            "Are you sure you want to close? Any unsaved changes will be lost.",
+                            "Confirm Close",
+                            JOptionPane.YES_NO_OPTION,
+                            JOptionPane.WARNING_MESSAGE
+                        );
+                        
+                        if (result != JOptionPane.YES_OPTION) {
+                            return;
+                        }
+                    }
+                    dialog.dispose();
+                });
+
+                saveButton.addActionListener(evt -> {
+                    String description = descriptionArea.getText().trim();
+                    
+                    if (description.isEmpty()) {
+                        JOptionPane.showMessageDialog(
+                            dialog,
+                            "Please enter a description.",
+                            "Empty Description",
+                            JOptionPane.WARNING_MESSAGE
+                        );
+                        return;
+                    }
+
+                    try {
+                        String query = "UPDATE tasks SET description = ? WHERE title = ? AND user_id = ?";
+                        DatabaseManager.executeUpdate(query, 
+                            description,
+                            title,
+                            UserSession.getUserId()
+                        );
+                        
+                        Toast.success(existingDescriptionRef[0] == null || existingDescriptionRef[0].isEmpty() ? 
+                                    "Description added successfully!" : "Description updated successfully!");
+                        dialog.dispose();
+                        
+                        // Refresh the task container to show updated data
+                        refreshTaskContainer();
+                    } catch (SQLException ex) {
+                        ex.printStackTrace();
+                        Toast.error("Error saving description: " + ex.getMessage());
+                    }
+                });
+
+                buttonPanel.add(closeButton);
+                buttonPanel.add(saveButton);
+                descriptionPanel.add(buttonPanel, BorderLayout.SOUTH);
+
+                // Create and setup dialog
+      
+                dialog.setUndecorated(true);
+                dialog.setContentPane(descriptionPanel);
+
+                // Add a border to the main panel
+                descriptionPanel.setBorder(BorderFactory.createLineBorder(new Color(0x000000), 1));
+
+                // Final dialog setup
+                dialog.pack();
+                dialog.setLocationRelativeTo(null);
+                dialog.setVisible(true);
+            }
         });
 
         return panel;

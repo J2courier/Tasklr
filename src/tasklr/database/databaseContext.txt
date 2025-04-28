@@ -12,6 +12,7 @@ the database I have in this project is named in "tasklrdb" with tables of:
     - id
     - user_id
     - title
+    - description
     - status
     - due_date
 - sessions
