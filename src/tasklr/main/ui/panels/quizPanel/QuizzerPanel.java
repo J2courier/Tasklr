@@ -30,14 +30,11 @@ public class QuizzerPanel {
     private static JPanel mainPanel;
     private static UIRefreshManager refreshManager;
 
-    // Remove the old scheduler variables as we'll use UIRefreshManager instead
-    // private static ScheduledExecutorService scheduler;
-    // private static ScheduledFuture<?> refreshTask;
 
     private static final Color TEXT_COLOR = new Color(0x242424);
     private static final Color BACKGROUND_COLOR = new Color(0xFFFFFF);
     private static final Color LIST_CONTAINER_COLOR = new Color(0xFFFFFF);
-    private static final Color LIST_ITEM_COLOR = new Color(0xFBFBFC);
+    private static final Color LIST_ITEM_COLOR = new Color(0xFFFFFF);
     private static final Color LIST_ITEM_HOVER_BG = new Color(0xE8EAED);
     private static final Color LIST_ITEM_HOVER_BORDER = new Color(0x0082FC);
     private static final Color PRIMARY_BUTTON_COLOR = new Color(0x275CE2);
@@ -280,7 +277,7 @@ public class QuizzerPanel {
         JPanel panel = createPanel.panel(LIST_ITEM_COLOR, new BorderLayout(), null);
         panel.setPreferredSize(new Dimension(550, 80));
         panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 80));
-        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        panel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
 
         // Content panel
         JPanel contentPanel = createPanel.panel(LIST_ITEM_COLOR, new BorderLayout(10, 0), null);
@@ -289,7 +286,7 @@ public class QuizzerPanel {
         JPanel textPanel = createPanel.panel(null, new GridLayout(2, 1, 0, 5), null);
 
         JLabel subjectLabel = new JLabel(subject);
-        subjectLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 14));
+        subjectLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 18));
         subjectLabel.setForeground(TEXT_COLOR);
 
         String shortDescription = description != null && description.length() > 50

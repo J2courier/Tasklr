@@ -194,17 +194,7 @@ public class HomePanel {
 
         JPanel summaryPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 0));
         summaryPanel.setOpaque(false);
-
-        try {
-            ImageIcon notifIcon = new ImageIcon("C://Users//ADMIN//Desktop//Tasklr//resource//icons//NotificationIcon.png");
-            Image scaledImage = notifIcon.getImage().getScaledInstance(25, 25, Image.SCALE_SMOOTH);
-            JLabel notificationLabel = new JLabel(new ImageIcon(scaledImage));
-            notificationLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
-            summaryPanel.add(notificationLabel);
-        } catch (Exception e) {
-            System.err.println("Failed to load notification icon: " + e.getMessage());
-        }
-
+        
         headerPanel.add(welcomePanel, BorderLayout.WEST);
         headerPanel.add(summaryPanel, BorderLayout.EAST);
 
@@ -327,7 +317,7 @@ public class HomePanel {
 
                 JPanel taskItemPanel = createTaskItemPanel(title, status, dueDate);
                 tasksWrapper.add(taskItemPanel);
-                tasksWrapper.add(Box.createRigidArea(new Dimension(0, 10)));
+                tasksWrapper.add(Box.createRigidArea(new Dimension(0, 5))); // Reduced from 10 to 5
 
             }
 
@@ -369,7 +359,7 @@ public class HomePanel {
         JPanel contentPanel = createPanel.panel(Color.WHITE, new BorderLayout(), null);
 
         JLabel titleLabel = new JLabel(title);
-        titleLabel.setFont(new Font("Segoe UI Variable", Font.PLAIN, 24));
+        titleLabel.setFont(new Font("Segoe UI Variable", Font.PLAIN, 20));
         contentPanel.add(titleLabel, BorderLayout.NORTH);
 
         JLabel dateLabel;
@@ -609,11 +599,12 @@ public class HomePanel {
 
                 JPanel taskItemPanel = new JPanel(new BorderLayout(2, 0));
                 taskItemPanel.setBackground(CARD_COLOR);
-                taskItemPanel.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));  // Only padding, no line border
+                taskItemPanel.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 20));  // Keep at 0 vertical padding
 
-                taskItemPanel.setPreferredSize(new Dimension(CONTAINER_WIDTH - 40, 80));
-                taskItemPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 80));
-                taskItemPanel.setMinimumSize(new Dimension(CONTAINER_WIDTH - 40, 80));
+                // Reduce the height of the panel
+                taskItemPanel.setPreferredSize(new Dimension(CONTAINER_WIDTH - 40, 60)); // Reduced from 80 to 60
+                taskItemPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60)); // Reduced from 80 to 60
+                taskItemPanel.setMinimumSize(new Dimension(CONTAINER_WIDTH - 40, 60)); // Reduced from 80 to 60
 
                 JLabel titleLabel = new JLabel(title);
                 titleLabel.setFont(new Font("Segoe UI", Font.PLAIN, 18));
@@ -631,7 +622,8 @@ public class HomePanel {
                 wrapperPanel.add(taskItemPanel);
                 
                 recentTasksWrapper.add(wrapperPanel);
-                recentTasksWrapper.add(Box.createRigidArea(new Dimension(0, 10))); // Spacing between items
+                // Reduce the spacing between items from 10 to 5 pixels
+                recentTasksWrapper.add(Box.createRigidArea(new Dimension(0, 5))); // Reduced from 10 to 5
             }
 
             if (!hasItems) {

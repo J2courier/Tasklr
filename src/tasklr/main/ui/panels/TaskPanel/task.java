@@ -248,7 +248,7 @@ public class task {
         // Configure task container with BoxLayout (Y_AXIS)
         taskContainer = createPanel.panel(LIST_CONTAINER_COLOR, null, null);
         taskContainer.setLayout(new BoxLayout(taskContainer, BoxLayout.Y_AXIS));
-        taskContainer.setBorder(BorderFactory.createEmptyBorder(5, 0, 20, 5));
+        taskContainer.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
         // Add initial tasks
         refreshTaskContainer();
@@ -278,7 +278,7 @@ public class task {
         
         // Inner panel for consistent padding and content positioning
         JPanel contentPanel = createPanel.panel(LIST_ITEM_COLOR, new BorderLayout(), null);
-        contentPanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 00, 10)); // Adjusted padding
+        contentPanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10)); // Adjusted padding
         
         // Text panel using BorderLayout for north-south positioning
         JPanel textPanel = createPanel.panel(null, new BorderLayout(), null);

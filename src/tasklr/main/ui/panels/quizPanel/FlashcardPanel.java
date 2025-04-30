@@ -483,7 +483,7 @@ public class FlashcardPanel {
         JPanel panel = createPanel.panel(LIST_ITEM_COLOR, new BorderLayout(), null);
         panel.setPreferredSize(new Dimension(550, 100));
         panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 100));
-        panel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 10));
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 10));
 
         // Content panel
         JPanel contentPanel = createPanel.panel(LIST_ITEM_COLOR, new BorderLayout(10, 0), null);
