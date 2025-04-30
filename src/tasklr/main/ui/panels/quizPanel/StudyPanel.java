@@ -45,56 +45,31 @@ public class StudyPanel {
         navButtonsPanel.setOpaque(false);
 
         // Create navigation buttons with initial states
-        JButton flashcardBtn = createButton.button("FLASHCARDS", PRIMARY_COLOR, Color.WHITE, null, false);
+        JButton flashcardBtn = createButton.button("FLASHCARDS", null, PRIMARY_COLOR, null, false);
         flashcardBtn.setFont(new Font("Segoe UI Variable", Font.BOLD, 14));
         flashcardBtn.setPreferredSize(new Dimension(180, 40));
         flashcardBtn.setBorderPainted(false);
         flashcardBtn.setFocusPainted(false);
         
-        JButton quizzerBtn = createButton.button("QUIZZER", Color.WHITE, PRIMARY_COLOR, null, false);
+        JButton quizzerBtn = createButton.button("QUIZZER", null, PRIMARY_COLOR, null, false);
         quizzerBtn.setFont(new Font("Segoe UI Variable", Font.BOLD, 14));
         quizzerBtn.setPreferredSize(new Dimension(180, 40));
         quizzerBtn.setBorderPainted(false);
         quizzerBtn.setFocusPainted(false);
 
-        // Add hover effects to buttons
-        new HoverButtonEffect(flashcardBtn, 
-            PRIMARY_COLOR,         // default background
-            new Color(0x3B6FF0),   // hover background (lighter blue)
-            Color.WHITE,           // default text
-            Color.WHITE            // hover text
-        );
-
-        new HoverButtonEffect(quizzerBtn, 
-            PRIMARY_COLOR,           // default background
-            new Color(0x3B6FF0),   // hover background (light gray)
-            Color.WHITE,           // default text
-            Color.WHITE            // hover text
-        );
-
         flashcardBtn.addActionListener(e -> {
             cardLayout.show(cardPanel, "flashcard");
-            // Update button styles
-            flashcardBtn.setBackground(PRIMARY_COLOR);
-            flashcardBtn.setForeground(Color.WHITE);
-            quizzerBtn.setBackground(Color.WHITE);
-            quizzerBtn.setForeground(PRIMARY_COLOR);
         });
 
         quizzerBtn.addActionListener(e -> {
             cardLayout.show(cardPanel, "quizzer");
-            // Update button styles
-            quizzerBtn.setBackground(PRIMARY_COLOR);
-            quizzerBtn.setForeground(Color.WHITE);
-            flashcardBtn.setBackground(Color.WHITE);
-            flashcardBtn.setForeground(PRIMARY_COLOR);
         });
 
         // Set initial active state (Flashcard active by default)
         flashcardBtn.setBackground(PRIMARY_COLOR);
         flashcardBtn.setForeground(Color.WHITE);
-        quizzerBtn.setBackground(Color.WHITE);
-        quizzerBtn.setForeground(PRIMARY_COLOR);
+        quizzerBtn.setBackground(PRIMARY_COLOR);
+        quizzerBtn.setForeground(Color.WHITE);
 
         navButtonsPanel.add(flashcardBtn);
         navButtonsPanel.add(quizzerBtn);

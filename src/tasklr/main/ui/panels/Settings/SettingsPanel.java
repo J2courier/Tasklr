@@ -30,7 +30,6 @@ public class SettingsPanel {
         cardPanel.add(createMainView(), MAIN_VIEW);
         cardPanel.add(ManageAccountView.createPanel(), ACCOUNT_VIEW);
         cardPanel.add(ManageEntriesView.createPanel(), ENTRIES_VIEW);
-        cardPanel.add(AppearanceView.createPanel(), APPEARANCE_VIEW);
         
         settingsPanel.add(cardPanel, BorderLayout.CENTER);
         
@@ -99,9 +98,6 @@ public class SettingsPanel {
         showEntriesView();
     }
     
-    private static void showAppearanceDialog() {
-        showAppearanceView();
-    }
     
     private static void handleLogout() {
         int confirm = JOptionPane.showConfirmDialog(
@@ -148,10 +144,6 @@ public class SettingsPanel {
         cardLayout.show(cardPanel, ENTRIES_VIEW);
     }
 
-    public static void showAppearanceView() {
-        cardLayout.show(cardPanel, APPEARANCE_VIEW);
-    }
-
     private static JPanel createMainView() {
         JPanel mainView = createPanel.panel(Color.WHITE, new BorderLayout(), null);
         
@@ -179,12 +171,6 @@ public class SettingsPanel {
             "Manage Entries",
             "Manage your tasks, flashcards, and other content",
             e -> showManageEntriesDialog()
-        ));
-        
-        optionsPanel.add(createOptionPanel(
-            "Appearance",
-            "Customize the look and feel of the application",
-            e -> showAppearanceDialog()
         ));
         
         optionsPanel.add(createOptionPanel(

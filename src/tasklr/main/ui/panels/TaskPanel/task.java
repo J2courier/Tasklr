@@ -222,13 +222,37 @@ public class task {
             String query = "SELECT title, due_date FROM tasks WHERE user_id = ? ORDER BY due_date ASC";
             ResultSet rs = DatabaseManager.executeQuery(query, UserSession.getUserId());
             
+            boolean hasItems = false;
             while (rs.next()) {
+                hasItems = true;
                 String title = rs.getString("title");
                 java.sql.Date dueDate = rs.getDate("due_date");
                 
                 JPanel taskPanel = createTaskItemPanel(title, dueDate);
                 taskContainer.add(taskPanel);
                 taskContainer.add(Box.createRigidArea(new Dimension(0, 5)));
+            }
+
+            // Add "No tasks yet" message if there are no tasks
+            if (!hasItems) {
+                // Create a panel that takes up the full height of the container
+                JPanel centeringPanel = new JPanel(new GridBagLayout());
+                centeringPanel.setBackground(LIST_CONTAINER_COLOR);
+                centeringPanel.setPreferredSize(new Dimension(taskContainer.getWidth(), 200));
+                
+                JLabel noTasksLabel = new JLabel("No tasks yet");
+                noTasksLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
+                noTasksLabel.setForeground(TEXT_COLOR);
+                noTasksLabel.setHorizontalAlignment(SwingConstants.CENTER);
+                
+                // Add the label to the centering panel which will center it
+                centeringPanel.add(noTasksLabel);
+                
+                // Add the centering panel to fill the entire container
+                taskContainer.add(centeringPanel);
+                
+                // Make the centering panel expand to fill available space
+                taskContainer.add(Box.createVerticalGlue());
             }
 
             taskContainer.revalidate();
