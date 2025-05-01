@@ -13,6 +13,7 @@ import tasklr.utilities.createButton;
 import tasklr.utilities.createPanel;
 import tasklr.utilities.HoverButtonEffect;
 import tasklr.utilities.DatabaseManager;
+import tasklr.utilities.*;
 
 
 import java.awt.*;
@@ -56,14 +57,86 @@ public class task {
         gbc.weightx = 1.0; // Expand horizontally
         gbc.insets = new Insets(0, 0, 0, 0); // Default spacing
 
-        // Create and add header panel
-        JPanel headerPanel = createPanel.panel(PRIMARY_COLOR, new BorderLayout(), new Dimension(0, 70));
+        // Create and add header panel with FlowLayout
+        JPanel headerPanel = createPanel.panel(PRIMARY_COLOR, new FlowLayout(FlowLayout.LEFT, 20, 15), new Dimension(0, 70));
         headerPanel.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 20));
-        
+
+        // Create a panel for the header label
+        JPanel labelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        labelPanel.setOpaque(false);
+        labelPanel.setPreferredSize(new Dimension(200, 40));
+
         JLabel headerLabel = new JLabel("TASK LIST");
         headerLabel.setForeground(Color.WHITE);
         headerLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 24));
-        headerPanel.add(headerLabel, BorderLayout.CENTER);
+        labelPanel.add(headerLabel);
+
+        // Create a panel for the search components
+        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        searchPanel.setOpaque(false);
+        searchPanel.setPreferredSize(new Dimension(350, 40));
+
+        // Create search field
+        JTextField searchField = new JTextField(15);
+        searchField.setPreferredSize(new Dimension(200, 30));
+        searchField.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(Color.WHITE, 1),
+            BorderFactory.createEmptyBorder(0, 5, 0, 5)
+        ));
+        searchField.setFont(new Font("Segoe UI Variable", Font.PLAIN, 14));
+
+        // Create search button
+        JButton searchButton = createButton.button("Search", null, PRIMARY_COLOR, null, false);
+        searchButton.setBackground(Color.WHITE);
+        searchButton.setForeground(PRIMARY_COLOR);
+        searchButton.setPreferredSize(new Dimension(80, 30));
+        searchButton.setFocusPainted(false);
+
+        // Create close button (initially hidden)
+        JButton closeButton = createButton.button("×", null, new Color(0xDC3545), null, false);
+        closeButton.setPreferredSize(new Dimension(30, 30));
+        closeButton.setFont(new Font("Segoe UI Variable", Font.BOLD, 16));
+        closeButton.setFocusPainted(false);
+        closeButton.setVisible(false); // Initially hidden
+
+        // Add search functionality
+        searchButton.addActionListener(e -> {
+            String searchTerm = searchField.getText().trim().toLowerCase();
+            if (!searchTerm.isEmpty()) {
+                closeButton.setVisible(true); // Show close button when search is active
+            }
+            searchTasks(searchTerm);
+        });
+
+        // Add close button functionality
+        closeButton.addActionListener(e -> {
+            searchField.setText(""); // Clear search field
+            closeButton.setVisible(false); // Hide close button
+            searchTasks(""); // Show all tasks
+        });
+
+        // Add enter key listener to search field
+        searchField.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                    String searchTerm = searchField.getText().trim().toLowerCase();
+                    if (!searchTerm.isEmpty()) {
+                        closeButton.setVisible(true); // Show close button when search is active
+                    }
+                    searchTasks(searchTerm);
+                }
+            }
+        });
+
+        // Add components to search panel
+        searchPanel.add(searchField);
+        searchPanel.add(searchButton);
+        searchPanel.add(closeButton);
+
+        // Add panels to header panel
+        headerPanel.add(labelPanel);
+        headerPanel.add(searchPanel);
 
         // Add header panel
         gbc.gridx = 0;
@@ -293,8 +366,72 @@ public class task {
         return mainPanel;
     }
     
-    
+    private static void searchTasks(String searchTerm) {
+        if (taskContainer == null) {
+            return;
+        }
+        taskContainer.removeAll();
+        
+        try {
+            String query;
+            ResultSet rs;
+            
+            if (searchTerm.isEmpty()) {
+                // If search term is empty, show all tasks
+                query = "SELECT id, title, due_date, status, description FROM tasks WHERE user_id = ? ORDER BY due_date ASC";
+                rs = DatabaseManager.executeQuery(query, UserSession.getUserId());
+            } else {
+                // If search term is not empty, filter tasks
+                query = "SELECT id, title, due_date, status, description FROM tasks WHERE user_id = ? AND title LIKE ? ORDER BY due_date ASC";
+                rs = DatabaseManager.executeQuery(query, 
+                    UserSession.getUserId(),
+                    "%" + searchTerm + "%"
+                );
+            }
+            
+            boolean hasItems = false;
+            int resultCount = 0;
+            while (rs.next()) {
+                hasItems = true;
+                resultCount++;
+                String title = rs.getString("title");
+                java.sql.Date dueDate = rs.getDate("due_date");
+                
+                JPanel taskPanel = createTaskItemPanel(title, dueDate);
+                taskContainer.add(taskPanel);
+                taskContainer.add(Box.createRigidArea(new Dimension(0, 5)));
+            }
 
+            // Add "No tasks found" message if there are no matching tasks
+            if (!hasItems) {
+                JPanel centeringPanel = new JPanel(new GridBagLayout());
+                centeringPanel.setBackground(LIST_CONTAINER_COLOR);
+                centeringPanel.setPreferredSize(new Dimension(taskContainer.getWidth(), 200));
+                
+                JLabel noTasksLabel = new JLabel(searchTerm.isEmpty() ? 
+                                               "No tasks yet" : 
+                                               "No tasks matching '" + searchTerm + "'");
+                noTasksLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
+                noTasksLabel.setForeground(TEXT_COLOR);
+                noTasksLabel.setHorizontalAlignment(SwingConstants.CENTER);
+                
+                centeringPanel.add(noTasksLabel);
+                taskContainer.add(centeringPanel);
+                taskContainer.add(Box.createVerticalGlue());
+            }
+
+            taskContainer.revalidate();
+            taskContainer.repaint();
+            
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            Toast.error("Error searching tasks: " + ex.getMessage());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            Toast.error("Error during search: " + ex.getMessage());
+        }
+    }
+    
     private static JPanel createTaskItemPanel(String title, java.sql.Date dueDate) {
         // Main panel with fixed height and flexible width
         JPanel panel = createPanel.panel(LIST_ITEM_COLOR, new BorderLayout(), new Dimension(0, 100)); // Changed height to 100
