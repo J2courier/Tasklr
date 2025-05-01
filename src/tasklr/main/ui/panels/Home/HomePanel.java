@@ -444,7 +444,7 @@ public class HomePanel {
             );
             
             JDialog dialog = optionPane.createDialog(parent, "Confirm Delete");
-            dialog.setLocationRelativeTo(null); // Center the dialog
+            dialog.setLocationRelativeTo(null);
             dialog.setVisible(true);
             
             Object selectedValue = optionPane.getValue();
@@ -454,6 +454,14 @@ public class HomePanel {
                     DatabaseManager.executeUpdate(query, title, UserSession.getUserId());
                     Window popup = SwingUtilities.getWindowAncestor(popupPanel);
                     popup.dispose();
+                    
+                    // Refresh the task list in HomePanel
+                    refreshTasksList();
+                    refreshTaskCounters();
+                    
+                    // Also refresh the task list container in task.java
+                    tasklr.main.ui.panels.TaskPanel.task.refreshTaskContainer();
+                    
                 } catch (SQLException ex) {
                     ex.printStackTrace();
                     JOptionPane errorPane = new JOptionPane(

@@ -69,20 +69,14 @@ public class QuizzerPanel {
         // Use full size for the main panel
         mainPanel = createPanel.panel(BACKGROUND_COLOR, new BorderLayout(), null);
 
-        // Create and add list container
+        // Create and add list container - now taking full width
         JPanel listContainerPanel = createListContainer();
-        mainPanel.add(listContainerPanel, BorderLayout.WEST);
+        mainPanel.add(listContainerPanel, BorderLayout.CENTER);
 
-        // Create quiz view panel with CardLayout
+        // Create quiz view panel with CardLayout (will be used when a quiz is started)
         cardLayout = new CardLayout();
         quizViewPanel = new JPanel(cardLayout);
         quizViewPanel.setBackground(BACKGROUND_COLOR);
-
-        // Add empty state panel
-        JPanel emptyStatePanel = createEmptyStatePanel();
-        quizViewPanel.add(emptyStatePanel, "EMPTY_STATE");
-
-        mainPanel.add(quizViewPanel, BorderLayout.CENTER);
 
         // Start the auto-refresh mechanism
         startAutoRefresh();
@@ -99,9 +93,6 @@ public class QuizzerPanel {
                 startAutoRefresh();
             }
         });
-
-        // Show empty state initially
-        cardLayout.show(quizViewPanel, "EMPTY_STATE");
 
         return mainPanel;
     }
@@ -151,8 +142,8 @@ public class QuizzerPanel {
     }
 
     private static JPanel createListContainer() {
-        // Main container with fixed width
-        listContainer = createPanel.panel(LIST_CONTAINER_COLOR, new BorderLayout(), new Dimension(700, 0));
+        // Main container with no fixed width (will expand to fill available space)
+        listContainer = createPanel.panel(LIST_CONTAINER_COLOR, new BorderLayout(), null);
         
         // Configure quiz container
         quizContainer = createPanel.panel(LIST_CONTAINER_COLOR, null, null);
