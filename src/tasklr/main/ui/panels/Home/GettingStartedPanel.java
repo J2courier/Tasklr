@@ -26,7 +26,7 @@ public class GettingStartedPanel extends JDialog {
     private final String username;
     
     public GettingStartedPanel(Frame owner, String username) {
-        super(owner, "Welcome to Tasklr", true);
+        super(owner, "Welcome to Duetz", true);
         this.owner = owner;
         this.username = username;
         initializePanel();
@@ -60,7 +60,7 @@ public class GettingStartedPanel extends JDialog {
         gbc.gridwidth = GridBagConstraints.REMAINDER;
         
         // Welcome message
-        JLabel welcomeLabel = new JLabel("Welcome to Tasklr!");
+        JLabel welcomeLabel = new JLabel("Welcome to Duetz!");
         welcomeLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 32));
         welcomeLabel.setForeground(PRIMARY_COLOR);
         gbc.gridy = 0;
@@ -100,9 +100,10 @@ public class GettingStartedPanel extends JDialog {
     private JPanel createSetupView() {
         JPanel panel = createPanel.panel(BACKGROUND_COLOR, new GridBagLayout(), null);
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(10, 20, 10, 20);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridwidth = GridBagConstraints.REMAINDER;
+        gbc.weightx = 0;
+        gbc.insets = new Insets(0, 20, 0, 20);
         
         // Title
         JLabel titleLabel = new JLabel("Account Security Setup");
@@ -111,19 +112,35 @@ public class GettingStartedPanel extends JDialog {
         gbc.gridy = 0;
         panel.add(titleLabel, gbc);
         
+        // Space 5
+        gbc.gridy = 1;
+        gbc.insets = new Insets(5, 0, 0, 0);
+        panel.add(Box.createVerticalStrut(5), gbc);
+        
         // Explanation
         JLabel explanationLabel = new JLabel("<html><div style='width: 400px;'>" +
             "To ensure the security of your account and enable account recovery if needed, " +
             "please provide the following information. This information will be used to verify " +
             "your identity if you ever need to recover your account access.</div></html>");
         explanationLabel.setFont(new Font("Segoe UI Variable", Font.PLAIN, 14));
-        gbc.gridy = 1;
-        gbc.insets = new Insets(20, 20, 30, 20);
+        gbc.gridy = 2;
+        gbc.insets = new Insets(0, 20, 0, 20);
         panel.add(explanationLabel, gbc);
+        
+        // Space 5
+        gbc.gridy = 3;
+        gbc.insets = new Insets(5, 0, 0, 0);
+        panel.add(Box.createVerticalStrut(10), gbc);
         
         // Input fields
         JTextField addressField = new JTextField();
+        addressField.setPreferredSize(new Dimension(400, 30));
+        addressField.setFont(new Font("Segoe UI Variable", Font.PLAIN, 14));
+
         JTextField contactField = new JTextField();
+        contactField.setPreferredSize(new Dimension(400, 30));
+        contactField.setFont(new Font("Segoe UI Variable", Font.PLAIN, 14));
+
         JDateChooser birthdayChooser = new JDateChooser();
         birthdayChooser.setPreferredSize(new Dimension(400, 30));
         birthdayChooser.setFont(new Font("Segoe UI Variable", Font.PLAIN, 14));
@@ -132,30 +149,47 @@ public class GettingStartedPanel extends JDialog {
         // Address
         JLabel addressLabel = new JLabel("Address:");
         addressLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 14));
-        gbc.gridy = 2;
-        gbc.insets = new Insets(5, 20, 5, 20);
+        gbc.gridy = 4;
+        gbc.insets = new Insets(0, 20, 0, 20);
         panel.add(addressLabel, gbc);
         
-        gbc.gridy = 3;
+        gbc.gridy = 5;
         panel.add(addressField, gbc);
+        
+        // Space 5
+        gbc.gridy = 6;
+        gbc.insets = new Insets(5, 0, 0, 0);
+        panel.add(Box.createVerticalStrut(10), gbc);
         
         // Contact
         JLabel contactLabel = new JLabel("Contact Number:");
         contactLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 14));
-        gbc.gridy = 4;
+        gbc.gridy = 7;
+        gbc.insets = new Insets(0, 20, 0, 20);
         panel.add(contactLabel, gbc);
         
-        gbc.gridy = 5;
+        gbc.gridy = 8;
         panel.add(contactField, gbc);
+        
+        // Space 5
+        gbc.gridy = 9;
+        gbc.insets = new Insets(5, 0, 0, 0);
+        panel.add(Box.createVerticalStrut(10), gbc);
         
         // Birthday
         JLabel birthdayLabel = new JLabel("Birthday:");
         birthdayLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 14));
-        gbc.gridy = 6;
+        gbc.gridy = 10;
+        gbc.insets = new Insets(0, 20, 0, 20);
         panel.add(birthdayLabel, gbc);
         
-        gbc.gridy = 7;
+        gbc.gridy = 11;
         panel.add(birthdayChooser, gbc);
+        
+        // Space 5
+        gbc.gridy = 12;
+        gbc.insets = new Insets(5, 0, 0, 0);
+        panel.add(Box.createVerticalStrut(55), gbc);
         
         // Finish button
         JButton finishButton = new JButton("Complete Setup");
@@ -163,20 +197,25 @@ public class GettingStartedPanel extends JDialog {
         finishButton.setForeground(Color.WHITE);
         finishButton.setFont(new Font("Segoe UI Variable", Font.BOLD, 14));
         finishButton.setFocusPainted(false);
-        
+        finishButton.setFocusable(false);
+
         finishButton.addActionListener(e -> {
-            if (validateAndSaveBackupInfo(addressField.getText().trim(),
-                                        contactField.getText().trim(),
-                                        birthdayChooser)) {
+            if (validateAndSaveBackupInfo(addressField.getText().trim(), contactField.getText().trim(), birthdayChooser)) {
                 dispose();
             }
         });
-        
-        gbc.gridy = 8;
-        gbc.insets = new Insets(30, 20, 10, 20);
+
+        gbc.gridy = 13;
+        gbc.insets = new Insets(0, 20, 0, 20);
         gbc.fill = GridBagConstraints.NONE;
         gbc.anchor = GridBagConstraints.CENTER;
         panel.add(finishButton, gbc);
+
+        // Space after finish button
+        gbc.gridy = 14;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.insets = new Insets(5, 0, 0, 0);
+        panel.add(Box.createVerticalStrut(10), gbc);
         
         return panel;
     }
