@@ -180,11 +180,11 @@ public class ManageAccountView {
         gbc.gridwidth = GridBagConstraints.REMAINDER;
 
         backupPanel.add(new JLabel("Please answer the following questions for account backup:"), gbc);
-        backupPanel.add(new JLabel("What is your address?"), gbc);
+        backupPanel.add(new JLabel("Add your email address."), gbc);
         backupPanel.add(addressField, gbc);
-        backupPanel.add(new JLabel("What is your contact number?"), gbc);
+        backupPanel.add(new JLabel("Add your contact number."), gbc);
         backupPanel.add(contactField, gbc);
-        backupPanel.add(new JLabel("When is your birthday? (YYYY-MM-DD)"), gbc);
+        backupPanel.add(new JLabel("Add your birthday. (YYYY-MM-DD)"), gbc);
         backupPanel.add(birthdayField, gbc);
 
         int result = JOptionPane.showConfirmDialog(
@@ -597,58 +597,65 @@ public class ManageAccountView {
             }
 
             // If verified, show password change dialog
-            JPasswordField newPasswordField = new JPasswordField();
-            JPasswordField confirmPasswordField = new JPasswordField();
-            JCheckBox showPasswordCheckBox = new JCheckBox("Show Passwords");
+            boolean passwordChangeCompleted = false;
+            
+            while (!passwordChangeCompleted) {
+                JPasswordField newPasswordField = new JPasswordField();
+                JPasswordField confirmPasswordField = new JPasswordField();
+                JCheckBox showPasswordCheckBox = new JCheckBox("Show Passwords");
 
-            // Create password change panel
-            JPanel changePanel = new JPanel(new GridBagLayout());
-            gbc = new GridBagConstraints();
-            gbc.fill = GridBagConstraints.HORIZONTAL;
-            gbc.insets = new Insets(5, 5, 5, 5);
-            gbc.gridwidth = GridBagConstraints.REMAINDER;
+                // Create password change panel
+                JPanel changePanel = new JPanel(new GridBagLayout());
+                gbc = new GridBagConstraints();
+                gbc.fill = GridBagConstraints.HORIZONTAL;
+                gbc.insets = new Insets(5, 5, 5, 5);
+                gbc.gridwidth = GridBagConstraints.REMAINDER;
 
-            changePanel.add(new JLabel("Enter New Password:"), gbc);
-            changePanel.add(newPasswordField, gbc);
-            changePanel.add(new JLabel("Confirm New Password:"), gbc);
-            changePanel.add(confirmPasswordField, gbc);
-            changePanel.add(showPasswordCheckBox, gbc);
+                changePanel.add(new JLabel("Enter New Password:"), gbc);
+                changePanel.add(newPasswordField, gbc);
+                changePanel.add(new JLabel("Confirm New Password:"), gbc);
+                changePanel.add(confirmPasswordField, gbc);
+                changePanel.add(showPasswordCheckBox, gbc);
 
-            // Add show/hide password functionality
-            showPasswordCheckBox.addActionListener(e -> {
-                char echoChar = showPasswordCheckBox.isSelected() ? (char)0 : '•';
-                newPasswordField.setEchoChar(echoChar);
-                confirmPasswordField.setEchoChar(echoChar);
-            });
+                // Add show/hide password functionality
+                showPasswordCheckBox.addActionListener(e -> {
+                    char echoChar = showPasswordCheckBox.isSelected() ? (char)0 : '•';
+                    newPasswordField.setEchoChar(echoChar);
+                    confirmPasswordField.setEchoChar(echoChar);
+                });
 
-            int changeResult = JOptionPane.showConfirmDialog(
-                null,
-                changePanel,
-                "Change Password",
-                JOptionPane.OK_CANCEL_OPTION,
-                JOptionPane.PLAIN_MESSAGE
-            );
-
-            if (changeResult == JOptionPane.OK_OPTION) {
-                String newPassword = new String(newPasswordField.getPassword()).trim();
-                String confirmPassword = new String(confirmPasswordField.getPassword()).trim();
-
-                // Validate new password
-                if (!validateNewPassword(newPassword, confirmPassword)) {
-                    return;
-                }
-
-                // Hash and update the new password
-                String hashedNewPassword = hashPassword(newPassword);
-                String updateQuery = "UPDATE users SET password = ? WHERE id = ?";
-                DatabaseManager.executeUpdate(updateQuery, hashedNewPassword, UserSession.getUserId());
-
-                JOptionPane.showMessageDialog(
+                int changeResult = JOptionPane.showConfirmDialog(
                     null,
-                    "Password updated successfully!",
-                    "Success",
-                    JOptionPane.INFORMATION_MESSAGE
+                    changePanel,
+                    "Change Password",
+                    JOptionPane.OK_CANCEL_OPTION,
+                    JOptionPane.PLAIN_MESSAGE
                 );
+
+                if (changeResult == JOptionPane.OK_OPTION) {
+                    String newPassword = new String(newPasswordField.getPassword()).trim();
+                    String confirmPassword = new String(confirmPasswordField.getPassword()).trim();
+
+                    // Validate new password
+                    if (validateNewPassword(newPassword, confirmPassword)) {
+                        // Hash and update the new password
+                        String hashedNewPassword = hashPassword(newPassword);
+                        String updateQuery = "UPDATE users SET password = ? WHERE id = ?";
+                        DatabaseManager.executeUpdate(updateQuery, hashedNewPassword, UserSession.getUserId());
+
+                        JOptionPane.showMessageDialog(
+                            null,
+                            "Password updated successfully!",
+                            "Success",
+                            JOptionPane.INFORMATION_MESSAGE
+                        );
+                        passwordChangeCompleted = true;
+                    }
+                    // If validation fails, the loop continues and shows the dialog again
+                } else {
+                    // User clicked Cancel
+                    passwordChangeCompleted = true;
+                }
             }
         } catch (SQLException ex) {
             ex.printStackTrace();

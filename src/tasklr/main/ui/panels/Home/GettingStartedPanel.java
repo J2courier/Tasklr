@@ -38,6 +38,20 @@ public class GettingStartedPanel extends JDialog {
         setResizable(false);
         setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
         
+        // Add window listener to handle close button clicks
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                JOptionPane.showMessageDialog(
+                    GettingStartedPanel.this,
+                    "Setting up backup information is crucial for your account security.\n" +
+                    "This information will be used to verify your identity if you need to recover your account.",
+                    "Important Security Information",
+                    JOptionPane.INFORMATION_MESSAGE
+                );
+            }
+        });
+        
         mainPanel = new JPanel();
         cardLayout = new CardLayout();
         mainPanel.setLayout(cardLayout);
@@ -146,8 +160,7 @@ public class GettingStartedPanel extends JDialog {
         birthdayChooser.setFont(new Font("Segoe UI Variable", Font.PLAIN, 14));
         birthdayChooser.setDateFormatString("yyyy-MM-dd");
         
-        // Address
-        JLabel addressLabel = new JLabel("Address:");
+        JLabel addressLabel = new JLabel("Add Email Address:");
         addressLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 14));
         gbc.gridy = 4;
         gbc.insets = new Insets(0, 20, 0, 20);
@@ -156,13 +169,11 @@ public class GettingStartedPanel extends JDialog {
         gbc.gridy = 5;
         panel.add(addressField, gbc);
         
-        // Space 5
         gbc.gridy = 6;
         gbc.insets = new Insets(5, 0, 0, 0);
         panel.add(Box.createVerticalStrut(10), gbc);
         
-        // Contact
-        JLabel contactLabel = new JLabel("Contact Number:");
+        JLabel contactLabel = new JLabel("Add Contact Number:");
         contactLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 14));
         gbc.gridy = 7;
         gbc.insets = new Insets(0, 20, 0, 20);
@@ -171,13 +182,11 @@ public class GettingStartedPanel extends JDialog {
         gbc.gridy = 8;
         panel.add(contactField, gbc);
         
-        // Space 5
         gbc.gridy = 9;
         gbc.insets = new Insets(5, 0, 0, 0);
         panel.add(Box.createVerticalStrut(10), gbc);
         
-        // Birthday
-        JLabel birthdayLabel = new JLabel("Birthday:");
+        JLabel birthdayLabel = new JLabel("Add Birthday:");
         birthdayLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 14));
         gbc.gridy = 10;
         gbc.insets = new Insets(0, 20, 0, 20);
@@ -186,12 +195,10 @@ public class GettingStartedPanel extends JDialog {
         gbc.gridy = 11;
         panel.add(birthdayChooser, gbc);
         
-        // Space 5
         gbc.gridy = 12;
         gbc.insets = new Insets(5, 0, 0, 0);
         panel.add(Box.createVerticalStrut(55), gbc);
-        
-        // Finish button
+    
         JButton finishButton = new JButton("Complete Setup");
         finishButton.setBackground(BUTTON_COLOR);
         finishButton.setForeground(Color.WHITE);
@@ -211,7 +218,6 @@ public class GettingStartedPanel extends JDialog {
         gbc.anchor = GridBagConstraints.CENTER;
         panel.add(finishButton, gbc);
 
-        // Space after finish button
         gbc.gridy = 14;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.insets = new Insets(5, 0, 0, 0);
@@ -221,7 +227,6 @@ public class GettingStartedPanel extends JDialog {
     }
     
     private boolean validateAndSaveBackupInfo(String address, String contact, JDateChooser birthdayChooser) {
-        // Validate inputs
         if (address.isEmpty() || contact.isEmpty() || birthdayChooser.getDate() == null) {
             JOptionPane.showMessageDialog(this,
                 "All fields must be filled out",
