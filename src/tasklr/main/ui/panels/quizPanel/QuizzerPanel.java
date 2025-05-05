@@ -232,38 +232,47 @@ public class QuizzerPanel {
 
         SwingUtilities.invokeLater(() -> {
             quizContainer.removeAll();
-
-            try (Connection conn = DatabaseManager.getConnection()) {
-                String query = "SELECT set_id, subject, description FROM flashcard_sets WHERE user_id = ?";
-                try (PreparedStatement stmt = conn.prepareStatement(query)) {
-                    stmt.setInt(1, UserSession.getUserId());
-                    try (ResultSet rs = stmt.executeQuery()) {
-                        boolean hasItems = false;
-
-                        while (rs.next()) {
-                            hasItems = true;
-                            int setId = rs.getInt("set_id");
-                            String subject = rs.getString("subject");
-                            String description = rs.getString("description");
-
-                            JPanel setPanel = createQuizSetItemPanel(setId, subject, description);
-                            quizContainer.add(setPanel);
-                            quizContainer.add(Box.createRigidArea(new Dimension(0, 5)));
-                        }
-
-                        // Update UI
-                        quizContainer.revalidate();
-                        quizContainer.repaint();
-                    }
+            
+            try {
+                String query = "SELECT set_id, subject, description FROM flashcard_sets WHERE user_id = ? ORDER BY subject ASC";
+                ResultSet rs = DatabaseManager.executeQuery(query, UserSession.getUserId());
+                
+                boolean hasItems = false;
+                
+                while (rs.next()) {
+                    hasItems = true;
+                    int setId = rs.getInt("set_id");
+                    String subject = rs.getString("subject");
+                    String description = rs.getString("description");
+                    
+                    JPanel setPanel = createQuizSetItemPanel(setId, subject, description);
+                    quizContainer.add(setPanel);
+                    
+                    // Use consistent spacing of 5 pixels
+                    quizContainer.add(Box.createVerticalStrut(5));
                 }
-            } catch (SQLException e) {
-                e.printStackTrace();
-                Toast.error("Failed to refresh quiz container: " + e.getMessage());
+                
+                // Add "No sets" message if needed
+                if (!hasItems) {
+                    // Add empty state message
+                    JLabel noSetsLabel = new JLabel("No flashcard sets yet. Create one!", SwingConstants.CENTER);
+                    noSetsLabel.setFont(new Font("Segoe UI Variable", Font.PLAIN, 16));
+                    noSetsLabel.setForeground(new Color(0x707070));
+                    noSetsLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+                    quizContainer.add(noSetsLabel);
+                }
+                
+                quizContainer.revalidate();
+                quizContainer.repaint();
+                
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                Toast.error("Error fetching flashcard sets: " + ex.getMessage());
             }
         });
     }
 
-    private static JPanel createQuizSetItemPanel(int setId, String subject, String description) {
+    public static JPanel createQuizSetItemPanel(int setId, String subject, String description) {
         // Main panel with fixed height and full width
         JPanel panel = createPanel.panel(LIST_ITEM_COLOR, new BorderLayout(), null);
         panel.setPreferredSize(new Dimension(550, 80));
@@ -1466,5 +1475,99 @@ public class QuizzerPanel {
         // 3. Updating statistics
         // 4. Any other necessary cleanup
     }
-}
 
+    // Add this getter method to access the quiz container
+    public static JPanel getQuizContainer() {
+        return quizContainer;
+    }
+
+// Add this method if it doesn't exist
+public static void showQuizOptions(int setId, String subject) {
+    // Count the number of flashcards in the set
+    int totalFlashcards = 0;
+    try {
+        String countQuery = "SELECT COUNT(*) FROM flashcards WHERE set_id = ?";
+        ResultSet rs = DatabaseManager.executeQuery(countQuery, setId);
+        if (rs.next()) {
+            totalFlashcards = rs.getInt(1);
+        }
+    } catch (SQLException ex) {
+        ex.printStackTrace();
+        Toast.error("Error counting flashcards: " + ex.getMessage());
+        return;
+    }
+    
+    if (totalFlashcards == 0) {
+        Toast.error("This set has no flashcards. Add some flashcards first!");
+        return;
+    }
+    
+    // Create dialog components
+    JPanel panel = new JPanel(new GridBagLayout());
+    GridBagConstraints gbc = new GridBagConstraints();
+    gbc.gridwidth = 2;
+    gbc.fill = GridBagConstraints.HORIZONTAL;
+    gbc.insets = new Insets(5, 5, 5, 5);
+
+    // Quiz type selection
+    JLabel typeLabel = new JLabel("Quiz Type:");
+    String[] quizTypes = {"Multiple Choice", "Identification"};
+    JComboBox<String> quizTypeCombo = new JComboBox<>(quizTypes);
+    
+    // Number of items selection
+    JLabel itemsLabel = new JLabel("Number of Items:");
+    SpinnerNumberModel spinnerModel = new SpinnerNumberModel(
+        Math.min(10, totalFlashcards), // initial value
+        1,                            // minimum value
+        totalFlashcards,              // maximum value
+        1                            // step
+    );
+    JSpinner itemsSpinner = new JSpinner(spinnerModel);
+    
+    // Time duration selection
+    JLabel timeLabel = new JLabel("Time Limit (minutes):");
+    Integer[] timeOptions = {5, 10, 15, 20, 30, 45, 60};
+    JComboBox<Integer> timeCombo = new JComboBox<>(timeOptions);
+    timeCombo.setSelectedItem(15); // Default to 15 minutes
+    
+    // Add components to panel
+    gbc.gridx = 0;
+    gbc.gridy = 0;
+    panel.add(new JLabel("Start Quiz: " + subject), gbc);
+    
+    gbc.gridy = 1;
+    gbc.gridwidth = 1;
+    panel.add(typeLabel, gbc);
+    gbc.gridx = 1;
+    panel.add(quizTypeCombo, gbc);
+    
+    gbc.gridx = 0;
+    gbc.gridy = 2;
+    panel.add(itemsLabel, gbc);
+    gbc.gridx = 1;
+    panel.add(itemsSpinner, gbc);
+    
+    gbc.gridx = 0;
+    gbc.gridy = 3;
+    panel.add(timeLabel, gbc);
+    gbc.gridx = 1;
+    panel.add(timeCombo, gbc);
+    
+    // Show dialog
+    int result = JOptionPane.showConfirmDialog(
+        null, panel, "Start Quiz", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE
+    );
+    
+    if (result == JOptionPane.OK_OPTION) {
+        String selectedType = (String) quizTypeCombo.getSelectedItem();
+        int numberOfItems = (Integer) itemsSpinner.getValue();
+        int timeDuration = (Integer) timeCombo.getSelectedItem();
+
+        if ("Identification".equals(selectedType)) {
+            startIdentificationQuiz(setId, subject, numberOfItems, timeDuration);
+        } else {
+            startMultipleChoiceQuiz(setId, subject, numberOfItems, timeDuration);
+        }
+    }
+  }
+}

@@ -453,32 +453,41 @@ public class FlashcardPanel {
         quizContainer.removeAll();
         
         try {
-            String query = "SELECT set_id, subject, description FROM flashcard_sets WHERE user_id = ?";
-            try (Connection conn = DatabaseManager.getConnection();
-                 PreparedStatement stmt = conn.prepareStatement(query)) {
-                stmt.setInt(1, UserSession.getUserId());
-                ResultSet rs = stmt.executeQuery();
+            String query = "SELECT set_id, subject, description FROM flashcard_sets WHERE user_id = ? ORDER BY subject ASC";
+            ResultSet rs = DatabaseManager.executeQuery(query, UserSession.getUserId());
+            
+            boolean hasItems = false;
+            
+            while (rs.next()) {
+                hasItems = true;
+                int setId = rs.getInt("set_id");
+                String subject = rs.getString("subject");
+                String description = rs.getString("description");
                 
-                while (rs.next()) {
-                    int setId = rs.getInt("set_id");
-                    String subject = rs.getString("subject");
-                    String description = rs.getString("description");
-                    
-                    JPanel setPanel = createSetItemPanel(setId, subject, description);
-                    quizContainer.add(setPanel);
-                    quizContainer.add(Box.createVerticalStrut(2));
-                }
+                JPanel setPanel = createSetItemPanel(setId, subject, description);
+                quizContainer.add(setPanel);
+                
+                // Use consistent spacing of 5 pixels
+                quizContainer.add(Box.createVerticalStrut(5));
             }
+            
+            // Add "No sets" message if needed
+            if (!hasItems) {
+                // Add empty state message
+                JLabel noSetsLabel = new JLabel("No flashcard sets yet. Create one!", SwingConstants.CENTER);
+                noSetsLabel.setFont(new Font("Segoe UI Variable", Font.PLAIN, 16));
+                noSetsLabel.setForeground(new Color(0x707070));
+                noSetsLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+                quizContainer.add(noSetsLabel);
+            }
+            
         } catch (SQLException ex) {
             ex.printStackTrace();
-            Toast.error("Error loading sets: " + ex.getMessage());
+            JOptionPane.showMessageDialog(null, "Error fetching flashcard sets: " + ex.getMessage());
         }
-        
-        quizContainer.revalidate();
-        quizContainer.repaint();
     }
 
-    private static JPanel createSetItemPanel(int setId, String subject, String description) {
+    public static JPanel createSetItemPanel(int setId, String subject, String description) {
         // Main panel with fixed height and full width
         JPanel panel = createPanel.panel(LIST_ITEM_COLOR, new BorderLayout(), null);
         panel.setPreferredSize(new Dimension(550, 100));
@@ -743,7 +752,7 @@ public class FlashcardPanel {
         return panel;
     }
 
-    private static void showFlashcardMode(int setId) {
+    public static void showFlashcardMode(int setId) {
         // Update flashcard mode panel with the selected set's cards
         JPanel flashcardModePanel = createFlashcardModePanel(setId);
         mainCardPanel.add(flashcardModePanel, "flashcardMode");
@@ -882,42 +891,32 @@ public class FlashcardPanel {
             
             cardLayout.show(mainCardPanel, "setCreation");
         });
-
-        // Toggle List Container button
-        JButton toggleListBtn = createButton.button(isListVisible ? "Hide List" : "Show List", null, Color.WHITE, null, false);
+        
+        // Toggle list visibility button
+        JButton toggleListBtn = createButton.button("Hide List", null, Color.WHITE, null, false);
         toggleListBtn.setBackground(new Color(0x275CE2));
         toggleListBtn.setPreferredSize(new Dimension(120, 40));
-        
-        // Add hover effect
-        new HoverButtonEffect(toggleListBtn, 
-            new Color(0x275CE2),  // default background
-            new Color(0x1E40AF),  // hover background
-            Color.WHITE,          // default text
-            Color.WHITE          // hover text
-        );
-        
         toggleListBtn.addActionListener(e -> toggleListVisibility(toggleListBtn));
-
+        toggleButtons.add(toggleListBtn);
+        
         // Add More Terms button
-        addMoreTermsBtn = createButton.button("More Terms", null, Color.WHITE, null, false);
+        addMoreTermsBtn = createButton.button("Add Terms", null, Color.WHITE, null, false);
         addMoreTermsBtn.setBackground(new Color(0x275CE2));
         addMoreTermsBtn.setPreferredSize(new Dimension(120, 40));
         addMoreTermsBtn.addActionListener(e -> {
+            // Set the title for the terms input panel
+            String subject = "";
             try {
                 String query = "SELECT subject FROM flashcard_sets WHERE set_id = ?";
-                try (Connection conn = DatabaseManager.getConnection();
-                     PreparedStatement stmt = conn.prepareStatement(query)) {
-                    stmt.setInt(1, setId);
-                    ResultSet rs = stmt.executeQuery();
-                    
-                    if (rs.next()) {
-                        String subject = rs.getString("subject");
-                        termsInputTitleLabel.setText("ADD TERMS TO " + subject.toUpperCase());
-                    }
+                ResultSet rs = DatabaseManager.executeQuery(query, setId);
+                if (rs.next()) {
+                    subject = rs.getString("subject");
                 }
             } catch (SQLException ex) {
                 ex.printStackTrace();
             }
+            
+            termsInputTitleLabel.setText("ADD TERMS TO " + subject.toUpperCase());
             
             isCardView = false;
             currentCardIndex = 0;
@@ -940,111 +939,8 @@ public class FlashcardPanel {
         leftButtonsPanel.add(addMoreTermsBtn);
         leftButtonsPanel.add(viewToggleBtn);
         
-        // Right panel for search functionality
-        JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
-        rightPanel.setBackground(Color.WHITE);
-        
-        // Search input field
-        JTextField searchInput = new JTextField(20);
-        searchInput.setPreferredSize(new Dimension(200, 35));
-        searchInput.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(0xE0E0E0)),
-            BorderFactory.createEmptyBorder(5, 10, 5, 10)
-        ));
-        
-        // Clear search button (initially invisible)
-        JButton clearSearchBtn = createButton.button("Clear", null, Color.WHITE, null, false);
-        clearSearchBtn.setBackground(new Color(0xDC2626)); // Red color for clear action
-        clearSearchBtn.setPreferredSize(new Dimension(80, 35));
-        clearSearchBtn.setVisible(false); // Hidden by default
-        
-        // Add hover effect to clear button
-        new HoverButtonEffect(clearSearchBtn,
-            new Color(0xDC2626),  // default background
-            new Color(0xB91C1C),  // hover background
-            Color.WHITE,          // default text
-            Color.WHITE           // hover text
-        );
-        
-        // Search button
-        JButton searchBtn = createButton.button("Search", null, Color.WHITE, null, false);
-        searchBtn.setBackground(new Color(0x275CE2));
-        searchBtn.setPreferredSize(new Dimension(100, 35));
-        
-        // Clear search functionality
-        clearSearchBtn.addActionListener(e -> {
-            searchInput.setText(""); // Clear the search input
-            clearSearchBtn.setVisible(false); // Hide clear button
-            
-            // Reload all flashcards
-            try {
-                flashcardsList.clear();
-                String query = "SELECT term, definition FROM flashcards WHERE set_id = ?";
-                ResultSet rs = DatabaseManager.executeQuery(query, setId);
-                
-                while (rs.next()) {
-                    Map<String, String> card = new HashMap<>();
-                    card.put("term", rs.getString("term"));
-                    card.put("definition", rs.getString("definition"));
-                    flashcardsList.add(card);
-                }
-                
-                currentCardIndex = 0;
-                refreshFlashcardView(mainContainer, setId);
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-                Toast.error("Error loading flashcards: " + ex.getMessage());
-            }
-        });
-        
-        // Modified search functionality
-        searchBtn.addActionListener(e -> {
-            String query = searchInput.getText().trim();
-            if (!query.isEmpty()) {
-                List<Map<String, Object>> searchResults = SearchManager.searchFlashcardsInSet(query, setId);
-                
-                if (searchResults.isEmpty()) {
-                    // Show no results message
-                    JLabel noResultsLabel = new JLabel("No flashcards match your search: '" + query + "'", SwingConstants.CENTER);
-                    noResultsLabel.setFont(new Font("Segoe UI Variable", Font.PLAIN, 16));
-                    noResultsLabel.setForeground(new Color(0x707070));
-                    
-                    // Clear and show message
-                    mainContainer.removeAll();
-                    mainContainer.add(headerPanel, BorderLayout.NORTH);
-                    mainContainer.add(noResultsLabel, BorderLayout.CENTER);
-                    mainContainer.revalidate();
-                    mainContainer.repaint();
-                    
-                    clearSearchBtn.setVisible(true); // Show clear button for no results too
-                } else {
-                    // Update with search results
-                    flashcardsList.clear();
-                    for (Map<String, Object> result : searchResults) {
-                        Map<String, String> card = new HashMap<>();
-                        card.put("term", (String) result.get("term"));
-                        card.put("definition", (String) result.get("definition"));
-                        flashcardsList.add(card);
-                    }
-                    currentCardIndex = 0;
-                    refreshFlashcardView(mainContainer, setId);
-                    
-                    clearSearchBtn.setVisible(true); // Show clear button when there are results
-                }
-            } else {
-                clearSearchBtn.setVisible(false); // Hide clear button for empty search
-                refreshFlashcardView(mainContainer, setId);
-            }
-        });
-        
-        // Add components to right panel
-        rightPanel.add(searchInput);
-        rightPanel.add(searchBtn);
-        rightPanel.add(clearSearchBtn);
-        
         // Add panels to header
         headerPanel.add(leftButtonsPanel, BorderLayout.WEST);
-        headerPanel.add(rightPanel, BorderLayout.EAST);
         
         // Fetch flashcards data
         flashcardsList.clear();
@@ -1220,7 +1116,7 @@ public class FlashcardPanel {
         for (Map<String, String> card : flashcardsList) {
             JPanel flashcard = createFlashcardItem(card.get("term"), card.get("definition"));
             cardsContainer.add(flashcard);
-            cardsContainer.add(Box.createRigidArea(new Dimension(0, 10)));
+            cardsContainer.add(Box.createVerticalStrut(5)); // Changed from 10 to 5
         }
 
         return cardsContainer;
@@ -1678,5 +1574,10 @@ public class FlashcardPanel {
             Toast.error("Error counting flashcards: " + ex.getMessage());
         }
         return 0;
+    }
+
+    // Add this getter method to access the quiz container
+    public static JPanel getQuizContainer() {
+        return quizContainer;
     }
 }
