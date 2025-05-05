@@ -7,6 +7,16 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import javax.swing.Box;
+import java.awt.Font;
+import tasklr.utilities.DatabaseManager;
+import com.toedter.calendar.JDateChooser;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class LoginPanel {
     private static final int FIELD_WIDTH = 500;
@@ -245,15 +255,264 @@ public class LoginPanel {
             
             @Override
             public void mouseClicked(MouseEvent e) {
-                // TODO: Implement forgot password functionality
-                JOptionPane.showMessageDialog(loginPanel, 
-                    "Forgot password functionality will be implemented soon.",
-                    "Coming Soon",
-                    JOptionPane.INFORMATION_MESSAGE);
+                showForgotPasswordDialog();
             }
         });
         
         return label;
+    }
+
+    private void showForgotPasswordDialog() {
+        // Create the main panel with GridBagLayout for better control
+        JPanel recoveryPanel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.insets = new Insets(5, 10, 5, 10);
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        
+        // Title and instructions
+        JLabel titleLabel = new JLabel("Account Recovery");
+        titleLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 16));
+        recoveryPanel.add(titleLabel, gbc);
+        
+        JLabel instructionsLabel = new JLabel("<html>Please provide your account's backup information to verify your identity.</html>");
+        recoveryPanel.add(instructionsLabel, gbc);
+        
+        // Add some space
+        recoveryPanel.add(Box.createVerticalStrut(10), gbc);
+        
+        // Username field
+        recoveryPanel.add(new JLabel("Username:"), gbc);
+        JTextField usernameField = new JTextField(20);
+        usernameField.setPreferredSize(new Dimension(300, 40));
+        recoveryPanel.add(usernameField, gbc);
+        
+        // Email address field
+        recoveryPanel.add(new JLabel("Email Address:"), gbc);
+        JTextField addressField = new JTextField(20);
+        addressField.setPreferredSize(new Dimension(300, 40));
+        recoveryPanel.add(addressField, gbc);
+        
+        // Contact number field
+        recoveryPanel.add(new JLabel("Contact Number:"), gbc);
+        JTextField contactField = new JTextField(20);
+        contactField.setPreferredSize(new Dimension(300, 40));
+        recoveryPanel.add(contactField, gbc);
+        
+        // Birthday field with JDateChooser
+        recoveryPanel.add(new JLabel("Birthday:"), gbc);
+        JDateChooser birthdayChooser = new JDateChooser();
+        birthdayChooser.setPreferredSize(new Dimension(300, 40));
+        birthdayChooser.setDateFormatString("yyyy-MM-dd");
+        recoveryPanel.add(birthdayChooser, gbc);
+        
+        // Show the dialog
+        int result = JOptionPane.showConfirmDialog(
+            loginPanel,
+            recoveryPanel,
+            "Account Recovery",
+            JOptionPane.OK_CANCEL_OPTION,
+            JOptionPane.PLAIN_MESSAGE
+        );
+        
+        // Process the result
+        if (result == JOptionPane.OK_OPTION) {
+            String username = usernameField.getText().trim();
+            String address = addressField.getText().trim();
+            String contact = contactField.getText().trim();
+            
+            // Get formatted date from JDateChooser
+            Date birthdayDate = birthdayChooser.getDate();
+            
+            // Validate input
+            if (username.isEmpty() || address.isEmpty() || contact.isEmpty() || birthdayDate == null) {
+                JOptionPane.showMessageDialog(
+                    loginPanel,
+                    "All fields are required",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE
+                );
+                return;
+            }
+            
+            // Format the date
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            String birthday = sdf.format(birthdayDate);
+            
+            // Verify account information
+            try {
+                // First check if user exists
+                String userQuery = "SELECT id FROM users WHERE username = ?";
+                ResultSet userRs = DatabaseManager.executeQuery(userQuery, username);
+                
+                if (!userRs.next()) {
+                    JOptionPane.showMessageDialog(
+                        loginPanel,
+                        "No account found with this username",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE
+                    );
+                    return;
+                }
+                
+                int userId = userRs.getInt("id");
+                
+                // Check if backup info matches
+                String backupQuery = "SELECT * FROM user_backup_info WHERE user_id = ? AND address = ? AND contact_number = ? AND birthday = ?";
+                ResultSet backupRs = DatabaseManager.executeQuery(backupQuery, userId, address, contact, birthday);
+                
+                if (!backupRs.next()) {
+                    JOptionPane.showMessageDialog(
+                        loginPanel,
+                        "The information provided does not match our records",
+                        "Verification Failed",
+                        JOptionPane.ERROR_MESSAGE
+                    );
+                    return;
+                }
+                
+                // If verification successful, show password reset dialog
+                showPasswordResetDialog(userId);
+                
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(
+                    loginPanel,
+                    "Error during account verification: " + ex.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE
+                );
+            }
+        }
+    }
+
+    private void showPasswordResetDialog(int userId) {
+        boolean passwordResetCompleted = false;
+        
+        while (!passwordResetCompleted) {
+            // Create password reset panel
+            JPanel resetPanel = new JPanel(new GridBagLayout());
+            GridBagConstraints gbc = new GridBagConstraints();
+            gbc.fill = GridBagConstraints.HORIZONTAL;
+            gbc.insets = new Insets(5, 10, 5, 10);
+            gbc.gridwidth = GridBagConstraints.REMAINDER;
+            
+            resetPanel.add(new JLabel("Create a new password:"), gbc);
+            
+            // New password field
+            resetPanel.add(new JLabel("New Password:"), gbc);
+            JPasswordField newPasswordField = new JPasswordField(20);
+            newPasswordField.setPreferredSize(new Dimension(300, 30));
+            resetPanel.add(newPasswordField, gbc);
+            
+            // Confirm password field
+            resetPanel.add(new JLabel("Confirm Password:"), gbc);
+            JPasswordField confirmPasswordField = new JPasswordField(20);
+            confirmPasswordField.setPreferredSize(new Dimension(300, 30));
+            resetPanel.add(confirmPasswordField, gbc);
+            
+            // Show password checkbox
+            JCheckBox showPasswordCheckBox = new JCheckBox("Show Password");
+            showPasswordCheckBox.addActionListener(e -> {
+                if (showPasswordCheckBox.isSelected()) {
+                    newPasswordField.setEchoChar((char) 0);
+                    confirmPasswordField.setEchoChar((char) 0);
+                } else {
+                    newPasswordField.setEchoChar('•');
+                    confirmPasswordField.setEchoChar('•');
+                }
+            });
+            resetPanel.add(showPasswordCheckBox, gbc);
+            
+            // Show the dialog
+            int result = JOptionPane.showConfirmDialog(
+                loginPanel,
+                resetPanel,
+                "Reset Password",
+                JOptionPane.OK_CANCEL_OPTION,
+                JOptionPane.PLAIN_MESSAGE
+            );
+            
+            if (result == JOptionPane.OK_OPTION) {
+                String newPassword = new String(newPasswordField.getPassword()).trim();
+                String confirmPassword = new String(confirmPasswordField.getPassword()).trim();
+                
+                // Validate passwords
+                if (newPassword.isEmpty() || confirmPassword.isEmpty()) {
+                    JOptionPane.showMessageDialog(
+                        loginPanel,
+                        "Password fields cannot be empty",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE
+                    );
+                    continue;
+                }
+                
+                if (newPassword.length() < 8) {
+                    JOptionPane.showMessageDialog(
+                        loginPanel,
+                        "Password must be at least 8 characters long",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE
+                    );
+                    continue;
+                }
+                
+                if (!newPassword.equals(confirmPassword)) {
+                    JOptionPane.showMessageDialog(
+                        loginPanel,
+                        "Passwords do not match",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE
+                    );
+                    continue;
+                }
+                
+                // Update password in database
+                try {
+                    String hashedPassword = hashPassword(newPassword);
+                    String updateQuery = "UPDATE users SET password = ? WHERE id = ?";
+                    DatabaseManager.executeUpdate(updateQuery, hashedPassword, userId);
+                    
+                    JOptionPane.showMessageDialog(
+                        loginPanel,
+                        "Password has been reset successfully!\nYou can now log in with your new password.",
+                        "Password Reset Complete",
+                        JOptionPane.INFORMATION_MESSAGE
+                    );
+                    
+                    passwordResetCompleted = true;
+                    
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                    JOptionPane.showMessageDialog(
+                        loginPanel,
+                        "Error updating password: " + ex.getMessage(),
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE
+                    );
+                }
+            } else {
+                // User cancelled
+                passwordResetCompleted = true;
+            }
+        }
+    }
+
+    private String hashPassword(String password) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            byte[] hashedBytes = md.digest(password.getBytes());
+            
+            StringBuilder sb = new StringBuilder();
+            for (byte b : hashedBytes) {
+                sb.append(String.format("%02x", b));
+            }
+            return sb.toString();
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     private void setupKeyListeners() {
