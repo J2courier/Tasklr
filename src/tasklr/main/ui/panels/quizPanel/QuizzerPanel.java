@@ -40,6 +40,11 @@ public class QuizzerPanel {
     private static final Color LIST_ITEM_HOVER_BORDER = new Color(0x0082FC);
     private static final Color PRIMARY_BUTTON_COLOR = new Color(0x275CE2);
     private static final Color PRIMARY_BUTTON_HOVER = new Color(0x3B6FF0);
+    private static final Color PANEL_SHADOW_COLOR = new Color(0xE0E0E0);
+    private static final Color QUESTION_PANEL_BG = new Color(0xF8F9FA);
+    private static final Color HEADER_BG = new Color(0xF8F9FA);
+    private static final Color ACCENT_COLOR = new Color(0x275CE2);
+    private static final Color ANSWER_FIELD_BG = new Color(0xF5F7FA);
     private static final Color PRIMARY_BUTTON_TEXT = Color.WHITE;
 
     // Add references to HomePanel's counter panels
@@ -72,18 +77,13 @@ public class QuizzerPanel {
         JPanel listContainerPanel = createListContainer();
         mainPanel.add(listContainerPanel, BorderLayout.CENTER); // Changed from WEST to CENTER to take full space
 
-        // Create quiz view panel with CardLayout (will be used when a quiz is started)
         cardLayout = new CardLayout();
         quizViewPanel = new JPanel(cardLayout);
         quizViewPanel.setBackground(BACKGROUND_COLOR);
         
-        // Add an empty state panel to the quiz view panel
         JPanel emptyStatePanel = createEmptyStatePanel();
         quizViewPanel.add(emptyStatePanel, "EMPTY_STATE");
         cardLayout.show(quizViewPanel, "EMPTY_STATE");
-        
-        // Remove the auto-refresh start
-        // startAutoRefresh();
 
         return mainPanel;
     }
@@ -137,24 +137,9 @@ public class QuizzerPanel {
         scrollPane.getViewport().setBackground(LIST_CONTAINER_COLOR);
 
         listContainer.add(scrollPane, BorderLayout.CENTER);
-
-        // Remove the initial refresh call since it will be called when the button is clicked
-        // refreshQuizContainer();
-
         return listContainer;
     }
 
-    // Remove the toggleListVisibility method since we're removing that functionality
-
-    private static void startAutoRefresh() {
-        // Auto-refresh is no longer needed as refresh is triggered by button click
-    }
-
-    private static void stopAutoRefresh() {
-        if (refreshManager != null) {
-            refreshManager.stopRefresh(UIRefreshManager.QUIZ_CONTAINER);
-        }
-    }
 
     private static void showCenteredOptionPane(Component parentComponent, String message, String title, int messageType) {
         JOptionPane pane = new JOptionPane(message, messageType);
@@ -569,7 +554,6 @@ public class QuizzerPanel {
                 "Time's Up",
                 JOptionPane.WARNING_MESSAGE
             );
-            submitQuiz();
         });
 
         controlPanel.add(timerPanel);
@@ -639,7 +623,7 @@ public class QuizzerPanel {
 
             // Add question panel to questions container
             questionsPanel.add(questionPanel);
-            questionsPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+            questionsPanel.add(Box.createRigidArea(new Dimension(0, 20))); // Increased spacing between questions
         }
 
         // Button panel
@@ -920,7 +904,6 @@ public class QuizzerPanel {
                 "Time's Up",
                 JOptionPane.WARNING_MESSAGE
             );
-            submitQuiz();
         });
 
         controlPanel.add(timerPanel);
@@ -950,10 +933,12 @@ public class QuizzerPanel {
             // Create question panel with GridBagLayout
             JPanel questionPanel = new JPanel(new GridBagLayout());
             questionPanel.setBackground(BACKGROUND_COLOR);
-            questionPanel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(0xE0E0E0), 1),  // Outer border
-                BorderFactory.createEmptyBorder(15, 15, 15, 15)  // Inner padding
-            ));
+            questionPanel.setBorder(
+                BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(new Color(0xE0E0E0), 1), // Light border
+                    BorderFactory.createEmptyBorder(20, 20, 20, 20)  // Increased padding
+                )
+            );
 
             GridBagConstraints gbc = new GridBagConstraints();
             gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -997,7 +982,7 @@ public class QuizzerPanel {
 
             // Add question panel to questions container
             questionsPanel.add(questionPanel);
-            questionsPanel.add(Box.createRigidArea(new Dimension(0, 15)));
+            questionsPanel.add(Box.createRigidArea(new Dimension(0, 30))); // Increased spacing between questions
         }
 
         // Button panel
@@ -1331,18 +1316,12 @@ public class QuizzerPanel {
         cardLayout.show(quizViewPanel, "OVERVIEW");
     }
 
-    // Add cleanup method to be called when the panel is being disposed
-    public static void cleanup() {
-        stopAutoRefresh();
-    }
 
-    // Add this method to update the counters in HomePanel
     private static void updateHomeStatistics() {
         if (totalQuizTakenPanel != null && totalQuizRetakedPanel != null) {
             try {
                 String countQuery = """
-                    SELECT
-                        COUNT(*) as total_taken,
+                    SELECT COUNT(*) as total_taken,
                         SUM(CASE
                             WHEN EXISTS (
                                 SELECT 1 FROM quiz_attempts qa2
@@ -1394,8 +1373,7 @@ public class QuizzerPanel {
             } else {
                 secs--;
             }
-            
-            // Change color to red when less than 1 minute remains
+    
             if (mins == 0 && secs <= 59) {
                 timerLabel.setForeground(Color.RED);
             }
@@ -1410,15 +1388,7 @@ public class QuizzerPanel {
         return timerPanel;
     }
 
-    // Add this method to handle quiz submission
-    private static void submitQuiz() {
-        // Add your quiz submission logic here
-        // This should include:
-        // 1. Calculating the score
-        // 2. Showing results
-        // 3. Updating statistics
-        // 4. Any other necessary cleanup
-    }
+
 
     // Add this getter method to access the quiz container
     public static JPanel getQuizContainer() {
