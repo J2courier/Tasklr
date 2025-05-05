@@ -74,6 +74,8 @@ public class StudyPanel {
 
         quizzerBtn.addActionListener(e -> {
             cardLayout.show(cardPanel, "quizzer");
+            // Fetch and load flashcard sets when Quizzer tab is clicked
+            QuizzerPanel.refreshQuizContainer();
         });
 
         // Set initial active state (Flashcard active by default)
@@ -166,6 +168,8 @@ public class StudyPanel {
     public static void showQuizzer() {
         if (cardPanel != null && cardLayout != null) {
             cardLayout.show(cardPanel, "quizzer");
+            // Refresh the quiz container when switching to Quizzer
+            QuizzerPanel.refreshQuizContainer();
         }
     }
 

@@ -18,6 +18,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.Enumeration;
 import tasklr.main.ui.components.TaskCounterPanel;
 import tasklr.main.ui.panels.Home.HomePanel;
+import java.util.Arrays;
 
 public class QuizzerPanel {
     private static final String url = "jdbc:mysql://localhost:3306/tasklrdb";
@@ -61,8 +62,6 @@ public class QuizzerPanel {
         }
     }
 
-    // Add static variable to track list visibility
-    private static boolean isListVisible = true;
     private static JPanel listContainer;
 
     public static JPanel createQuizzerPanel() {
@@ -71,59 +70,34 @@ public class QuizzerPanel {
 
         // Create and add list container - now taking full width
         JPanel listContainerPanel = createListContainer();
-        mainPanel.add(listContainerPanel, BorderLayout.CENTER);
+        mainPanel.add(listContainerPanel, BorderLayout.CENTER); // Changed from WEST to CENTER to take full space
 
         // Create quiz view panel with CardLayout (will be used when a quiz is started)
         cardLayout = new CardLayout();
         quizViewPanel = new JPanel(cardLayout);
         quizViewPanel.setBackground(BACKGROUND_COLOR);
-
-        // Start the auto-refresh mechanism
-        startAutoRefresh();
-
-        // Add component listener to handle cleanup
-        mainPanel.addComponentListener(new ComponentAdapter() {
-            @Override
-            public void componentHidden(ComponentEvent e) {
-                stopAutoRefresh();
-            }
-
-            @Override
-            public void componentShown(ComponentEvent e) {
-                startAutoRefresh();
-            }
-        });
+        
+        // Add an empty state panel to the quiz view panel
+        JPanel emptyStatePanel = createEmptyStatePanel();
+        quizViewPanel.add(emptyStatePanel, "EMPTY_STATE");
+        cardLayout.show(quizViewPanel, "EMPTY_STATE");
+        
+        // Remove the auto-refresh start
+        // startAutoRefresh();
 
         return mainPanel;
     }
 
     private static JPanel createEmptyStatePanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(BACKGROUND_COLOR);
-
+        JPanel panel = createPanel.panel(BACKGROUND_COLOR, new BorderLayout(), null);
+        
         // Create header panel
         JPanel headerPanel = new JPanel(new BorderLayout());
-        headerPanel.setBackground(BACKGROUND_COLOR);
-        headerPanel.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+        headerPanel.setBackground(Color.WHITE);
         headerPanel.setPreferredSize(new Dimension(0, 60));
-        
-        // Create toggle button
-        JButton toggleListBtn = createButton.button(isListVisible ? "Hide List" : "Show List", null, Color.WHITE, null, false);
-        toggleListBtn.setBackground(PRIMARY_BUTTON_COLOR);
-        toggleListBtn.setPreferredSize(new Dimension(120, 40));
-        
-        // Add hover effect
-        new HoverButtonEffect(toggleListBtn, 
-            PRIMARY_BUTTON_COLOR,  // default background
-            PRIMARY_BUTTON_HOVER,  // hover background
-            PRIMARY_BUTTON_TEXT,   // default text
-            PRIMARY_BUTTON_TEXT    // hover text
-        );
-        
-        toggleListBtn.addActionListener(e -> toggleListVisibility(toggleListBtn));
-    
-        headerPanel.add(toggleListBtn, BorderLayout.EAST);
+        headerPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0xE0E0E0)));
 
+        
         // Create content panel for the message
         JPanel contentPanel = new JPanel(new GridBagLayout());
         contentPanel.setBackground(BACKGROUND_COLOR);
@@ -164,54 +138,16 @@ public class QuizzerPanel {
 
         listContainer.add(scrollPane, BorderLayout.CENTER);
 
-        // Initial refresh
-        refreshQuizContainer();
+        // Remove the initial refresh call since it will be called when the button is clicked
+        // refreshQuizContainer();
 
         return listContainer;
     }
 
-    private static void toggleListVisibility(JButton toggleButton) {
-        isListVisible = !isListVisible;
-        int newWidth = isListVisible ? 700 : 0;
-        
-        if (listContainer != null) {
-            listContainer.setPreferredSize(new Dimension(newWidth, 0));
-            listContainer.revalidate();
-            listContainer.repaint();
-            
-            // Update the button text based on the new width
-            updateToggleButtonText(toggleButton, newWidth);
-            
-            // Update all toggle buttons
-            updateAllToggleButtons();
-            
-            // Revalidate parent containers
-            Container parent = listContainer.getParent();
-            while (parent != null) {
-                parent.revalidate();
-                parent.repaint();
-                parent = parent.getParent();
-            }
-        }
-    }
-
-    private static void updateToggleButtonText(JButton button, int listWidth) {
-        if (listWidth == 0) {
-            button.setText("Show List");
-        } else if (listWidth == 700) {
-            button.setText("Hide List");
-        }
-    }
+    // Remove the toggleListVisibility method since we're removing that functionality
 
     private static void startAutoRefresh() {
-        refreshManager = UIRefreshManager.getInstance();
-        refreshManager.startRefresh(UIRefreshManager.QUIZ_CONTAINER, () -> {
-            try {
-                refreshQuizContainer();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
+        // Auto-refresh is no longer needed as refresh is triggered by button click
     }
 
     private static void stopAutoRefresh() {
@@ -230,12 +166,15 @@ public class QuizzerPanel {
     public static synchronized void refreshQuizContainer() {
         if (quizContainer == null || !mainPanel.isShowing()) return;
 
-        SwingUtilities.invokeLater(() -> {
-            quizContainer.removeAll();
-            
-            try {
-                String query = "SELECT set_id, subject, description FROM flashcard_sets WHERE user_id = ? ORDER BY subject ASC";
-                ResultSet rs = DatabaseManager.executeQuery(query, UserSession.getUserId());
+        quizContainer.removeAll();
+        
+        try {
+            String query = "SELECT set_id, subject, description FROM flashcard_sets WHERE user_id = ? ORDER BY subject ASC";
+            try (Connection conn = DatabaseManager.getConnection();
+                 PreparedStatement stmt = conn.prepareStatement(query)) {
+                
+                stmt.setInt(1, UserSession.getUserId());
+                ResultSet rs = stmt.executeQuery();
                 
                 boolean hasItems = false;
                 
@@ -261,15 +200,21 @@ public class QuizzerPanel {
                     noSetsLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
                     quizContainer.add(noSetsLabel);
                 }
-                
-                quizContainer.revalidate();
-                quizContainer.repaint();
-                
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-                Toast.error("Error fetching flashcard sets: " + ex.getMessage());
             }
-        });
+            
+            // Refresh UI components
+            quizContainer.revalidate();
+            quizContainer.repaint();
+            
+            if (scrollPane != null) {
+                scrollPane.getViewport().revalidate();
+                scrollPane.getViewport().repaint();
+            }
+            
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            Toast.error("Error fetching flashcard sets: " + ex.getMessage());
+        }
     }
 
     public static JPanel createQuizSetItemPanel(int setId, String subject, String description) {
@@ -323,22 +268,21 @@ public class QuizzerPanel {
             return;
         }
 
-        String[] options = {"Identification", "Multiple Choice"};
-
-        // Main dialog panel with padding
+        // Main dialog panel with padding and fixed width
         JPanel dialogPanel = new JPanel(new BorderLayout(0, 10));
-        dialogPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        dialogPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+        dialogPanel.setPreferredSize(new Dimension(350, 300)); // Fixed width for the dialog
 
         // Title panel at the top
         JPanel titlePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-        JLabel titleLabel = new JLabel("Select Quiz Type for " + subject);
-        titleLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 24));  // Changed from 14
+        JLabel titleLabel = new JLabel("Quiz Settings");
+        titleLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 24));
         titlePanel.add(titleLabel);
 
         // Content panel for all inputs
         JPanel contentPanel = new JPanel();
         contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
-        contentPanel.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
+        contentPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
 
         // Quiz type section
         JPanel quizTypeSection = new JPanel();
@@ -347,10 +291,13 @@ public class QuizzerPanel {
 
         JLabel typeLabel = new JLabel("Quiz Type:");
         typeLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        typeLabel.setFont(new Font("Segoe UI Variable", Font.PLAIN, 14));
 
         JPanel comboPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 5));
+        String[] options = {"Identification", "Multiple Choice"};
         JComboBox<String> quizTypeCombo = new JComboBox<>(options);
-        quizTypeCombo.setPreferredSize(new Dimension(230, 30));
+        quizTypeCombo.setPreferredSize(new Dimension(300, 30)); // Fixed width
+        quizTypeCombo.setFont(new Font("Segoe UI Variable", Font.PLAIN, 14));
         comboPanel.add(quizTypeCombo);
         comboPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
@@ -365,16 +312,18 @@ public class QuizzerPanel {
 
         JLabel itemsLabel = new JLabel("Number of Items (max " + totalFlashcards + "):");
         itemsLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        itemsLabel.setFont(new Font("Segoe UI Variable", Font.PLAIN, 14));
 
         JPanel spinnerPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 5));
         SpinnerNumberModel spinnerModel = new SpinnerNumberModel(
-            totalFlashcards, // initial value
-            1,              // minimum value
-            totalFlashcards,// maximum value
-            1               // step
+            Math.min(10, totalFlashcards), // initial value
+            1,                            // minimum value
+            totalFlashcards,              // maximum value
+            1                             // step
         );
         JSpinner itemsSpinner = new JSpinner(spinnerModel);
-        itemsSpinner.setPreferredSize(new Dimension(230, 30)); // Match the width of quizTypeCombo
+        itemsSpinner.setPreferredSize(new Dimension(300, 30)); // Fixed width
+        itemsSpinner.setFont(new Font("Segoe UI Variable", Font.PLAIN, 14));
         spinnerPanel.add(itemsSpinner);
         spinnerPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
@@ -389,19 +338,19 @@ public class QuizzerPanel {
 
         JLabel timeLabel = new JLabel("Time Duration (minutes):");
         timeLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        timeLabel.setFont(new Font("Segoe UI Variable", Font.PLAIN, 14));
 
         JPanel timeComboPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 5));
         Integer[] timeOptions = {5, 10, 15, 20, 25, 30, 40, 45, 50, 55, 60};
         JComboBox<Integer> timeCombo = new JComboBox<>(timeOptions);
-        timeCombo.setPreferredSize(new Dimension(230, 30)); // Match width of other components
+        timeCombo.setSelectedItem(15); // Default to 15 minutes
+        timeCombo.setPreferredSize(new Dimension(300, 30)); // Fixed width
+        timeCombo.setFont(new Font("Segoe UI Variable", Font.PLAIN, 14));
         timeComboPanel.add(timeCombo);
         timeComboPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         timeSection.add(timeLabel);
         timeSection.add(timeComboPanel);
-
-        // Add time section to content panel
-        contentPanel.add(timeSection);
 
         // Add all sections to content panel
         contentPanel.add(quizTypeSection);
@@ -415,19 +364,16 @@ public class QuizzerPanel {
         int result = JOptionPane.showConfirmDialog(
             mainPanel,
             dialogPanel,
-            "Select Quiz Type",
+            "Start Quiz",
             JOptionPane.OK_CANCEL_OPTION,
             JOptionPane.PLAIN_MESSAGE
         );
 
         if (result == JOptionPane.OK_OPTION) {
-            // Hide list container when starting quiz
-            isListVisible = false;
-            listContainer.setPreferredSize(new Dimension(0, 0));
-            updateAllToggleButtons();
-            listContainer.revalidate();
-            listContainer.repaint();
-
+            // Remove list container and add quiz view panel
+            mainPanel.removeAll();
+            mainPanel.add(quizViewPanel, BorderLayout.CENTER);
+            
             String selectedType = (String) quizTypeCombo.getSelectedItem();
             int numberOfItems = (Integer) itemsSpinner.getValue();
             int timeDuration = (Integer) timeCombo.getSelectedItem();
@@ -437,21 +383,14 @@ public class QuizzerPanel {
             } else {
                 startMultipleChoiceQuiz(setId, subject, numberOfItems, timeDuration);
             }
-        } else {
-            // Show list container when dialog is cancelled
-            isListVisible = true;
-            listContainer.setPreferredSize(new Dimension(700, 0));
-            updateAllToggleButtons();
-            listContainer.revalidate();
-            listContainer.repaint();
-        }
-
-        // Revalidate parent containers
-        Container parent = listContainer.getParent();
-        while (parent != null) {
-            parent.revalidate();
-            parent.repaint();
-            parent = parent.getParent();
+            
+            // Make sure the main panel and all its parents are properly validated and repainted
+            Container parent = mainPanel;
+            while (parent != null) {
+                parent.revalidate();
+                parent.repaint();
+                parent = parent.getParent();
+            }
         }
     }
 
@@ -485,9 +424,27 @@ public class QuizzerPanel {
         Collections.shuffle(flashcards);
         flashcards = flashcards.subList(0, Math.min(numberOfItems, flashcards.size()));
 
+        // Create the quiz panel
         JPanel quizPanel = createIdentificationQuizPanel(flashcards, subject, setId, timeDuration);
-        quizViewPanel.add(quizPanel, "QUIZ_" + setId);
-        cardLayout.show(quizViewPanel, "QUIZ_" + setId);
+        
+        // Hide navbars
+        hideNavbars();
+        
+        // Add the quiz panel to the quiz view panel with a unique identifier
+        String quizId = "QUIZ_" + setId + "_" + System.currentTimeMillis();
+        quizViewPanel.add(quizPanel, quizId);
+        
+        // Show the quiz panel
+        cardLayout.show(quizViewPanel, quizId);
+        
+        // Make sure the quiz view panel is visible
+        quizViewPanel.setVisible(true);
+        
+        // Revalidate and repaint
+        quizViewPanel.revalidate();
+        quizViewPanel.repaint();
+        mainPanel.revalidate();
+        mainPanel.repaint();
     }
 
     private static class FlashCard {
@@ -600,7 +557,7 @@ public class QuizzerPanel {
         titleLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 24));
         headerPanel.add(titleLabel, BorderLayout.WEST);
 
-        // Right side: Control Panel (Timer and Toggle Button)
+        // Right side: Timer only (removed toggle button)
         JPanel controlPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         controlPanel.setBackground(Color.WHITE);
 
@@ -615,23 +572,7 @@ public class QuizzerPanel {
             submitQuiz();
         });
 
-        // Create toggle button
-        JButton toggleListBtn = createButton.button(isListVisible ? "Hide List" : "Show List", null, Color.WHITE, null, false);
-        toggleListBtn.setBackground(new Color(0x275CE2));
-        toggleListBtn.setPreferredSize(new Dimension(120, 40));
-        
-        // Add hover effect
-        new HoverButtonEffect(toggleListBtn, 
-            new Color(0x275CE2),  // default background
-            new Color(0x1E40AF),  // hover background
-            Color.WHITE,          // default text
-            Color.WHITE          // hover text
-        );
-        
-        toggleListBtn.addActionListener(e -> toggleListVisibility(toggleListBtn));
-
         controlPanel.add(timerPanel);
-        controlPanel.add(toggleListBtn);
         headerPanel.add(controlPanel, BorderLayout.EAST);
 
         mainPanel.add(headerPanel, BorderLayout.NORTH);
@@ -662,6 +603,7 @@ public class QuizzerPanel {
                 BorderFactory.createEmptyBorder(15, 15, 15, 15)  // Inner padding
             );
             GridBagConstraints gbc = new GridBagConstraints();
+            gbc.weightx = 1.0;
             gbc.fill = GridBagConstraints.HORIZONTAL;
             gbc.insets = new Insets(5, 5, 5, 5);
 
@@ -688,7 +630,7 @@ public class QuizzerPanel {
                 BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0x575757)), // Only bottom border
                 BorderFactory.createEmptyBorder(5, 0, 5, 0)  // Top, left, bottom, right padding
             ));
-            answerField.setPreferredSize(new Dimension(0, 35));
+            answerField.setPreferredSize(new Dimension(500, 35));
             answerFields.add(answerField);
 
             gbc.gridy = 1;
@@ -697,7 +639,7 @@ public class QuizzerPanel {
 
             // Add question panel to questions container
             questionsPanel.add(questionPanel);
-            questionsPanel.add(Box.createRigidArea(new Dimension(0, 15)));
+            questionsPanel.add(Box.createRigidArea(new Dimension(0, 5)));
         }
 
         // Button panel
@@ -792,7 +734,21 @@ public class QuizzerPanel {
         closeButton.setBackground(Color.RED);
         closeButton.setForeground(Color.WHITE);
         closeButton.setFocusPainted(false);
-        closeButton.addActionListener(e -> closeQuiz(mainPanel));
+        closeButton.addActionListener(e -> {
+            // Add confirmation dialog
+            int result = JOptionPane.showConfirmDialog(
+                mainPanel,
+                "Are you sure you want to close this quiz? Your answers will not be saved.",
+                "Confirm Close",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE
+            );
+            
+            if (result == JOptionPane.YES_OPTION) {
+                closeQuiz(mainPanel);
+                refreshQuizContainer(); // Add this line to refresh the container
+            }
+        });
 
         buttonPanel.add(submitButton);
         buttonPanel.add(closeButton);
@@ -817,7 +773,7 @@ public class QuizzerPanel {
         // Remove the current quiz panel
         quizViewPanel.remove(quizPanel);
 
-        // Show the overview
+        // Show the overview (navbars should remain hidden)
         showQuizOverview(flashcards, subject, score, total, quizType, setId, userAnswers);
     }
 
@@ -907,9 +863,27 @@ public class QuizzerPanel {
         Collections.shuffle(flashcards);
         flashcards = flashcards.subList(0, Math.min(numberOfItems, flashcards.size()));
 
+        // Create the quiz panel
         JPanel quizPanel = createMultipleChoiceQuizPanel(flashcards, subject, setId, timeDuration);
-        quizViewPanel.add(quizPanel, "QUIZ_" + setId);
-        cardLayout.show(quizViewPanel, "QUIZ_" + setId);
+        
+        // Hide navbars
+        hideNavbars();
+        
+        // Add the quiz panel to the quiz view panel with a unique identifier
+        String quizId = "QUIZ_" + setId + "_" + System.currentTimeMillis();
+        quizViewPanel.add(quizPanel, quizId);
+        
+        // Show the quiz panel
+        cardLayout.show(quizViewPanel, quizId);
+        
+        // Make sure the quiz view panel is visible
+        quizViewPanel.setVisible(true);
+        
+        // Revalidate and repaint
+        quizViewPanel.revalidate();
+        quizViewPanel.repaint();
+        mainPanel.revalidate();
+        mainPanel.repaint();
     }
 
     private static JPanel createMultipleChoiceQuizPanel(List<FlashCard> flashcards, String subject, int setId, int timeDuration) {
@@ -934,7 +908,7 @@ public class QuizzerPanel {
         titleLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 24));
         headerPanel.add(titleLabel, BorderLayout.WEST);
 
-        // Right side: Control Panel (Timer and Toggle Button)
+        // Right side: Timer only (removed toggle button)
         JPanel controlPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         controlPanel.setBackground(Color.WHITE);
 
@@ -949,23 +923,7 @@ public class QuizzerPanel {
             submitQuiz();
         });
 
-        // Create toggle button
-        JButton toggleListBtn = createButton.button(isListVisible ? "Hide List" : "Show List", null, Color.WHITE, null, false);
-        toggleListBtn.setBackground(new Color(0x275CE2));
-        toggleListBtn.setPreferredSize(new Dimension(120, 40));
-        
-        // Add hover effect
-        new HoverButtonEffect(toggleListBtn, 
-            new Color(0x275CE2),  // default background
-            new Color(0x1E40AF),  // hover background
-            Color.WHITE,          // default text
-            Color.WHITE          // hover text
-        );
-        
-        toggleListBtn.addActionListener(e -> toggleListVisibility(toggleListBtn));
-
         controlPanel.add(timerPanel);
-        controlPanel.add(toggleListBtn);
         headerPanel.add(controlPanel, BorderLayout.EAST);
 
         mainPanel.add(headerPanel, BorderLayout.NORTH);
@@ -1156,7 +1114,21 @@ public class QuizzerPanel {
         closeButton.setBackground(Color.RED);
         closeButton.setForeground(Color.WHITE);
         closeButton.setFocusPainted(false);
-        closeButton.addActionListener(e -> closeQuiz(mainPanel));
+        closeButton.addActionListener(e -> {
+            // Add confirmation dialog
+            int result = JOptionPane.showConfirmDialog(
+                mainPanel,
+                "Are you sure you want to close this quiz? Your answers will not be saved.",
+                "Confirm Close",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE
+            );
+            
+            if (result == JOptionPane.YES_OPTION) {
+                closeQuiz(mainPanel);
+                refreshQuizContainer(); // Add this line to refresh the container
+            }
+        });
 
         buttonPanel.add(submitButton);
         buttonPanel.add(closeButton);
@@ -1190,50 +1162,22 @@ public class QuizzerPanel {
 
     // Add a helper method to handle quiz closure
     private static void closeQuiz(JPanel quizPanel) {
-        // Reset list container if it's hidden
-        if (!isListVisible) {
-            isListVisible = true;
-            listContainer.setPreferredSize(new Dimension(700, 0));
-            
-            // Update all toggle buttons in the view
-            updateAllToggleButtons();
-            
-            // Revalidate parent containers
-            Container parent = listContainer.getParent();
-            while (parent != null) {
-                parent.revalidate();
-                parent.repaint();
-                parent = parent.getParent();
-            }
-        }
-
-        // Show empty state and remove quiz panel
-        cardLayout.show(quizViewPanel, "EMPTY_STATE");
+        // Show navbars
+        showNavbars();
+        
+        // Remove quiz view panel
+        mainPanel.removeAll();
+        
+        // Create and add list container
+        JPanel listContainerPanel = createListContainer();
+        mainPanel.add(listContainerPanel, BorderLayout.CENTER);
+        
+        // Remove the quiz panel from quizViewPanel
         quizViewPanel.remove(quizPanel);
-        quizViewPanel.revalidate();
-        quizViewPanel.repaint();
-    }
-
-    // Helper method to update all toggle buttons
-    public static void updateAllToggleButtons() {
-        if (listContainer != null) {
-            int currentWidth = (int) listContainer.getPreferredSize().getWidth();
-            updateToggleButtonsInContainer(mainPanel, currentWidth);
-        }
-    }
-
-    private static void updateToggleButtonsInContainer(Container container, int listWidth) {
-        for (Component comp : container.getComponents()) {
-            if (comp instanceof JButton) {
-                JButton btn = (JButton) comp;
-                if (btn.getText().equals("Show List") || btn.getText().equals("Hide List")) {
-                    updateToggleButtonText(btn, listWidth);
-                }
-            }
-            if (comp instanceof Container) {
-                updateToggleButtonsInContainer((Container) comp, listWidth);
-            }
-        }
+        
+        // Revalidate and repaint
+        mainPanel.revalidate();
+        mainPanel.repaint();
     }
 
     private static void showQuizOverview(List<FlashCard> flashcards, String subject, int score,
@@ -1570,4 +1514,75 @@ public static void showQuizOptions(int setId, String subject) {
         }
     }
   }
+
+    // Add these methods to control navbar visibility
+    private static void hideNavbars() {
+        // Get the Tasklr frame
+        Container topLevelContainer = SwingUtilities.getWindowAncestor(mainPanel);
+        if (topLevelContainer instanceof JFrame) {
+            JFrame frame = (JFrame) topLevelContainer;
+            
+            // Hide the main navbar (west component in Tasklr)
+            if (frame.getContentPane().getLayout() instanceof BorderLayout) {
+                Component navbar = ((BorderLayout)frame.getContentPane().getLayout()).getLayoutComponent(BorderLayout.WEST);
+                if (navbar != null) {
+                    navbar.setVisible(false);
+                }
+            }
+            
+            // Hide the StudyPanel navbar
+            Component studyNavbar = findStudyPanelNavbar();
+            if (studyNavbar != null) {
+                studyNavbar.setVisible(false);
+            }
+            
+            // Revalidate and repaint
+            frame.revalidate();
+            frame.repaint();
+        }
+    }
+
+    private static void showNavbars() {
+        // Get the Tasklr frame
+        Container topLevelContainer = SwingUtilities.getWindowAncestor(mainPanel);
+        if (topLevelContainer instanceof JFrame) {
+            JFrame frame = (JFrame) topLevelContainer;
+            
+            // Show the main navbar
+            if (frame.getContentPane().getLayout() instanceof BorderLayout) {
+                Component navbar = ((BorderLayout)frame.getContentPane().getLayout()).getLayoutComponent(BorderLayout.WEST);
+                if (navbar != null) {
+                    navbar.setVisible(true);
+                }
+            }
+            
+            // Show the StudyPanel navbar
+            Component studyNavbar = findStudyPanelNavbar();
+            if (studyNavbar != null) {
+                studyNavbar.setVisible(true);
+            }
+            
+            // Revalidate and repaint
+            frame.revalidate();
+            frame.repaint();
+        }
+    }
+
+    private static Component findStudyPanelNavbar() {
+        // Find the StudyPanel's navbar by traversing the component hierarchy
+        Container parent = mainPanel.getParent();
+        while (parent != null) {
+            if (parent instanceof JPanel) {
+                // Look for the nav panel which is typically the first (NORTH) component in BorderLayout
+                if (parent.getLayout() instanceof BorderLayout) {
+                    Component navComponent = ((BorderLayout)parent.getLayout()).getLayoutComponent(BorderLayout.NORTH);
+                    if (navComponent != null) {
+                        return navComponent;
+                    }
+                }
+            }
+            parent = parent.getParent();
+        }
+        return null;
+    }
 }

@@ -1386,9 +1386,8 @@ public class FlashcardPanel {
     }
     
     private static boolean createNewSet(String subject, String description) {
-        currentSubject = subject; // Set the current subject
+        currentSubject = subject; 
         try {
-            // First create the set
             String setQuery = "INSERT INTO flashcard_sets (user_id, subject, description) VALUES (?, ?, ?)";
             int setId;
             
