@@ -41,7 +41,7 @@ public class QuizzerPanel {
     private static final Color PRIMARY_BUTTON_COLOR = new Color(0x275CE2);
     private static final Color PRIMARY_BUTTON_HOVER = new Color(0x3B6FF0);
     private static final Color PANEL_SHADOW_COLOR = new Color(0xE0E0E0);
-    private static final Color QUESTION_PANEL_BG = new Color(0xF8F9FA);
+    private static final Color QUESTION_PANEL_BG = new Color(0xF1F2F5);
     private static final Color HEADER_BG = new Color(0xF8F9FA);
     private static final Color ACCENT_COLOR = new Color(0x275CE2);
     private static final Color ANSWER_FIELD_BG = new Color(0xF5F7FA);
@@ -469,56 +469,56 @@ public class QuizzerPanel {
     }
 
     // Helper method to create consistent question panels for both quiz types
-    private static JPanel createStandardQuestionPanel(int questionNumber, String definition, int width) {
-        JPanel questionPanel = new JPanel();
-        questionPanel.setLayout(new BoxLayout(questionPanel, BoxLayout.Y_AXIS));
-        questionPanel.setBackground(BACKGROUND_COLOR);
-        questionPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+    // private static JPanel createStandardQuestionPanel(int questionNumber, String definition, int width) {
+    //     JPanel questionPanel = new JPanel();
+    //     questionPanel.setLayout(new BoxLayout(questionPanel, BoxLayout.Y_AXIS));
+    //     questionPanel.setBackground(BACKGROUND_COLOR);
+    //     questionPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
-        // Question container for proper alignment
-        JPanel questionContainer = new JPanel(new BorderLayout(10, 0));
-        questionContainer.setBackground(BACKGROUND_COLOR);
-        questionContainer.setMaximumSize(new Dimension(width - 30, Integer.MAX_VALUE));
+    //     // Question container for proper alignment
+    //     JPanel questionContainer = new JPanel(new BorderLayout(10, 0));
+    //     questionContainer.setBackground(BACKGROUND_COLOR);
+    //     questionContainer.setMaximumSize(new Dimension(width - 30, Integer.MAX_VALUE));
 
-        // Question number
-        JLabel numberLabel = new JLabel(questionNumber + ".");
-        numberLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 14));
-        numberLabel.setVerticalAlignment(SwingConstants.TOP);
+    //     // Question number
+    //     JLabel numberLabel = new JLabel(questionNumber + ".");
+    //     numberLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 14));
+    //     numberLabel.setVerticalAlignment(SwingConstants.TOP);
 
-        // Definition with dynamic wrapping
-        JTextArea definitionLabel = new JTextArea(definition);
-        definitionLabel.setFont(new Font("Segoe UI Variable", Font.PLAIN, 14));
-        definitionLabel.setBackground(BACKGROUND_COLOR);
-        definitionLabel.setEditable(false);
-        definitionLabel.setWrapStyleWord(true);
-        definitionLabel.setLineWrap(true);
-        definitionLabel.setBorder(null);
+    //     // Definition with dynamic wrapping
+    //     JTextArea definitionLabel = new JTextArea(definition);
+    //     definitionLabel.setFont(new Font("Segoe UI Variable", Font.PLAIN, 14));
+    //     definitionLabel.setBackground(BACKGROUND_COLOR);
+    //     definitionLabel.setEditable(false);
+    //     definitionLabel.setWrapStyleWord(true);
+    //     definitionLabel.setLineWrap(true);
+    //     definitionLabel.setBorder(null);
 
-        // Calculate preferred height based on text content
-        FontMetrics fm = definitionLabel.getFontMetrics(definitionLabel.getFont());
-        int textWidth = width - 80;
-        int lineHeight = fm.getHeight();
-        int textLength = fm.stringWidth(definition);
-        int lines = (textLength / textWidth) + 1;
-        int definitionHeight = Math.max(50, lines * lineHeight);
+    //     // Calculate preferred height based on text content
+    //     FontMetrics fm = definitionLabel.getFontMetrics(definitionLabel.getFont());
+    //     int textWidth = width - 80;
+    //     int lineHeight = fm.getHeight();
+    //     int textLength = fm.stringWidth(definition);
+    //     int lines = (textLength / textWidth) + 1;
+    //     int definitionHeight = Math.max(50, lines * lineHeight);
 
-        definitionLabel.setPreferredSize(new Dimension(textWidth, definitionHeight));
+    //     definitionLabel.setPreferredSize(new Dimension(textWidth, definitionHeight));
 
-        questionContainer.add(numberLabel, BorderLayout.WEST);
-        questionContainer.add(definitionLabel, BorderLayout.CENTER);
+    //     questionContainer.add(numberLabel, BorderLayout.WEST);
+    //     questionContainer.add(definitionLabel, BorderLayout.CENTER);
 
-        questionPanel.add(questionContainer);
-        questionPanel.add(Box.createRigidArea(new Dimension(0, 15))); // Increased spacing after question
+    //     questionPanel.add(questionContainer);
+    //     questionPanel.add(Box.createRigidArea(new Dimension(0, 15))); // Increased spacing after question
 
-        // Calculate total height based on content
-        int contentHeight = definitionHeight + 30; // Basic height for question
+    //     // Calculate total height based on content
+    //     int contentHeight = definitionHeight + 30; // Basic height for question
 
-        // Set panel sizes - remove fixed maximum height to allow content to expand
-        questionPanel.setPreferredSize(new Dimension(width, contentHeight));
-        // Remove setMaximumSize to allow panel to grow based on content
+    //     // Set panel sizes - remove fixed maximum height to allow content to expand
+    //     questionPanel.setPreferredSize(new Dimension(width, contentHeight));
+    //     // Remove setMaximumSize to allow panel to grow based on content
 
-        return questionPanel;
-    }
+    //     return questionPanel;
+    // }
 
     private static JPanel createIdentificationQuizPanel(List<FlashCard> flashcards, String subject, int setId, int timeDuration) {
         // Randomize flashcards
@@ -582,10 +582,11 @@ public class QuizzerPanel {
 
             // Create question panel with GridBagLayout
             JPanel questionPanel = new JPanel(new GridBagLayout());
-            questionPanel.setBackground(BACKGROUND_COLOR);
-            questionPanel.setBorder( // Outer border
+            questionPanel.setBackground(QUESTION_PANEL_BG);
+            questionPanel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(0xAAAAAA), 1), // Outer border with color 0xAAAAAA
                 BorderFactory.createEmptyBorder(15, 15, 15, 15)  // Inner padding
-            );
+            ));
             GridBagConstraints gbc = new GridBagConstraints();
             gbc.weightx = 1.0;
             gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -594,7 +595,7 @@ public class QuizzerPanel {
             // Question label (row 1)
             JTextArea questionLabel = new JTextArea((i + 1) + ". " + card.definition);
             questionLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 18)); // Changed to BOLD
-            questionLabel.setBackground(BACKGROUND_COLOR);
+            questionLabel.setBackground(QUESTION_PANEL_BG);
             questionLabel.setEditable(false);
             questionLabel.setWrapStyleWord(true);
             questionLabel.setLineWrap(true);
@@ -609,6 +610,7 @@ public class QuizzerPanel {
             // Answer field (row 2)
             JTextField answerField = new JTextField();
             answerField.setFont(new Font("Segoe UI Variable", Font.PLAIN, 14));
+            answerField.setBackground(QUESTION_PANEL_BG);
             // Create bottom-only border with padding
             answerField.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0x575757)), // Only bottom border
@@ -967,7 +969,7 @@ public class QuizzerPanel {
             // Add radio buttons in 2x2 grid
             for (int j = 0; j < choices.size(); j++) {
                 JRadioButton radioBtn = new JRadioButton(choices.get(j));
-                radioBtn.setFont(new Font("Segoe UI Variable", Font.PLAIN, 14));
+                radioBtn.setFont(new Font("Segoe UI Variable", Font.PLAIN, 18));
                 radioBtn.setBackground(BACKGROUND_COLOR);
                 choiceGroup.add(radioBtn);
 
@@ -1279,12 +1281,36 @@ public class QuizzerPanel {
         retakeButton.setForeground(Color.WHITE);
         retakeButton.setFocusPainted(false);
         retakeButton.addActionListener(e -> {
-            closeQuiz(overviewPanel);
-            if ("Identification".equals(quizType)) {
-                startIdentificationQuiz(setId, subject, total, 30); // Adding default 30 minutes for retake
-            } else {
-                startMultipleChoiceQuiz(setId, subject, total, 30); // Adding default 30 minutes for retake
+            // Remove the overview panel
+            quizViewPanel.remove(overviewPanel);
+            
+            // Update retake statistics
+            if (totalQuizRetakedPanel != null) {
+                try {
+                    String countQuery = "SELECT COUNT(*) as total_retaken FROM quiz_attempts qa1 " +
+                        "WHERE user_id = ? AND EXISTS (" +
+                        "SELECT 1 FROM quiz_attempts qa2 " +
+                        "WHERE qa2.user_id = qa1.user_id " +
+                        "AND qa2.set_id = qa1.set_id " +
+                        "AND qa2.completion_date < qa1.completion_date)";
+                    
+                    ResultSet rs = DatabaseManager.executeQuery(countQuery, UserSession.getUserId());
+                    if (rs.next()) {
+                        totalQuizRetakedPanel.updateCount(rs.getInt("total_retaken") + 1); // Add 1 for current retake
+                    }
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
             }
+            
+            // Start the appropriate quiz type
+            if ("Identification".equals(quizType)) {
+                startIdentificationQuiz(setId, subject, total, 30); // Default 30 minutes for retake
+            } else {
+                startMultipleChoiceQuiz(setId, subject, total, 30); // Default 30 minutes for retake
+            }
+            
+            // Update home statistics
             updateHomeStatistics();
         });
 

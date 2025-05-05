@@ -545,17 +545,17 @@ public class FlashcardPanel {
         }
         editItem.setText("Edit");
 
-        // Edit Sets menu item with icon
+        // Add more terms menu item
         JMenuItem editSetsItem = new JMenuItem();
         try {
-            ImageIcon editSetsIcon = new ImageIcon("C:\\Users\\ADMIN\\Desktop\\Tasklr\\resource\\icons\\EditSet.png");
-            Image scaledEditSetsImage = editSetsIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
-            editSetsItem.setIcon(new ImageIcon(scaledEditSetsImage));
+            ImageIcon editIcon = new ImageIcon("C:\\Users\\ADMIN\\Desktop\\Tasklr\\resource\\icons\\editIcon.png");
+            Image scaledEditImage = editIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
+            editSetsItem.setIcon(new ImageIcon(scaledEditImage));
         } catch (Exception e) {
-            System.err.println("Failed to load edit sets icon: " + e.getMessage());
+            System.err.println("Failed to load edit icon: " + e.getMessage());
         }
         editSetsItem.setText("Add More Terms");
-        
+
         // Delete menu item with icon
         JMenuItem deleteItem = new JMenuItem();
         try {
@@ -567,21 +567,9 @@ public class FlashcardPanel {
         }
         deleteItem.setText("Delete");
 
-        // Add quiz menu item with icon
-        JMenuItem startQuizItem = new JMenuItem();
-        try {
-            ImageIcon quizIcon = new ImageIcon("C:\\Users\\ADMIN\\Desktop\\Tasklr\\resource\\icons\\Quiz.png");
-            Image scaledQuizImage = quizIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
-            startQuizItem.setIcon(new ImageIcon(scaledQuizImage));
-        } catch (Exception e) {
-            System.err.println("Failed to load quiz icon: " + e.getMessage());
-        }
-        startQuizItem.setText("Start Quiz");
-
-        // Add items to popup menu (update the existing menu items)
+        // Add items to popup menu (removed the startQuizItem)
         popupMenu.add(editItem);
         popupMenu.add(editSetsItem);
-        popupMenu.add(startQuizItem);  // Add the new quiz item
         popupMenu.add(deleteItem);
 
         // Add action listeners
@@ -712,9 +700,6 @@ public class FlashcardPanel {
             }
         });
 
-        // Add action listeners (add this with the existing listeners)
-        startQuizItem.addActionListener(e -> showQuizTypeDialog(setId, subject));
-
         buttonPanel.add(moreBtn);
         
         contentPanel.add(textPanel, BorderLayout.CENTER);
@@ -730,16 +715,17 @@ public class FlashcardPanel {
             @Override
             public void mouseClicked(MouseEvent e) {
                 // Hide list container
-                isListVisible = false;
-                listContainer.setPreferredSize(new Dimension(0, 0));
-                
-                // Update all toggle buttons to "Show List"
+                // isListVisible = false;
+                // listContainer.setPreferredSize(new Dimension(0, 0));
+
+                setCreationToggleBtn.setText("Show List");
+            
                 for (JButton button : toggleButtons) {
                     button.setText("Show List");
                 }
                 
                 // Store the state for when user returns via back button
-                setCreationToggleBtn.setText("Hide List");
+                // setCreationToggleBtn.setText("Hide List");
                 
                 listContainer.revalidate();
                 listContainer.repaint();
@@ -886,7 +872,7 @@ public class FlashcardPanel {
             
             // Update all toggle buttons to "Hide List"
             for (JButton button : toggleButtons) {
-                button.setText("Hide List");
+                button.setText("Show List");
             }
             
             cardLayout.show(mainCardPanel, "setCreation");
