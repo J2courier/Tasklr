@@ -58,7 +58,6 @@ public class Login extends JFrame {
             String username = loginPanel.getUsername();
             String password = loginPanel.getPassword();
             String hashedPassword = hashPassword(password);
-
             int userId = validateUser(username, hashedPassword);
             if (userId != -1) {
                 handleSuccessfulLogin(userId, username);

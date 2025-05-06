@@ -113,17 +113,9 @@ public class LoginPanel {
 
     private void setupLayout() {
         GridBagConstraints gbc = createGridBagConstraints();
-
-        // Add logo
         addLogo(gbc);
-
-        // Add username components
         addUsernameComponents(gbc);
-
-        // Add password components
         addPasswordComponents(gbc);
-
-        // Add buttons
         addButtons(gbc);
     }
 
@@ -137,13 +129,12 @@ public class LoginPanel {
     private void addLogo(GridBagConstraints gbc) {
         ImageIcon logo = new ImageIcon(LOGO_PATH);
         JLabel logoLabel = new JLabel(logo);
-        
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridwidth = 2;
-        gbc.insets = new Insets(20, 10, 40, 10); // Add padding around the logo
+        gbc.insets = new Insets(20, 10, 40, 10); 
         loginPanel.add(logoLabel, gbc);
-        gbc.insets = new Insets(5, 10, 10, 10); // Reset insets for other components
+        gbc.insets = new Insets(5, 10, 10, 10); 
     }
 
     private void addUsernameComponents(GridBagConstraints gbc) {
@@ -151,7 +142,6 @@ public class LoginPanel {
         gbc.gridy = 1;
         gbc.gridwidth = 2;
         loginPanel.add(usernameLabel, gbc);
-
         gbc.gridy = 2;
         loginPanel.add(usernameField, gbc);
     }
@@ -160,44 +150,39 @@ public class LoginPanel {
         JLabel passwordLabel = createLabel("Password");
         gbc.gridy = 3;
         loginPanel.add(passwordLabel, gbc);
-
         gbc.gridy = 4;
         loginPanel.add(passwordField, gbc);
 
-        // Create a panel for checkbox and forgot password
         JPanel passwordOptionsPanel = new JPanel(new GridBagLayout());
         passwordOptionsPanel.setBackground(null);
-        
+
         GridBagConstraints optionsGbc = new GridBagConstraints();
         optionsGbc.gridx = 0;
         optionsGbc.gridy = 0;
         optionsGbc.anchor = GridBagConstraints.WEST;
-        optionsGbc.weightx = 1.0; // Give weight to create space between components
+        optionsGbc.weightx = 1.0; 
         passwordOptionsPanel.add(showPasswordCheckBox, optionsGbc);
         
         optionsGbc.gridx = 1;
         optionsGbc.anchor = GridBagConstraints.EAST;
-        optionsGbc.weightx = 0.0; // Reset weight for the forgot password label
+        optionsGbc.weightx = 0.0; 
         passwordOptionsPanel.add(forgotPasswordLabel, optionsGbc);
 
-        // Add the options panel
         gbc.gridy = 5;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         loginPanel.add(passwordOptionsPanel, gbc);
         
-        // Reset constraints for subsequent components
         gbc.anchor = GridBagConstraints.CENTER;
     }
 
     private void addButtons(GridBagConstraints gbc) {
-        gbc.gridy = 6; // Increment gridy by 1 for login button
+        gbc.gridy = 6; 
         loginPanel.add(loginButton, gbc);
 
-        // Add signup label
         JLabel signupLabel = createSignupLabel();
         gbc.gridy = 7;
-        gbc.fill = GridBagConstraints.NONE; // Don't stretch the label
-        gbc.anchor = GridBagConstraints.CENTER; // Center the label
+        gbc.fill = GridBagConstraints.NONE; 
+        gbc.anchor = GridBagConstraints.CENTER; 
         loginPanel.add(signupLabel, gbc);
     }
 
@@ -241,7 +226,6 @@ public class LoginPanel {
         label.setForeground(LINK_COLOR);
         label.setCursor(new Cursor(Cursor.HAND_CURSOR));
         
-        // Add hover effect
         label.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseEntered(MouseEvent e) {
@@ -263,14 +247,12 @@ public class LoginPanel {
     }
 
     private void showForgotPasswordDialog() {
-        // Create the main panel with GridBagLayout for better control
         JPanel recoveryPanel = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.insets = new Insets(5, 10, 5, 10);
         gbc.gridwidth = GridBagConstraints.REMAINDER;
         
-        // Title and instructions
         JLabel titleLabel = new JLabel("Account Recovery");
         titleLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 16));
         recoveryPanel.add(titleLabel, gbc);
@@ -278,35 +260,29 @@ public class LoginPanel {
         JLabel instructionsLabel = new JLabel("<html>Please provide your account's backup information to verify your identity.</html>");
         recoveryPanel.add(instructionsLabel, gbc);
         
-        // Add some space
         recoveryPanel.add(Box.createVerticalStrut(10), gbc);
         
-        // Username field
         recoveryPanel.add(new JLabel("Username:"), gbc);
         JTextField usernameField = new JTextField(20);
         usernameField.setPreferredSize(new Dimension(300, 40));
         recoveryPanel.add(usernameField, gbc);
         
-        // Email address field
         recoveryPanel.add(new JLabel("Email Address:"), gbc);
         JTextField addressField = new JTextField(20);
         addressField.setPreferredSize(new Dimension(300, 40));
         recoveryPanel.add(addressField, gbc);
         
-        // Contact number field
         recoveryPanel.add(new JLabel("Contact Number:"), gbc);
         JTextField contactField = new JTextField(20);
         contactField.setPreferredSize(new Dimension(300, 40));
         recoveryPanel.add(contactField, gbc);
         
-        // Birthday field with JDateChooser
         recoveryPanel.add(new JLabel("Birthday:"), gbc);
         JDateChooser birthdayChooser = new JDateChooser();
         birthdayChooser.setPreferredSize(new Dimension(300, 40));
         birthdayChooser.setDateFormatString("yyyy-MM-dd");
         recoveryPanel.add(birthdayChooser, gbc);
         
-        // Show the dialog
         int result = JOptionPane.showConfirmDialog(
             loginPanel,
             recoveryPanel,
@@ -315,16 +291,13 @@ public class LoginPanel {
             JOptionPane.PLAIN_MESSAGE
         );
         
-        // Process the result
         if (result == JOptionPane.OK_OPTION) {
             String username = usernameField.getText().trim();
             String address = addressField.getText().trim();
             String contact = contactField.getText().trim();
-            
-            // Get formatted date from JDateChooser
+    
             Date birthdayDate = birthdayChooser.getDate();
             
-            // Validate input
             if (username.isEmpty() || address.isEmpty() || contact.isEmpty() || birthdayDate == null) {
                 JOptionPane.showMessageDialog(
                     loginPanel,
@@ -335,13 +308,10 @@ public class LoginPanel {
                 return;
             }
             
-            // Format the date
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
             String birthday = sdf.format(birthdayDate);
             
-            // Verify account information
             try {
-                // First check if user exists
                 String userQuery = "SELECT id FROM users WHERE username = ?";
                 ResultSet userRs = DatabaseManager.executeQuery(userQuery, username);
                 
@@ -357,7 +327,6 @@ public class LoginPanel {
                 
                 int userId = userRs.getInt("id");
                 
-                // Check if backup info matches
                 String backupQuery = "SELECT * FROM user_backup_info WHERE user_id = ? AND address = ? AND contact_number = ? AND birthday = ?";
                 ResultSet backupRs = DatabaseManager.executeQuery(backupQuery, userId, address, contact, birthday);
                 
@@ -371,7 +340,6 @@ public class LoginPanel {
                     return;
                 }
                 
-                // If verification successful, show password reset dialog
                 showPasswordResetDialog(userId);
                 
             } catch (SQLException ex) {
@@ -390,7 +358,6 @@ public class LoginPanel {
         boolean passwordResetCompleted = false;
         
         while (!passwordResetCompleted) {
-            // Create password reset panel
             JPanel resetPanel = new JPanel(new GridBagLayout());
             GridBagConstraints gbc = new GridBagConstraints();
             gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -399,19 +366,16 @@ public class LoginPanel {
             
             resetPanel.add(new JLabel("Create a new password:"), gbc);
             
-            // New password field
             resetPanel.add(new JLabel("New Password:"), gbc);
             JPasswordField newPasswordField = new JPasswordField(20);
             newPasswordField.setPreferredSize(new Dimension(300, 30));
             resetPanel.add(newPasswordField, gbc);
             
-            // Confirm password field
             resetPanel.add(new JLabel("Confirm Password:"), gbc);
             JPasswordField confirmPasswordField = new JPasswordField(20);
             confirmPasswordField.setPreferredSize(new Dimension(300, 30));
             resetPanel.add(confirmPasswordField, gbc);
             
-            // Show password checkbox
             JCheckBox showPasswordCheckBox = new JCheckBox("Show Password");
             showPasswordCheckBox.addActionListener(e -> {
                 if (showPasswordCheckBox.isSelected()) {
@@ -424,7 +388,6 @@ public class LoginPanel {
             });
             resetPanel.add(showPasswordCheckBox, gbc);
             
-            // Show the dialog
             int result = JOptionPane.showConfirmDialog(
                 loginPanel,
                 resetPanel,
@@ -437,7 +400,6 @@ public class LoginPanel {
                 String newPassword = new String(newPasswordField.getPassword()).trim();
                 String confirmPassword = new String(confirmPasswordField.getPassword()).trim();
                 
-                // Validate passwords
                 if (newPassword.isEmpty() || confirmPassword.isEmpty()) {
                     JOptionPane.showMessageDialog(
                         loginPanel,
@@ -468,7 +430,6 @@ public class LoginPanel {
                     continue;
                 }
                 
-                // Update password in database
                 try {
                     String hashedPassword = hashPassword(newPassword);
                     String updateQuery = "UPDATE users SET password = ? WHERE id = ?";
@@ -493,7 +454,6 @@ public class LoginPanel {
                     );
                 }
             } else {
-                // User cancelled
                 passwordResetCompleted = true;
             }
         }
@@ -532,7 +492,6 @@ public class LoginPanel {
         };
     }
 
-    // Public methods - these remain unchanged to maintain compatibility
     public JPanel getLoginPanel() {
         return loginPanel;
     }
@@ -549,7 +508,6 @@ public class LoginPanel {
         loginButton.addActionListener(listener);
     }
 
-    // Add this method to create the checkbox
     private JCheckBox createShowPasswordCheckBox() {
         JCheckBox checkBox = new JCheckBox("Show Password");
         checkBox.setFocusable(false);
@@ -557,9 +515,9 @@ public class LoginPanel {
         checkBox.setForeground(Color.BLACK);
         checkBox.addActionListener(e -> {
             if (checkBox.isSelected()) {
-                passwordField.setEchoChar((char) 0); // Show password
+                passwordField.setEchoChar((char) 0); 
             } else {
-                passwordField.setEchoChar('•'); // Hide password
+                passwordField.setEchoChar('•'); 
             }
         });
         return checkBox;

@@ -22,9 +22,9 @@ public class Signup extends JFrame {
     private static final int FIELD_WIDTH = 500;
     private static final int FIELD_HEIGHT = 40;
     private static final Color BACKGROUND_COLOR = new Color(0xf1f3f6);
-    private static final Color BUTTON_BASE_COLOR = new Color(0x3B82F6);    // New base color
-    private static final Color BUTTON_HOVER_COLOR = new Color(0x60A5FA);   // Hover color
-    private static final Color BUTTON_PRESSED_COLOR = new Color(0x2563EB); // Pressed color
+    private static final Color BUTTON_BASE_COLOR = new Color(0x3B82F6);    
+    private static final Color BUTTON_HOVER_COLOR = new Color(0x60A5FA);   
+    private static final Color BUTTON_PRESSED_COLOR = new Color(0x2563EB); 
     private static final Color TEXT_COLOR = Color.WHITE;
     private static final String APP_ICON_PATH = "C:/Users/ADMIN/Desktop/Tasklr/resource/icons/AppLogo.png";
     private static final String LOGO_PATH = "C://Users//ADMIN//Desktop//Tasklr//resource//icons//logo1.png";
@@ -32,7 +32,7 @@ public class Signup extends JFrame {
     private final JTextField createUsernameField;
     private final JPasswordField createPasswordField;
     private final JPasswordField confirmPasswordField;
-    private final JCheckBox showPasswordCheckBox;    // Single checkbox for both fields
+    private final JCheckBox showPasswordCheckBox;    
     private final JButton signupButton;
     private final JPanel signupPanel;
 
@@ -40,7 +40,7 @@ public class Signup extends JFrame {
         createUsernameField = createTextField();
         createPasswordField = createPasswordField();
         confirmPasswordField = createPasswordField();
-        showPasswordCheckBox = createShowPasswordCheckBox();  // Create single checkbox
+        showPasswordCheckBox = createShowPasswordCheckBox();  
         signupButton = createButton("Sign Up");
         signupPanel = createSignupPanel();
 
@@ -88,8 +88,7 @@ public class Signup extends JFrame {
         button.setFocusable(false);
         button.setPreferredSize(new Dimension(0, FIELD_HEIGHT));
         button.setBackground(BUTTON_BASE_COLOR);
-        
-        // Add hover and pressed effects
+    
         button.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseEntered(MouseEvent e) {
@@ -116,7 +115,6 @@ public class Signup extends JFrame {
             }
         });
 
-        // Remove button borders and focus painting
         button.setBorderPainted(false);
         button.setFocusPainted(false);
         button.setContentAreaFilled(true);
@@ -141,46 +139,36 @@ public class Signup extends JFrame {
     private void setupComponents() {
         GridBagConstraints gbc = createGridBagConstraints();
 
-        // Add company logo
         ImageIcon logo = new ImageIcon(LOGO_PATH);
         JLabel logoLabel = new JLabel(logo);
         
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.insets = new Insets(20, 10, 40, 10); // Add padding around the logo
+        gbc.insets = new Insets(20, 10, 40, 10); 
         signupPanel.add(logoLabel, gbc);
         
-        // Reset insets for other components
         gbc.insets = new Insets(5, 10, 10, 10);
 
-        // Username components
         addLabelAndField(gbc, "Create Username", createUsernameField, 1);
 
-        // Password components
         addLabelAndField(gbc, "Create Password", createPasswordField, 3);
         
-        // Confirm password components
         gbc.gridy = 5;
         addLabelAndField(gbc, "Confirm Password", confirmPasswordField, 5);
         
-        // Add single show password checkbox
         gbc.gridy = 7;
         gbc.fill = GridBagConstraints.NONE;
         gbc.anchor = GridBagConstraints.WEST;
         signupPanel.add(showPasswordCheckBox, gbc);
         
-        // Reset constraints
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.anchor = GridBagConstraints.CENTER;
 
-        // Signup button
         gbc.gridy = 8;
         signupPanel.add(signupButton, gbc);
 
-        // Login section
         setupLoginSection(gbc);
 
-        // Add signup panel to frame
         addPanelToFrame();
     }
 
@@ -205,9 +193,7 @@ public class Signup extends JFrame {
     private void setupLoginSection(GridBagConstraints gbc) {
         JLabel loginLabel = new JLabel("Already have an account?");
         loginLabel.setForeground(new Color(0x275CE2));
-        loginLabel.setCursor(new Cursor(Cursor.HAND_CURSOR)); // Changes cursor to hand when hovering
-        
-        // Add mouse listener to handle click events
+        loginLabel.setCursor(new Cursor(Cursor.HAND_CURSOR)); 
         loginLabel.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -217,21 +203,19 @@ public class Signup extends JFrame {
             
             @Override
             public void mouseEntered(MouseEvent e) {
-                // Optional: Add underline when hovering
                 loginLabel.setText("<html><u>Already have an account?</u></html>");
             }
             
             @Override
             public void mouseExited(MouseEvent e) {
-                // Remove underline when not hovering
                 loginLabel.setText("Already have an account?");
             }
         });
 
         gbc.gridy = 10;
-        gbc.gridwidth = 2; // Make it span both columns
-        gbc.fill = GridBagConstraints.NONE; // Don't stretch the label
-        gbc.anchor = GridBagConstraints.CENTER; // Center the label
+        gbc.gridwidth = 2; 
+        gbc.fill = GridBagConstraints.NONE; 
+        gbc.anchor = GridBagConstraints.CENTER; 
         signupPanel.add(loginLabel, gbc);
     }
 
@@ -382,7 +366,6 @@ public class Signup extends JFrame {
                 }
             } catch (SQLException ex) {
                 conn.rollback();
-                // Check for duplicate entry error
                 if (ex.getErrorCode() == 1062) {
                     JOptionPane.showMessageDialog(this,
                         "Account Already Existing!",

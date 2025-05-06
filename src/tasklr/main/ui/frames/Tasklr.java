@@ -24,7 +24,7 @@ public class Tasklr extends JFrame {
     public Tasklr(String username) {
         pack();
         this.username = username;             
-        setTitle("Tasklr");
+        setTitle("Duets");
         setSize(1200, 1170);
         setLayout(new BorderLayout());
         setMinimumSize(new Dimension(1800, 1170));

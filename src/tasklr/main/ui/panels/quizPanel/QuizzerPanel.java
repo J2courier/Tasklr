@@ -972,7 +972,6 @@ public class QuizzerPanel {
                 radioBtn.setFont(new Font("Segoe UI Variable", Font.PLAIN, 18));
                 radioBtn.setBackground(BACKGROUND_COLOR);
                 choiceGroup.add(radioBtn);
-
                 gbc.gridx = j % 2;
                 gbc.gridy = (j / 2) + 1;
                 gbc.gridwidth = 1;
