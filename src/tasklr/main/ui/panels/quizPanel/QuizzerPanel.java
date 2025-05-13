@@ -762,6 +762,9 @@ public class QuizzerPanel {
         // Refresh the quiz progress in HomePanel
         HomePanel.refreshQuizProgress();
         
+        // Increment daily progress
+        HomePanel.incrementDailyProgress();
+        
         // Force UI update
         SwingUtilities.invokeLater(() -> {
             JFrame frame = (JFrame) SwingUtilities.getWindowAncestor(quizPanel);

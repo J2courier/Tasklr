@@ -47,6 +47,13 @@ public class HomePanel {
     private static TaskCounterPanel totalQuizRetakedPanel;
     private static UIRefreshManager refreshManager;
     
+    // Add these static variables to track session goals
+    private static int dailyGoalTarget = 2; // Start with 2 quizzes
+    private static int dailyGoalCompleted = 0;
+    private static JLabel dailyProgressPercentLabel;
+    private static JProgressBar dailyProgressBar;
+    private static JLabel dailyProgressStatusLabel;
+    
     public static JPanel createOverview(String username) {            
         JPanel mainPanel = createPanel.panel(BACKGROUND_COLOR, new GridBagLayout(), new Dimension(400, 0));
 
@@ -745,34 +752,37 @@ public class HomePanel {
         titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         
         // Progress percentage
-        JLabel percentLabel = new JLabel("0%");
-        percentLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 24));
-        percentLabel.setForeground(PRIMARY_COLOR);
-        percentLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        dailyProgressPercentLabel = new JLabel("0%");
+        dailyProgressPercentLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 24));
+        dailyProgressPercentLabel.setForeground(PRIMARY_COLOR);
+        dailyProgressPercentLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         
         // Progress bar
-        JProgressBar progressBar = new JProgressBar(0, 100);
-        progressBar.setValue(0);
-        progressBar.setStringPainted(false);
-        progressBar.setPreferredSize(new Dimension(CONTAINER_WIDTH - 80, 20));
-        progressBar.setMaximumSize(new Dimension(CONTAINER_WIDTH - 80, 20));
-        progressBar.setForeground(COMPLETED_COLOR);
-        progressBar.setBackground(new Color(0xE0E0E0));
+        dailyProgressBar = new JProgressBar(0, 100);
+        dailyProgressBar.setValue(0);
+        dailyProgressBar.setStringPainted(false);
+        dailyProgressBar.setPreferredSize(new Dimension(CONTAINER_WIDTH - 80, 20));
+        dailyProgressBar.setMaximumSize(new Dimension(CONTAINER_WIDTH - 80, 20));
+        dailyProgressBar.setForeground(COMPLETED_COLOR);
+        dailyProgressBar.setBackground(new Color(0xE0E0E0));
         
-        // Status label with coming soon message
-        JLabel statusLabel = new JLabel("Daily tasks coming soon");
-        statusLabel.setFont(new Font("Segoe UI Variable", Font.ITALIC, 16));
-        statusLabel.setForeground(new Color(0x6D6D6D));
-        statusLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        // Status label
+        dailyProgressStatusLabel = new JLabel("Take " + dailyGoalTarget + " quizzes today");
+        dailyProgressStatusLabel.setFont(new Font("Segoe UI Variable", Font.PLAIN, 16));
+        dailyProgressStatusLabel.setForeground(TEXT_DARK);
+        dailyProgressStatusLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         
         // Add components with spacing
         panel.add(titleLabel);
         panel.add(Box.createVerticalStrut(10));
-        panel.add(percentLabel);
+        panel.add(dailyProgressPercentLabel);
         panel.add(Box.createVerticalStrut(15));
-        panel.add(progressBar);
+        panel.add(dailyProgressBar);
         panel.add(Box.createVerticalStrut(10));
-        panel.add(statusLabel);
+        panel.add(dailyProgressStatusLabel);
+        
+        // Update daily progress initially
+        updateDailyProgress();
         
         return panel;
     }
@@ -1408,5 +1418,97 @@ public class HomePanel {
                 updateQuizPanelRecursive((Container) comp, quizPercentage, totalSets, setsQuizzed);
             }
         }
+    }
+
+    private static void updateDailyProgress() {
+        if (dailyProgressPercentLabel == null || dailyProgressBar == null || dailyProgressStatusLabel == null) {
+            return;
+        }
+        
+        // Calculate percentage
+        int percentage = (dailyGoalTarget > 0) ? (dailyGoalCompleted * 100) / dailyGoalTarget : 0;
+        
+        // Update UI components
+        dailyProgressPercentLabel.setText(percentage + "%");
+        dailyProgressBar.setValue(percentage);
+        
+        // Update status message
+        if (dailyGoalCompleted >= dailyGoalTarget) {
+            dailyProgressStatusLabel.setText("Daily goal completed!");
+        } else {
+            int remaining = dailyGoalTarget - dailyGoalCompleted;
+            dailyProgressStatusLabel.setText("Take " + remaining + " more quiz" + (remaining > 1 ? "es" : ""));
+        }
+    }
+
+    // Method to be called when a quiz is completed
+    public static void incrementDailyProgress() {
+        dailyGoalCompleted++;
+        updateDailyProgress();
+        
+        // Check if goal is completed
+        if (dailyGoalCompleted >= dailyGoalTarget) {
+            showDailyGoalCompletedDialog();
+        }
+    }
+
+    private static void showDailyGoalCompletedDialog() {
+        SwingUtilities.invokeLater(() -> {
+            JPanel panel = new JPanel(new BorderLayout(0, 10));
+            panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+            
+            JLabel congratsLabel = new JLabel("Congratulations!");
+            congratsLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 20));
+            congratsLabel.setHorizontalAlignment(SwingConstants.CENTER);
+            
+            JLabel messageLabel = new JLabel("You've completed your daily goal of " + dailyGoalTarget + " quizzes!");
+            messageLabel.setFont(new Font("Segoe UI Variable", Font.PLAIN, 16));
+            messageLabel.setHorizontalAlignment(SwingConstants.CENTER);
+            
+            JButton okButton = new JButton("OK");
+            okButton.setBackground(COMPLETED_COLOR);
+            okButton.setForeground(Color.WHITE);
+            okButton.setFocusPainted(false);
+            
+            panel.add(congratsLabel, BorderLayout.NORTH);
+            panel.add(messageLabel, BorderLayout.CENTER);
+            panel.add(okButton, BorderLayout.SOUTH);
+            
+            JDialog dialog = new JDialog();
+            dialog.setTitle("Daily Goal Completed");
+            dialog.setModal(true);
+            dialog.setContentPane(panel);
+            dialog.setSize(400, 200);
+            dialog.setLocationRelativeTo(null);
+            
+            okButton.addActionListener(e -> {
+                dialog.dispose();
+                
+                // Increment the goal for next time (up to the total number of flashcard sets)
+                try {
+                    String countQuery = "SELECT COUNT(*) as total FROM flashcard_sets WHERE user_id = ?";
+                    ResultSet rs = DatabaseManager.executeQuery(countQuery, UserSession.getUserId());
+                    if (rs.next()) {
+                        int totalSets = rs.getInt("total");
+                        if (dailyGoalTarget < totalSets) {
+                            dailyGoalTarget++;
+                            dailyGoalCompleted = 0;
+                            updateDailyProgress();
+                        }
+                    }
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                    Toast.error("Error counting flashcard sets: " + ex.getMessage());
+                }
+            });
+            
+            dialog.setVisible(true);
+        });
+    }
+
+    // Reset daily progress (call this when application starts)
+    public static void resetDailyProgress() {
+        dailyGoalCompleted = 0;
+        updateDailyProgress();
     }
 }
