@@ -6,6 +6,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class DatabaseManager {
+    //private static final string is a modifier for database connection
     private static final String URL = "jdbc:mysql://localhost:3306/tasklrdb";
     private static final String USER = "JFCompany";
     private static final String PASSWORD = "";
@@ -20,7 +21,8 @@ public class DatabaseManager {
             for (int i = 0; i < params.length; i++) {
                 stmt.setObject(i + 1, params[i]);
             }
-            stmt.executeUpdate();
+            //execute update is for modifying date such as inseret, update, delete
+            stmt.executeUpdate(); 
         }
     }
     
@@ -30,6 +32,7 @@ public class DatabaseManager {
         for (int i = 0; i < params.length; i++) {
             stmt.setObject(i + 1, params[i]);
         }
+        //execute query is for fetching the date
         return stmt.executeQuery();
     }
 }

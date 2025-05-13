@@ -7,14 +7,14 @@ public class UIComponents {
     private static JPanel createTitlePanel(String title) {
         JPanel titlePanel = new JPanel(new BorderLayout());
         JLabel titleLabel = new JLabel(title);
-        titleLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 24));  // Changed from 16
+        titleLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 24));  
         titleLabel.setBorder(BorderFactory.createEmptyBorder(0, 15, 0, 0));
         titlePanel.add(titleLabel, BorderLayout.CENTER);
         return titlePanel;
     }
 
     public static JPanel createListContainer(String title, int width) {
-        // If no specific width is provided, use 600 as default
+        
         width = (width <= 0) ? 600 : width;
         
         JPanel mainPanel = new JPanel(new BorderLayout());

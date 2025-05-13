@@ -161,7 +161,7 @@ public class Tasklr extends JFrame {
         
         gbc.gridx = 0;
         gbc.gridy = 0;       
-        homePanel.add(HomePanel.createOverview(username), gbc);//just call the sub class tasklist and access the method
+        homePanel.add(HomePanel.createOverview(username), gbc);
         
         return homePanel;
     }
@@ -170,7 +170,6 @@ public class Tasklr extends JFrame {
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            // new Tasklr("admin").setVisible(true);
             new Login().setVisible(true);
             TaskFetcher tf = new TaskFetcher();
             tf.getUserTasks();

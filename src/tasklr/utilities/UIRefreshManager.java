@@ -10,7 +10,6 @@ public class UIRefreshManager {
     private final Map<String, ScheduledFuture<?>> refreshTasks;
     private static final int DEFAULT_REFRESH_RATE = 5000;
 
-    // Only keeping the identifiers that are actually used
     public static final String TASK_COUNTER = "task_counter";
     public static final String TASK_GRAPH = "task_graph";
     public static final String QUIZ_STATS = "quiz_stats";

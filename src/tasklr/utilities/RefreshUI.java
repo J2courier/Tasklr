@@ -12,7 +12,7 @@ public class RefreshUI extends SwingWorker<Void, Void> {
     private final TaskCounterPanel pendingTasksPanel;
     private final TaskCounterPanel completedTasksPanel;
     private final TaskFetcher taskFetcher;
-    private volatile boolean running = true; // ✅ Ensures the loop stops properly
+    private volatile boolean running = true; 
 
     public RefreshUI(TaskCounterPanel totalTasksPanel, 
                      TaskCounterPanel pendingTasksPanel, 
@@ -25,11 +25,11 @@ public class RefreshUI extends SwingWorker<Void, Void> {
 
     @Override
     protected Void doInBackground() {
-        while (running && !isCancelled()) { // ✅ Ensures the worker stops when canceled
+        while (running && !isCancelled()) { 
             try {
                 Map<String, Integer> taskCounts = taskFetcher.getTaskCounts();
                 
-                if (taskCounts != null) { // ✅ Prevent NullPointerException
+                if (taskCounts != null) { 
                     SwingUtilities.invokeLater(() -> {
                         totalTasksPanel.updateCount(taskCounts.getOrDefault("total", 0));
                         pendingTasksPanel.updateCount(taskCounts.getOrDefault("pending", 0));
@@ -37,9 +37,9 @@ public class RefreshUI extends SwingWorker<Void, Void> {
                     });
                 }
 
-                Thread.sleep(2000); // Changed from 1000 to 2000 to match HomePanel refresh rate
+                Thread.sleep(2000); 
             } catch (InterruptedException e) {
-                running = false; // ✅ Stop the loop if interrupted
+                running = false; 
                 break;
             } catch (Exception e) {
                 e.printStackTrace();
@@ -50,6 +50,6 @@ public class RefreshUI extends SwingWorker<Void, Void> {
 
     @Override
     protected void done() {
-        System.out.println("RefreshUI task stopped."); // ✅ Debugging message
+        System.out.println("RefreshUI task stopped."); 
     }
 }
