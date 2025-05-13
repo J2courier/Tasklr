@@ -15,10 +15,10 @@ import tasklr.utilities.HoverButtonEffect;
 import tasklr.utilities.DatabaseManager;
 import tasklr.utilities.*;
 
-
 import java.awt.*;
 import java.awt.event.*;
 import java.util.List;
+import java.util.Map;
 import java.sql.*;
 
 public class task {
@@ -249,6 +249,22 @@ public class task {
                 // Refresh all necessary panels
                 refreshTaskContainer(); // Original refresh
                 tasklr.main.ui.panels.Home.HomePanel.refreshTasksList(); // Home panel refresh
+                
+                // Update task progress immediately
+                try {
+                    Map<String, Integer> taskCounts = new TaskFetcher().getTaskCounts();
+                    if (taskCounts != null) {
+                        int total = taskCounts.getOrDefault("total", 0);
+                        int completed = taskCounts.getOrDefault("completed", 0);
+                        int pending = taskCounts.getOrDefault("pending", 0);
+                        int percentage = (total > 0) ? (completed * 100) / total : 0;
+                        
+                        // Force update all progress panels in HomePanel
+                        tasklr.main.ui.panels.Home.HomePanel.forceUpdateAllProgressPanels(percentage, total, completed, pending);
+                    }
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
                 
                 // Show success message
                 Toast.success("Task added successfully!");

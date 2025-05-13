@@ -755,6 +755,21 @@ public class QuizzerPanel {
 
         // Update statistics
         updateQuizStatistics(setId, score);
+        
+        // Update home statistics
+        updateHomeStatistics();
+        
+        // Refresh the quiz progress in HomePanel
+        HomePanel.refreshQuizProgress();
+        
+        // Force UI update
+        SwingUtilities.invokeLater(() -> {
+            JFrame frame = (JFrame) SwingUtilities.getWindowAncestor(quizPanel);
+            if (frame != null) {
+                frame.revalidate();
+                frame.repaint();
+            }
+        });
 
         // Remove the current quiz panel
         quizViewPanel.remove(quizPanel);
@@ -1161,6 +1176,12 @@ public class QuizzerPanel {
         // Remove the quiz panel from quizViewPanel
         quizViewPanel.remove(quizPanel);
         
+        // Refresh the quiz container to load the sets
+        refreshQuizContainer();
+        
+        // Refresh the quiz progress in HomePanel
+        HomePanel.refreshQuizProgress();
+        
         // Revalidate and repaint
         mainPanel.revalidate();
         mainPanel.repaint();
@@ -1280,8 +1301,18 @@ public class QuizzerPanel {
         retakeButton.setForeground(Color.WHITE);
         retakeButton.setFocusPainted(false);
         retakeButton.addActionListener(e -> {
-            // Remove the overview panel
-            quizViewPanel.remove(overviewPanel);
+            // Update quiz taken statistics
+            if (totalQuizTakenPanel != null) {
+                try {
+                    String countQuery = "SELECT COUNT(*) as total_taken FROM quiz_attempts WHERE user_id = ?";
+                    ResultSet rs = DatabaseManager.executeQuery(countQuery, UserSession.getUserId());
+                    if (rs.next()) {
+                        totalQuizTakenPanel.updateCount(rs.getInt("total_taken") + 1); // Add 1 for current attempt
+                    }
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
+            }
             
             // Update retake statistics
             if (totalQuizRetakedPanel != null) {
@@ -1311,6 +1342,9 @@ public class QuizzerPanel {
             
             // Update home statistics
             updateHomeStatistics();
+            
+            // Refresh the quiz progress in HomePanel
+            HomePanel.refreshQuizProgress();
         });
 
         // Close button
@@ -1370,6 +1404,9 @@ public class QuizzerPanel {
                 Toast.error("Error updating quiz statistics: " + ex.getMessage());
             }
         }
+        
+        // Refresh the quiz progress in HomePanel
+        HomePanel.refreshQuizProgress();
     }
 
     // Helper method to create timer panel

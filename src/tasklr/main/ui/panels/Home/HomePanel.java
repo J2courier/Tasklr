@@ -70,14 +70,14 @@ public class HomePanel {
         taskContainersPanel.setBackground(BACKGROUND_COLOR);
 
         taskContainersPanel.add(createTaskContainer());
-        taskContainersPanel.add(createRecentTaskContainer());
+        taskContainersPanel.add(createProgressContainer()); // Changed from createRecentTaskContainer()
 
         gbc.gridy = 3;
         gbc.weighty = 1.0;
         mainPanel.add(taskContainersPanel, gbc);
 
         refreshTasksList();
-        refreshRecentTasksList();
+        refreshTaskProgress();
 
         return mainPanel;
     }
@@ -90,12 +90,17 @@ public class HomePanel {
         refreshManager.startRefresh(UIRefreshManager.TASK_COUNTER, () -> {
             refreshTaskCounters();
         }, REFRESH_INTERVAL);
+        
+        refreshManager.startRefresh(UIRefreshManager.QUIZ_STATS, () -> {
+            refreshQuizProgress();
+        }, REFRESH_INTERVAL);
     }
 
     public static void cleanup() {
         if (refreshManager != null) {
             refreshManager.stopRefresh(UIRefreshManager.TASK_LIST);
             refreshManager.stopRefresh(UIRefreshManager.TASK_COUNTER);
+            refreshManager.stopRefresh(UIRefreshManager.QUIZ_STATS);
         }
     }
 
@@ -255,8 +260,48 @@ public class HomePanel {
         
         refreshButton.addActionListener(e -> {
             refreshButton.setEnabled(false);
-            refreshTasksList();
-            refreshTaskCounters();
+            
+            // Use a more direct approach to update progress bars
+            try {
+                // Update task progress
+                Map<String, Integer> taskCounts = new TaskFetcher().getTaskCounts();
+                if (taskCounts != null) {
+                    int total = taskCounts.getOrDefault("total", 0);
+                    int completed = taskCounts.getOrDefault("completed", 0);
+                    int pending = taskCounts.getOrDefault("pending", 0);
+                    int percentage = (total > 0) ? (completed * 100) / total : 0;
+                    
+                    // Force update all progress panels
+                    forceUpdateAllProgressPanels(percentage, total, completed, pending);
+                }
+                
+                // Update quiz progress
+                String query = """
+                    SELECT 
+                        (SELECT COUNT(*) FROM flashcard_sets WHERE user_id = ?) AS total_sets,
+                        (SELECT COUNT(DISTINCT set_id) FROM quiz_attempts WHERE user_id = ?) AS sets_quizzed
+                """;
+                
+                ResultSet rs = DatabaseManager.executeQuery(query, UserSession.getUserId(), UserSession.getUserId());
+                if (rs.next()) {
+                    int totalSets = rs.getInt("total_sets");
+                    int setsQuizzed = rs.getInt("sets_quizzed");
+                    int percentage = (totalSets > 0) ? (setsQuizzed * 100) / totalSets : 0;
+                    
+                    // Force update quiz progress panel
+                    forceUpdateQuizProgressPanel(percentage, totalSets, setsQuizzed);
+                }
+                
+                // Also refresh task list and counters
+                refreshTasksList();
+                refreshTaskCounters();
+                
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                Toast.error("Error updating progress: " + ex.getMessage());
+            }
+            
+            // Re-enable the button after a delay
             Timer timer = new Timer(1000, event -> refreshButton.setEnabled(true));
             timer.setRepeats(false);
             timer.start();
@@ -339,8 +384,6 @@ public class HomePanel {
 
             tasksWrapper.revalidate();
             tasksWrapper.repaint();
-            
-            refreshRecentTasksList();
             
         } catch (SQLException ex) {
             ex.printStackTrace();
@@ -452,10 +495,24 @@ public class HomePanel {
                 try {
                     String query = "DELETE FROM tasks WHERE title = ? AND user_id = ?";
                     DatabaseManager.executeUpdate(query, title, UserSession.getUserId());
+                    
+                    // Close the popup
                     Window popup = SwingUtilities.getWindowAncestor(popupPanel);
                     popup.dispose();
                     
-                    // Refresh the task list in HomePanel
+                    // Update task progress immediately
+                    Map<String, Integer> taskCounts = new TaskFetcher().getTaskCounts();
+                    if (taskCounts != null) {
+                        int total = taskCounts.getOrDefault("total", 0);
+                        int completed = taskCounts.getOrDefault("completed", 0);
+                        int pending = taskCounts.getOrDefault("pending", 0);
+                        int percentage = (total > 0) ? (completed * 100) / total : 0;
+                        
+                        // Force update all progress panels
+                        forceUpdateAllProgressPanels(percentage, total, completed, pending);
+                    }
+                    
+                    // Also refresh task list and counters
                     refreshTasksList();
                     refreshTaskCounters();
                     
@@ -464,13 +521,12 @@ public class HomePanel {
                     
                 } catch (SQLException ex) {
                     ex.printStackTrace();
-                    JOptionPane errorPane = new JOptionPane(
+                    JOptionPane.showMessageDialog(
+                        parent,
                         "Error deleting task: " + ex.getMessage(),
+                        "Error",
                         JOptionPane.ERROR_MESSAGE
                     );
-                    JDialog errorDialog = errorPane.createDialog(parent, "Error");
-                    errorDialog.setLocationRelativeTo(null);
-                    errorDialog.setVisible(true);
                 }
             }
         });
@@ -482,10 +538,27 @@ public class HomePanel {
             try {
                 String query = "UPDATE tasks SET status = 'COMPLETED' WHERE title = ? AND user_id = ?";
                 DatabaseManager.executeUpdate(query, title, UserSession.getUserId());
+                
+                // Close the popup
                 Window popup = SwingUtilities.getWindowAncestor(popupPanel);
                 popup.dispose();
+                
+                // Update task progress immediately
+                Map<String, Integer> taskCounts = new TaskFetcher().getTaskCounts();
+                if (taskCounts != null) {
+                    int total = taskCounts.getOrDefault("total", 0);
+                    int completed = taskCounts.getOrDefault("completed", 0);
+                    int pending = taskCounts.getOrDefault("pending", 0);
+                    int percentage = (total > 0) ? (completed * 100) / total : 0;
+                    
+                    // Force update all progress panels
+                    forceUpdateAllProgressPanels(percentage, total, completed, pending);
+                }
+                
+                // Also refresh task list and counters
                 refreshTasksList();
                 refreshTaskCounters();
+                
             } catch (SQLException ex) {
                 ex.printStackTrace();
                 JOptionPane.showMessageDialog(
@@ -551,110 +624,282 @@ public class HomePanel {
         return totalQuizRetakedPanel;
     }
 
-    private static JPanel createRecentTaskContainer() {
-        JPanel recentTaskContainer = createPanel.panel(BACKGROUND_COLOR, new BorderLayout(), new Dimension(CONTAINER_WIDTH, 0));
-        recentTaskContainer.setBorder(BorderFactory.createLineBorder(BORDER_COLOR, 1));
+    private static JPanel createProgressContainer() {
+        JPanel progressContainer = createPanel.panel(BACKGROUND_COLOR, new BorderLayout(), new Dimension(CONTAINER_WIDTH, 0));
+        progressContainer.setBorder(BorderFactory.createLineBorder(BORDER_COLOR, 1));
+        
         JPanel headerPanel = createPanel.panel(CARD_COLOR, new BorderLayout(), new Dimension(0, 70));
         headerPanel.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createMatteBorder(0, 0, 1, 0, BORDER_COLOR),
             BorderFactory.createEmptyBorder(10, 20, 10, 20)
         ));
 
-        JLabel completedTaskLabel = new JLabel("Completed Tasks");
-        completedTaskLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 24));  // Changed from 20
-        completedTaskLabel.setForeground(TEXT_DARK);
-        headerPanel.add(completedTaskLabel, BorderLayout.WEST);
+        JLabel progressLabel = new JLabel("Task Progress");
+        progressLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 24));
+        progressLabel.setForeground(TEXT_DARK);
+        headerPanel.add(progressLabel, BorderLayout.WEST);
 
-        recentTasksWrapper = new JPanel();
-        recentTasksWrapper.setLayout(new BoxLayout(recentTasksWrapper, BoxLayout.Y_AXIS));
-        recentTasksWrapper.setBackground(BACKGROUND_COLOR);
-        recentTasksWrapper.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
+        // Main content panel with fixed layout
+        JPanel contentPanel = new JPanel();
+        contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
+        contentPanel.setBackground(BACKGROUND_COLOR);
+        contentPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
-        recentTaskListContainer = new JScrollPane(recentTasksWrapper);
-        recentTaskListContainer.setBorder(null);
-        recentTaskListContainer.setBackground(BACKGROUND_COLOR);
-        recentTaskListContainer.getVerticalScrollBar().setUnitIncrement(16);
+        // Add overall progress components
+        JPanel overallProgressPanel = createTaskProgressPanel("Overall Progress");
+        contentPanel.add(overallProgressPanel);
         
-        recentTaskListContainer.setPreferredSize(new Dimension(CONTAINER_WIDTH, 300)); // Fixed height of 300px
+        // Add spacing between panels
+        contentPanel.add(Box.createVerticalStrut(15));
         
-        recentTasksWrapper.setMinimumSize(new Dimension(CONTAINER_WIDTH - 20, 300));
+        // Add daily progress components
+        JPanel dailyProgressPanel = createDailyTaskProgressPanel();
+        contentPanel.add(dailyProgressPanel);
         
-        recentTaskListContainer.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-        recentTaskListContainer.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-
-        refreshRecentTasksList();
-
-        recentTaskContainer.add(headerPanel, BorderLayout.NORTH);
-        recentTaskContainer.add(recentTaskListContainer, BorderLayout.CENTER);
+        // Add spacing between panels
+        contentPanel.add(Box.createVerticalStrut(15));
         
-        return recentTaskContainer;
+        // Add quiz progress components
+        JPanel quizProgressPanel = createQuizProgressPanel();
+        contentPanel.add(quizProgressPanel);
+        
+        // Add to main container
+        progressContainer.add(headerPanel, BorderLayout.NORTH);
+        progressContainer.add(contentPanel, BorderLayout.CENTER);
+        
+        return progressContainer;
     }
 
-    public static void refreshRecentTasksList() {
-        if (recentTasksWrapper == null) return;
+    private static JPanel createTaskProgressPanel(String title) {
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setBackground(Color.WHITE);
+        panel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(BORDER_COLOR, 1),
+            BorderFactory.createEmptyBorder(15, 15, 15, 15)
+        ));
         
-        recentTasksWrapper.removeAll();
+        // Make panel have fixed height
+        panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 160));
+        panel.setPreferredSize(new Dimension(CONTAINER_WIDTH - 30, 160));
         
+        // Section title
+        JLabel titleLabel = new JLabel(title);
+        titleLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 18));
+        titleLabel.setForeground(TEXT_DARK);
+        titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        
+        // Progress percentage
+        JLabel percentLabel = new JLabel("0%");
+        percentLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 24));
+        percentLabel.setForeground(PRIMARY_COLOR);
+        percentLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        
+        // Progress bar
+        JProgressBar progressBar = new JProgressBar(0, 100);
+        progressBar.setValue(0);
+        progressBar.setStringPainted(false);
+        progressBar.setPreferredSize(new Dimension(CONTAINER_WIDTH - 80, 20));
+        progressBar.setMaximumSize(new Dimension(CONTAINER_WIDTH - 80, 20));
+        progressBar.setForeground(COMPLETED_COLOR);
+        progressBar.setBackground(new Color(0xE0E0E0));
+        
+        // Status label
+        JLabel statusLabel = new JLabel("No tasks to complete");
+        statusLabel.setFont(new Font("Segoe UI Variable", Font.PLAIN, 16));
+        statusLabel.setForeground(TEXT_DARK);
+        statusLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        
+        // Add components with spacing
+        panel.add(titleLabel);
+        panel.add(Box.createVerticalStrut(10));
+        panel.add(percentLabel);
+        panel.add(Box.createVerticalStrut(15));
+        panel.add(progressBar);
+        panel.add(Box.createVerticalStrut(10));
+        panel.add(statusLabel);
+        
+        // Update progress initially
+        updateTaskProgress(percentLabel, progressBar, statusLabel);
+        
+        return panel;
+    }
+
+    private static JPanel createDailyTaskProgressPanel() {
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setBackground(Color.WHITE);
+        panel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(BORDER_COLOR, 1),
+            BorderFactory.createEmptyBorder(15, 15, 15, 15)
+        ));
+        
+        // Make panel have fixed height
+        panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 160));
+        panel.setPreferredSize(new Dimension(CONTAINER_WIDTH - 30, 160));
+        
+        // Section title
+        JLabel titleLabel = new JLabel("Daily Progress");
+        titleLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 18));
+        titleLabel.setForeground(TEXT_DARK);
+        titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        
+        // Progress percentage
+        JLabel percentLabel = new JLabel("0%");
+        percentLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 24));
+        percentLabel.setForeground(PRIMARY_COLOR);
+        percentLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        
+        // Progress bar
+        JProgressBar progressBar = new JProgressBar(0, 100);
+        progressBar.setValue(0);
+        progressBar.setStringPainted(false);
+        progressBar.setPreferredSize(new Dimension(CONTAINER_WIDTH - 80, 20));
+        progressBar.setMaximumSize(new Dimension(CONTAINER_WIDTH - 80, 20));
+        progressBar.setForeground(COMPLETED_COLOR);
+        progressBar.setBackground(new Color(0xE0E0E0));
+        
+        // Status label with coming soon message
+        JLabel statusLabel = new JLabel("Daily tasks coming soon");
+        statusLabel.setFont(new Font("Segoe UI Variable", Font.ITALIC, 16));
+        statusLabel.setForeground(new Color(0x6D6D6D));
+        statusLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        
+        // Add components with spacing
+        panel.add(titleLabel);
+        panel.add(Box.createVerticalStrut(10));
+        panel.add(percentLabel);
+        panel.add(Box.createVerticalStrut(15));
+        panel.add(progressBar);
+        panel.add(Box.createVerticalStrut(10));
+        panel.add(statusLabel);
+        
+        return panel;
+    }
+
+    private static JPanel createQuizProgressPanel() {
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setBackground(Color.WHITE);
+        panel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(BORDER_COLOR, 1),
+            BorderFactory.createEmptyBorder(15, 15, 15, 15)
+        ));
+        
+        // Make panel have fixed height
+        panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 160));
+        panel.setPreferredSize(new Dimension(CONTAINER_WIDTH - 30, 160));
+        
+        // Section title
+        JLabel titleLabel = new JLabel("Quiz Progress");
+        titleLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 18));
+        titleLabel.setForeground(TEXT_DARK);
+        titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        
+        // Progress percentage
+        JLabel percentLabel = new JLabel("0%");
+        percentLabel.setFont(new Font("Segoe UI Variable", Font.BOLD, 24));
+        percentLabel.setForeground(PRIMARY_COLOR);
+        percentLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        
+        // Progress bar
+        JProgressBar progressBar = new JProgressBar(0, 100);
+        progressBar.setValue(0);
+        progressBar.setStringPainted(false);
+        progressBar.setPreferredSize(new Dimension(CONTAINER_WIDTH - 80, 20));
+        progressBar.setMaximumSize(new Dimension(CONTAINER_WIDTH - 80, 20));
+        progressBar.setForeground(COMPLETED_COLOR);
+        progressBar.setBackground(new Color(0xE0E0E0));
+        
+        // Status label
+        JLabel statusLabel = new JLabel("No quizzes taken yet");
+        statusLabel.setFont(new Font("Segoe UI Variable", Font.PLAIN, 16));
+        statusLabel.setForeground(TEXT_DARK);
+        statusLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        
+        // Add components with spacing
+        panel.add(titleLabel);
+        panel.add(Box.createVerticalStrut(10));
+        panel.add(percentLabel);
+        panel.add(Box.createVerticalStrut(15));
+        panel.add(progressBar);
+        panel.add(Box.createVerticalStrut(10));
+        panel.add(statusLabel);
+        
+        // Update quiz progress initially
+        updateQuizProgress(percentLabel, progressBar, statusLabel);
+        
+        return panel;
+    }
+
+    public static void updateTaskProgress(JLabel percentLabel, JProgressBar progressBar, JLabel statusLabel) {
         try {
-            String query = "SELECT title FROM tasks " + "WHERE user_id = ? AND status = 'completed' ";
-                          
-            ResultSet rs = DatabaseManager.executeQuery(query, UserSession.getUserId());
-
-            boolean hasItems = false;
-            while (rs.next()) {
-                hasItems = true;
-                String title = rs.getString("title");
-
-                JPanel taskItemPanel = new JPanel(new BorderLayout(2, 0));
-                taskItemPanel.setBackground(CARD_COLOR);
-                taskItemPanel.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 20));  // Keep at 0 vertical padding
-
-                // Reduce the height of the panel
-                taskItemPanel.setPreferredSize(new Dimension(CONTAINER_WIDTH - 40, 60)); // Reduced from 80 to 60
-                taskItemPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60)); // Reduced from 80 to 60
-                taskItemPanel.setMinimumSize(new Dimension(CONTAINER_WIDTH - 40, 60)); // Reduced from 80 to 60
-
-                JLabel titleLabel = new JLabel(title);
-                titleLabel.setFont(new Font("Segoe UI", Font.PLAIN, 18));
-                titleLabel.setForeground(TEXT_DARK);
-                taskItemPanel.add(titleLabel, BorderLayout.CENTER);
-
-                new HoverPanelEffect(taskItemPanel, 
-                    null,                    // default background
-                    new Color(0xF5F5F5)           // hover background
-                );
-
-                JPanel wrapperPanel = new JPanel();
-                wrapperPanel.setLayout(new BoxLayout(wrapperPanel, BoxLayout.X_AXIS));
-                wrapperPanel.setBackground(BACKGROUND_COLOR);
-                wrapperPanel.add(taskItemPanel);
-                
-                recentTasksWrapper.add(wrapperPanel);
-                // Reduce the spacing between items from 10 to 5 pixels
-                recentTasksWrapper.add(Box.createRigidArea(new Dimension(0, 5))); // Reduced from 10 to 5
-            }
-
-            if (!hasItems) {
-                JPanel centeringPanel = new JPanel(new GridBagLayout());
-                centeringPanel.setBackground(BACKGROUND_COLOR);
-                
-                JLabel noTasksLabel = new JLabel("No completed tasks yet!");
-                noTasksLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-                noTasksLabel.setForeground(TEXT_DARK);
-                noTasksLabel.setHorizontalAlignment(SwingConstants.CENTER);
-                
-                centeringPanel.add(noTasksLabel);
-                
-                recentTasksWrapper.add(centeringPanel);
-                recentTasksWrapper.add(Box.createVerticalGlue());
-            }
-
-            recentTasksWrapper.revalidate();
-            recentTasksWrapper.repaint();
+            Map<String, Integer> taskCounts = new TaskFetcher().getTaskCounts();
             
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-            Toast.error("Error fetching completed tasks: " + ex.getMessage());
+            if (taskCounts != null) {
+                int total = taskCounts.getOrDefault("total", 0);
+                int completed = taskCounts.getOrDefault("completed", 0);
+                int pending = taskCounts.getOrDefault("pending", 0);
+                
+                // Calculate percentage
+                int percentage = (total > 0) ? (completed * 100) / total : 0;
+                
+                // Update UI components
+                percentLabel.setText(percentage + "%");
+                progressBar.setValue(percentage);
+                
+                // Update status message
+                if (total == 0) {
+                    statusLabel.setText("No tasks to complete");
+                } else if (pending == 0) {
+                    statusLabel.setText("All tasks completed!");
+                } else {
+                    statusLabel.setText(pending + " task" + (pending > 1 ? "s" : "") + " remaining");
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            Toast.error("Error updating progress: " + e.getMessage());
+        }
+    }
+
+    private static void updateQuizProgress(JLabel percentLabel, JProgressBar progressBar, JLabel statusLabel) {
+        try {
+            // Query to get total flashcard sets and total quizzes taken
+            String query = """
+                SELECT 
+                    (SELECT COUNT(*) FROM flashcard_sets WHERE user_id = ?) AS total_sets,
+                    (SELECT COUNT(DISTINCT set_id) FROM quiz_attempts WHERE user_id = ?) AS sets_quizzed
+            """;
+            
+            ResultSet rs = DatabaseManager.executeQuery(query, UserSession.getUserId(), UserSession.getUserId());
+            
+            if (rs.next()) {
+                int totalSets = rs.getInt("total_sets");
+                int setsQuizzed = rs.getInt("sets_quizzed");
+                
+                // Calculate percentage
+                int percentage = (totalSets > 0) ? (setsQuizzed * 100) / totalSets : 0;
+                
+                // Update UI components
+                percentLabel.setText(percentage + "%");
+                progressBar.setValue(percentage);
+                
+                // Update status message
+                if (totalSets == 0) {
+                    statusLabel.setText("No flashcard sets created");
+                } else if (setsQuizzed == 0) {
+                    statusLabel.setText("No quizzes taken yet");
+                } else if (setsQuizzed == totalSets) {
+                    statusLabel.setText("All flashcard sets quizzed!");
+                } else {
+                    int remaining = totalSets - setsQuizzed;
+                    statusLabel.setText(remaining + " set" + (remaining > 1 ? "s" : "") + " remaining");
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            Toast.error("Error updating quiz progress: " + e.getMessage());
         }
     }
 
@@ -664,7 +909,504 @@ public class HomePanel {
         }
     }
 
+    public static void refreshTaskProgress() {
+        SwingUtilities.invokeLater(() -> {
+            try {
+                // Get task counts
+                Map<String, Integer> taskCounts = new TaskFetcher().getTaskCounts();
+                
+                if (taskCounts != null) {
+                    int total = taskCounts.getOrDefault("total", 0);
+                    int completed = taskCounts.getOrDefault("completed", 0);
+                    int pending = taskCounts.getOrDefault("pending", 0);
+                    
+                    // Calculate percentage
+                    int percentage = (total > 0) ? (completed * 100) / total : 0;
+                    
+                    System.out.println("Refreshing task progress: " + percentage + "% (" + pending + " tasks remaining)");
+                    
+                    // Find and update the overall progress panel
+                    findAndUpdateTaskProgressPanel(percentage, total, completed, pending);
+                    
+                    // Also update all progress panels using the updateProgressPanel method
+                    Container container = SwingUtilities.getAncestorOfClass(JPanel.class, taskListContainer);
+                    if (container != null) {
+                        updateAllProgressPanels(container);
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                Toast.error("Error refreshing task progress: " + e.getMessage());
+            }
+        });
+    }
 
+    private static void findAndUpdateTaskProgressPanel(int percentage, int total, int completed, int pending) {
+        // Start from the main panel and search for the overall progress panel
+        Container container = SwingUtilities.getAncestorOfClass(JPanel.class, taskListContainer);
+        if (container == null) return;
+        
+        // Search through all components recursively
+        findAndUpdateTaskProgressPanelRecursive(container, percentage, total, completed, pending);
+    }
 
-    
+    private static boolean findAndUpdateTaskProgressPanelRecursive(Container container, int percentage, int total, int completed, int pending) {
+        Component[] components = container.getComponents();
+        
+        for (Component comp : components) {
+            // Check if this is the overall progress panel by looking for the "Overall Progress" label
+            if (comp instanceof JPanel) {
+                JPanel panel = (JPanel) comp;
+                boolean foundOverallLabel = false;
+                JLabel percentLabel = null;
+                JProgressBar progressBar = null;
+                JLabel statusLabel = null;
+                
+                // Check all components in this panel
+                for (Component c : panel.getComponents()) {
+                    if (c instanceof JLabel) {
+                        JLabel label = (JLabel) c;
+                        if (label.getText().equals("Overall Progress")) {
+                            foundOverallLabel = true;
+                        } else if (label.getText().endsWith("%")) {
+                            percentLabel = label;
+                        } else if (!label.getText().equals("Overall Progress") && 
+                                  !label.getText().endsWith("%")) {
+                            statusLabel = label;
+                        }
+                    } else if (c instanceof JProgressBar) {
+                        progressBar = (JProgressBar) c;
+                    }
+                }
+                
+                // If we found the overall progress panel, update it
+                if (foundOverallLabel && percentLabel != null && progressBar != null && statusLabel != null) {
+                    // Update UI components
+                    percentLabel.setText(percentage + "%");
+                    progressBar.setValue(percentage);
+                    
+                    // Update status message
+                    if (total == 0) {
+                        statusLabel.setText("No tasks to complete");
+                    } else if (pending == 0) {
+                        statusLabel.setText("All tasks completed!");
+                    } else {
+                        statusLabel.setText(pending + " task" + (pending > 1 ? "s" : "") + " remaining");
+                    }
+                    
+                    // Revalidate and repaint the panel
+                    panel.revalidate();
+                    panel.repaint();
+                    return true;
+                }
+                
+                // If this panel has sub-containers, search them too
+                if (findAndUpdateTaskProgressPanelRecursive(panel, percentage, total, completed, pending)) {
+                    return true;
+                }
+            } else if (comp instanceof Container) {
+                // Search other types of containers
+                if (findAndUpdateTaskProgressPanelRecursive((Container) comp, percentage, total, completed, pending)) {
+                    return true;
+                }
+            }
+        }
+        
+        return false;
+    }
+
+    public static void refreshQuizProgress() {
+        SwingUtilities.invokeLater(() -> {
+            try {
+                // Direct approach to update quiz progress
+                // Query to get total flashcard sets and total quizzes taken
+                String query = """
+                    SELECT 
+                        (SELECT COUNT(*) FROM flashcard_sets WHERE user_id = ?) AS total_sets,
+                        (SELECT COUNT(DISTINCT set_id) FROM quiz_attempts WHERE user_id = ?) AS sets_quizzed
+                """;
+                
+                ResultSet rs = DatabaseManager.executeQuery(query, UserSession.getUserId(), UserSession.getUserId());
+                
+                if (rs.next()) {
+                    int totalSets = rs.getInt("total_sets");
+                    int setsQuizzed = rs.getInt("sets_quizzed");
+                    
+                    // Calculate percentage
+                    int percentage = (totalSets > 0) ? (setsQuizzed * 100) / totalSets : 0;
+                    
+                    // Now find and update the quiz progress panel
+                    findAndUpdateQuizProgressPanel(percentage, totalSets, setsQuizzed);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                Toast.error("Error refreshing quiz progress: " + e.getMessage());
+            }
+        });
+    }
+
+    private static void findAndUpdateQuizProgressPanel(int percentage, int totalSets, int setsQuizzed) {
+        // Start from the main panel and search for the quiz progress panel
+        Container container = SwingUtilities.getAncestorOfClass(JPanel.class, taskListContainer);
+        if (container == null) return;
+        
+        // Search through all components recursively
+        findAndUpdateQuizProgressPanelRecursive(container, percentage, totalSets, setsQuizzed);
+    }
+
+    private static boolean findAndUpdateQuizProgressPanelRecursive(Container container, int percentage, int totalSets, int setsQuizzed) {
+        Component[] components = container.getComponents();
+        
+        for (Component comp : components) {
+            // Check if this is the quiz progress panel by looking for the "Quiz Progress" label
+            if (comp instanceof JPanel) {
+                JPanel panel = (JPanel) comp;
+                boolean foundQuizLabel = false;
+                JLabel percentLabel = null;
+                JProgressBar progressBar = null;
+                JLabel statusLabel = null;
+                
+                // Check all components in this panel
+                for (Component c : panel.getComponents()) {
+                    if (c instanceof JLabel) {
+                        JLabel label = (JLabel) c;
+                        if (label.getText().equals("Quiz Progress")) {
+                            foundQuizLabel = true;
+                        } else if (label.getText().endsWith("%")) {
+                            percentLabel = label;
+                        } else if (!label.getText().equals("Quiz Progress") && 
+                                  !label.getText().endsWith("%")) {
+                            statusLabel = label;
+                        }
+                    } else if (c instanceof JProgressBar) {
+                        progressBar = (JProgressBar) c;
+                    }
+                }
+                
+                // If we found the quiz progress panel, update it
+                if (foundQuizLabel && percentLabel != null && progressBar != null && statusLabel != null) {
+                    // Update UI components
+                    percentLabel.setText(percentage + "%");
+                    progressBar.setValue(percentage);
+                    
+                    // Update status message
+                    if (totalSets == 0) {
+                        statusLabel.setText("No flashcard sets created");
+                    } else if (setsQuizzed == 0) {
+                        statusLabel.setText("No quizzes taken yet");
+                    } else if (setsQuizzed == totalSets) {
+                        statusLabel.setText("All flashcard sets quizzed!");
+                    } else {
+                        int remaining = totalSets - setsQuizzed;
+                        statusLabel.setText(remaining + " set" + (remaining > 1 ? "s" : "") + " not yet quizzed");
+                    }
+                    
+                    // Revalidate and repaint the panel
+                    panel.revalidate();
+                    panel.repaint();
+                    return true;
+                }
+                
+                // If this panel has sub-containers, search them too
+                if (findAndUpdateQuizProgressPanelRecursive(panel, percentage, totalSets, setsQuizzed)) {
+                    return true;
+                }
+            } else if (comp instanceof Container) {
+                // Search other types of containers
+                if (findAndUpdateQuizProgressPanelRecursive((Container) comp, percentage, totalSets, setsQuizzed)) {
+                    return true;
+                }
+            }
+        }
+        
+        return false;
+    }
+
+    private static void updateProgressPanel(JPanel panel) {
+        JLabel titleLabel = null;
+        JLabel percentLabel = null;
+        JProgressBar progressBar = null;
+        JLabel statusLabel = null;
+        
+        for (Component c : panel.getComponents()) {
+            if (c instanceof JLabel) {
+                JLabel label = (JLabel)c;
+                String text = label.getText();
+                
+                if (text.equals("Overall Progress") || text.equals("Daily Progress") || text.equals("Quiz Progress")) {
+                    titleLabel = label;
+                } else if (text.endsWith("%")) {
+                    percentLabel = label;
+                } else if (!text.equals("Overall Progress") && !text.equals("Daily Progress") && !text.equals("Quiz Progress")) {
+                    statusLabel = label;
+                }
+            } else if (c instanceof JProgressBar) {
+                progressBar = (JProgressBar)c;
+            }
+        }
+        
+        if (titleLabel != null && percentLabel != null && progressBar != null && statusLabel != null) {
+            if (titleLabel.getText().equals("Overall Progress")) {
+                try {
+                    Map<String, Integer> taskCounts = new TaskFetcher().getTaskCounts();
+                    
+                    if (taskCounts != null) {
+                        int total = taskCounts.getOrDefault("total", 0);
+                        int completed = taskCounts.getOrDefault("completed", 0);
+                        int pending = taskCounts.getOrDefault("pending", 0);
+                        
+                        // Calculate percentage
+                        int percentage = (total > 0) ? (completed * 100) / total : 0;
+                        
+                        // Update UI components
+                        percentLabel.setText(percentage + "%");
+                        progressBar.setValue(percentage);
+                        
+                        // Update status message
+                        if (total == 0) {
+                            statusLabel.setText("No tasks to complete");
+                        } else if (pending == 0) {
+                            statusLabel.setText("All tasks completed!");
+                        } else {
+                            statusLabel.setText(pending + " task" + (pending > 1 ? "s" : "") + " remaining");
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            } else if (titleLabel.getText().equals("Daily Progress")) {
+                // For now, we'll leave this at 0% since daily tasks aren't implemented
+                percentLabel.setText("0%");
+                progressBar.setValue(0);
+                statusLabel.setText("Daily tasks coming soon");
+            } else if (titleLabel.getText().equals("Quiz Progress")) {
+                try {
+                    // Query to get total flashcard sets and total quizzes taken
+                    String query = """
+                        SELECT 
+                            (SELECT COUNT(*) FROM flashcard_sets WHERE user_id = ?) AS total_sets,
+                            (SELECT COUNT(DISTINCT set_id) FROM quiz_attempts WHERE user_id = ?) AS sets_quizzed
+                    """;
+                    
+                    ResultSet rs = DatabaseManager.executeQuery(query, UserSession.getUserId(), UserSession.getUserId());
+                    
+                    if (rs.next()) {
+                        int totalSets = rs.getInt("total_sets");
+                        int setsQuizzed = rs.getInt("sets_quizzed");
+                        
+                        // Calculate percentage
+                        int percentage = (totalSets > 0) ? (setsQuizzed * 100) / totalSets : 0;
+                        
+                        // Update UI components
+                        percentLabel.setText(percentage + "%");
+                        progressBar.setValue(percentage);
+                        
+                        // Update status message
+                        if (totalSets == 0) {
+                            statusLabel.setText("No flashcard sets created");
+                        } else if (setsQuizzed == 0) {
+                            statusLabel.setText("No quizzes taken yet");
+                        } else if (setsQuizzed == totalSets) {
+                            statusLabel.setText("All flashcard sets quizzed!");
+                        } else {
+                            int remaining = totalSets - setsQuizzed;
+                            statusLabel.setText(remaining + " set" + (remaining > 1 ? "s" : "") + " not yet quizzed");
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+            
+            // Revalidate and repaint the panel
+            panel.revalidate();
+            panel.repaint();
+        }
+    }
+
+    private static void updateAllProgressPanels(Container container) {
+        Component[] components = container.getComponents();
+        
+        for (Component comp : components) {
+            if (comp instanceof JPanel) {
+                JPanel panel = (JPanel) comp;
+                
+                // Check if this panel has a BoxLayout and white background (likely a progress panel)
+                if (panel.getLayout() instanceof BoxLayout && 
+                    panel.getBackground().equals(Color.WHITE)) {
+                    
+                    updateProgressPanel(panel);
+                }
+                
+                // Recursively check child containers
+                if (comp instanceof Container) {
+                    updateAllProgressPanels((Container) comp);
+                }
+            } else if (comp instanceof Container) {
+                updateAllProgressPanels((Container) comp);
+            }
+        }
+    }
+
+    public static void forceUpdateAllProgressPanels(int taskPercentage, int total, int completed, int pending) {
+        // Get the root container
+        Container root = SwingUtilities.getWindowAncestor(taskListContainer);
+        if (root == null) return;
+        
+        // Update all panels recursively
+        updateAllPanelsRecursive(root, taskPercentage, total, completed, pending);
+    }
+
+    private static void updateAllPanelsRecursive(Container container, int taskPercentage, int total, int completed, int pending) {
+        for (Component comp : container.getComponents()) {
+            if (comp instanceof JPanel) {
+                JPanel panel = (JPanel) comp;
+                
+                // Check for progress panels
+                boolean isProgressPanel = false;
+                String panelType = "";
+                
+                for (Component c : panel.getComponents()) {
+                    if (c instanceof JLabel) {
+                        JLabel label = (JLabel) c;
+                        String text = label.getText();
+                        if (text != null && (text.equals("Overall Progress") || text.equals("Quiz Progress") || text.equals("Daily Progress"))) {
+                            isProgressPanel = true;
+                            panelType = text;
+                            break;
+                        }
+                    }
+                }
+                
+                if (isProgressPanel) {
+                    // Found a progress panel, update it
+                    JLabel percentLabel = null;
+                    JProgressBar progressBar = null;
+                    JLabel statusLabel = null;
+                    
+                    for (Component c : panel.getComponents()) {
+                        if (c instanceof JLabel) {
+                            JLabel label = (JLabel) c;
+                            String text = label.getText();
+                            if (text != null && text.endsWith("%")) {
+                                percentLabel = label;
+                            } else if (text != null && !text.equals("Overall Progress") && 
+                                      !text.equals("Quiz Progress") && !text.equals("Daily Progress")) {
+                                statusLabel = label;
+                            }
+                        } else if (c instanceof JProgressBar) {
+                            progressBar = (JProgressBar) c;
+                        }
+                    }
+                    
+                    if (percentLabel != null && progressBar != null && statusLabel != null) {
+                        if (panelType.equals("Overall Progress")) {
+                            // Update task progress
+                            percentLabel.setText(taskPercentage + "%");
+                            progressBar.setValue(taskPercentage);
+                            
+                            if (total == 0) {
+                                statusLabel.setText("No tasks to complete");
+                            } else if (pending == 0) {
+                                statusLabel.setText("All tasks completed!");
+                            } else {
+                                statusLabel.setText(pending + " task" + (pending > 1 ? "s" : "") + " remaining");
+                            }
+                            
+                            System.out.println("Updated Overall Progress panel: " + taskPercentage + "%");
+                        }
+                    }
+                    
+                    // Force immediate repaint
+                    panel.revalidate();
+                    panel.repaint();
+                }
+            }
+            
+            // Recursively check child containers
+            if (comp instanceof Container) {
+                updateAllPanelsRecursive((Container) comp, taskPercentage, total, completed, pending);
+            }
+        }
+    }
+
+    public static void forceUpdateQuizProgressPanel(int quizPercentage, int totalSets, int setsQuizzed) {
+        // Get the root container
+        Container root = SwingUtilities.getWindowAncestor(taskListContainer);
+        if (root == null) return;
+        
+        // Update all panels recursively
+        updateQuizPanelRecursive(root, quizPercentage, totalSets, setsQuizzed);
+    }
+
+    private static void updateQuizPanelRecursive(Container container, int quizPercentage, int totalSets, int setsQuizzed) {
+        for (Component comp : container.getComponents()) {
+            if (comp instanceof JPanel) {
+                JPanel panel = (JPanel) comp;
+                
+                // Check for quiz progress panel
+                boolean isQuizPanel = false;
+                
+                for (Component c : panel.getComponents()) {
+                    if (c instanceof JLabel) {
+                        JLabel label = (JLabel) c;
+                        String text = label.getText();
+                        if (text != null && text.equals("Quiz Progress")) {
+                            isQuizPanel = true;
+                            break;
+                        }
+                    }
+                }
+                
+                if (isQuizPanel) {
+                    // Found a quiz progress panel, update it
+                    JLabel percentLabel = null;
+                    JProgressBar progressBar = null;
+                    JLabel statusLabel = null;
+                    
+                    for (Component c : panel.getComponents()) {
+                        if (c instanceof JLabel) {
+                            JLabel label = (JLabel) c;
+                            String text = label.getText();
+                            if (text != null && text.endsWith("%")) {
+                                percentLabel = label;
+                            } else if (text != null && !text.equals("Quiz Progress")) {
+                                statusLabel = label;
+                            }
+                        } else if (c instanceof JProgressBar) {
+                            progressBar = (JProgressBar) c;
+                        }
+                    }
+                    
+                    if (percentLabel != null && progressBar != null && statusLabel != null) {
+                        // Update quiz progress
+                        percentLabel.setText(quizPercentage + "%");
+                        progressBar.setValue(quizPercentage);
+                        
+                        if (totalSets == 0) {
+                            statusLabel.setText("No flashcard sets created");
+                        } else if (setsQuizzed == 0) {
+                            statusLabel.setText("No quizzes taken yet");
+                        } else if (setsQuizzed == totalSets) {
+                            statusLabel.setText("All flashcard sets quizzed!");
+                        } else {
+                            int remaining = totalSets - setsQuizzed;
+                            statusLabel.setText(remaining + " set" + (remaining > 1 ? "s" : "") + " not yet quizzed");
+                        }
+                        
+                        System.out.println("Updated Quiz Progress panel: " + quizPercentage + "%");
+                    }
+                    
+                    // Force immediate repaint
+                    panel.revalidate();
+                    panel.repaint();
+                }
+            }
+            
+            // Recursively check child containers
+            if (comp instanceof Container) {
+                updateQuizPanelRecursive((Container) comp, quizPercentage, totalSets, setsQuizzed);
+            }
+        }
+    }
 }
