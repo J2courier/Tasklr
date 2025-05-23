@@ -245,14 +245,14 @@ public class QuizzerPanel {
         return panel;
     }
 
-    private static void showQuizTypeDialog(int setId, String subject) {
+    public static void showQuizTypeDialog(int setId, String subject) {
         // First, get the total number of flashcards
         int totalFlashcards = getTotalFlashcards(setId);
         if (totalFlashcards == 0) {
             Toast.error("No flashcards found in this set!");
             return;
         }
-
+        
         // Main dialog panel with padding and fixed width
         JPanel dialogPanel = new JPanel(new BorderLayout(0, 10));
         dialogPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));

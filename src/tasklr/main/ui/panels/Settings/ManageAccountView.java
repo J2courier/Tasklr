@@ -429,11 +429,15 @@ public class ManageAccountView {
                             JOptionPane.INFORMATION_MESSAGE
                         );
 
-                        // Close current window and show login screen
-                        Window window = SwingUtilities.getWindowAncestor(
-                            (Component) verificationPanel.getParent()
-                        );
-                        window.dispose();
+                        // Find and dispose the main application frame
+                        for (Window window : Window.getWindows()) {
+                            if (window instanceof JFrame && window.isVisible() && window instanceof tasklr.main.ui.frames.Tasklr) {
+                                window.dispose();
+                                break;
+                            }
+                        }
+                        
+                        // Show login screen
                         new Login().setVisible(true);
 
                     } catch (SQLException ex) {
